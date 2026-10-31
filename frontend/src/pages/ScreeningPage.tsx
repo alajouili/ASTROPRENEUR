@@ -292,6 +292,64 @@ export const ScreeningPage: React.FC<ScreeningPageProps> = ({ onDataChanged }) =
         </div>
       </div>
 
+      {/* Active Requisition Overview Banner */}
+      {selectedJob && (
+        <div className="surface-card p-4 rounded-xl border border-indigo-100 dark:border-indigo-950/70 bg-gradient-to-r from-indigo-50/40 via-white to-slate-50/50 dark:from-indigo-950/30 dark:via-slate-900 dark:to-slate-900 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-300">
+                Active Requisition
+              </span>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
+                {selectedJob.title}
+              </h2>
+              <span className="badge-clean text-[10px] font-mono">
+                {selectedJob.department || 'Operations'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-300 max-w-4xl line-clamp-2 leading-relaxed">
+              {selectedJob.description || 'Full-time requisition open for candidate submissions and forensic AI screening.'}
+            </p>
+            <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
+              <span className="text-[10px] font-mono text-slate-500 font-semibold uppercase">Criteria Gates:</span>
+              {selectedJob.criteria.map((c) => (
+                <span
+                  key={c.id}
+                  className={`text-[10px] font-mono px-2 py-0.5 rounded ${
+                    c.kind === 'must'
+                      ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900/40 font-semibold'
+                      : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                  }`}
+                >
+                  {c.kind === 'must' ? '⚡ Must: ' : 'Nice: '}{c.label}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsJobDetailOpen(true)}
+              className="btn-secondary py-1.5 px-3 text-xs flex items-center gap-1.5"
+              title="Inspect Full Job Description & Criteria Specification"
+            >
+              <FileText className="w-3.5 h-3.5 text-indigo-500" />
+              <span>Full Job Details</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsCreateJobOpen(true)}
+              className="btn-primary py-1.5 px-3 text-xs flex items-center gap-1.5"
+              title="Create new Job Offer with custom description & criteria"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>New Requisition</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {errorMessage && (
         <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2">
           <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />

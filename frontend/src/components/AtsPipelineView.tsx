@@ -1,6 +1,5 @@
 import React from 'react';
 import { RankedCandidate, NotRankedCandidate, JobOffer } from '../services/api';
-import { flagCode } from '../lib/format';
 import {
   ShieldAlert,
   ShieldCheck,
@@ -227,14 +226,20 @@ export const AtsPipelineView: React.FC<AtsPipelineViewProps> = ({
                       {/* Threat or Flag Badges */}
                       {isQuarantined && cand.risk_flags && cand.risk_flags.length > 0 && (
                         <div className="mt-2 pt-1.5 border-t border-slate-100 dark:border-slate-800 flex flex-wrap gap-1">
-                          {cand.risk_flags.map((flag, idx) => (
-                            <span
-                              key={idx}
-                              className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50"
-                            >
-                              [{flagCode(flag)}]
-                            </span>
-                          ))}
+                          {cand.risk_flags.map((flag: any, idx: number) => {
+                            const badgeText =
+                              typeof flag === 'string'
+                                ? flag
+                                : (flag?.code || flag?.name || flag?.detail || 'FLAG').toUpperCase();
+                            return (
+                              <span
+                                key={idx}
+                                className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50"
+                              >
+                                [{badgeText}]
+                              </span>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
