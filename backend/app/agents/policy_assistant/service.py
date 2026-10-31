@@ -24,6 +24,7 @@ from app.security.injection import scan_rules
 
 OFFLINE_MODE = "offline-retrieval (SIMULATED, no LLM)"
 MIN_SCORE = 3.0        # best passage below this: "not found"
+MIN_COVERAGE = 0.4     # share of the question's distinctive words the best passage must contain
 FOLLOW_UP_TERMS = 6    # a question with this few content words reuses the previous question
 HR_CONTACT = "hr@trusthr.demo"
 NOT_FOUND = (f"I could not find this in the company policies available to you. "
@@ -127,6 +128,11 @@ def answer_question(question: str, history: list[Turn], role: str, index: Policy
     terms = _query_terms(question, history)
     hits = index.search(terms, audiences)
     if not hits or hits[0][0] < MIN_SCORE:
+        return AssistantReply(NOT_FOUND, found=False, mode=mode)
+    # One shared common word ("data" in "data analyst") is not an answer. A follow-up may rely on
+    # the previous question for its topic.
+    previous = next((t.content for t in reversed(history) if t.role == "user"), "")
+    if max(index.coverage(hits[0][1], question), index.coverage(hits[0][1], f"{previous} {question}")) < MIN_COVERAGE:
         return AssistantReply(NOT_FOUND, found=False, mode=mode)
     top = hits[0][1]
     related = [p for s, p in hits[1:] if s >= 0.6 * hits[0][0]][:2]
