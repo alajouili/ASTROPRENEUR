@@ -57,7 +57,12 @@ export const App: React.FC = () => {
 
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-sky-500 selection:text-white">
+      <div className="min-h-screen bg-[#0b0f19] flex flex-col font-sans text-slate-100 selection:bg-sky-500 selection:text-white relative overflow-x-hidden">
+        {/* Ambient Cybernetic Radial Lights */}
+        <div className="fixed top-0 left-1/4 w-[600px] h-[600px] bg-sky-500/5 rounded-full blur-[140px] pointer-events-none -z-10"></div>
+        <div className="fixed top-1/3 right-10 w-[500px] h-[500px] bg-indigo-500/5 rounded-full blur-[150px] pointer-events-none -z-10"></div>
+        <div className="fixed bottom-10 left-10 w-[450px] h-[450px] bg-emerald-500/5 rounded-full blur-[160px] pointer-events-none -z-10"></div>
+
         {/* Global Navigation Bar */}
         <Navbar
           pendingCount={pendingCount}
@@ -78,14 +83,14 @@ export const App: React.FC = () => {
         {/* Global Toast Alert */}
         {toastMessage && (
           <div className="max-w-7xl mx-auto w-full px-4 pt-4">
-            <div className="p-3.5 rounded-xl bg-slate-900 text-white text-xs font-medium shadow-lg flex justify-between items-center animate-fade-in border border-slate-700">
-              <div className="flex items-center gap-2">
+            <div className="p-3.5 rounded-xl bg-slate-900/90 text-white text-xs font-medium shadow-2xl flex justify-between items-center animate-fade-in border border-sky-500/30 backdrop-blur-md">
+              <div className="flex items-center gap-2.5">
                 <span className="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span>
-                <span>{toastMessage}</span>
+                <span className="text-slate-200">{toastMessage}</span>
               </div>
               <button
                 onClick={() => setToastMessage(null)}
-                className="text-slate-400 hover:text-white font-bold text-xs"
+                className="text-slate-400 hover:text-white font-bold text-xs px-2 py-0.5 rounded hover:bg-slate-800 transition-colors"
               >
                 Dismiss
               </button>
@@ -112,13 +117,20 @@ export const App: React.FC = () => {
         </main>
 
         {/* Enterprise Compliance Footer */}
-        <footer className="bg-white border-t border-slate-200 py-6 mt-12">
-          <div className="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 space-y-1">
-            <p className="font-semibold text-slate-700">
-              TrustHR AI &bull; Secure Multi-Agent HR Recruitment Platform (EU AI Act High-Risk Compliant)
-            </p>
-            <p>
-              Golden Rule: <em>"The agent proposes, the human decides."</em> Forensic Prompt-Injection Defense &bull; Deterministic Mathematical Scoring &bull; Tamper-Evident SHA-256 Chained Ledger.
+        <footer className="bg-slate-950/80 border-t border-slate-800/80 backdrop-blur-md py-6 mt-12">
+          <div className="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400 space-y-2">
+            <div className="flex flex-wrap items-center justify-center gap-3 text-slate-300 font-semibold">
+              <span className="flex items-center gap-1.5 text-sky-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse"></span>
+                TrustHR AI v1.0
+              </span>
+              <span>&bull;</span>
+              <span>Defense-Grade Multi-Agent Recruitment</span>
+              <span>&bull;</span>
+              <span className="text-emerald-400 font-mono">EU AI Act High-Risk Compliant (Articles 10, 12, 14, 15)</span>
+            </div>
+            <p className="text-slate-400 max-w-2xl mx-auto">
+              Golden Principle: <strong className="text-slate-200">"The agent proposes, the human decides."</strong> Air-gapped Action Gateway prevents unauthorized outbound candidate actions.
             </p>
           </div>
         </footer>
