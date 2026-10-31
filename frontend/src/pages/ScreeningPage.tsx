@@ -312,7 +312,7 @@ export const ScreeningPage: React.FC<ScreeningPageProps> = ({ onDataChanged }) =
             </p>
             <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
               <span className="text-[10px] font-mono text-slate-500 font-semibold uppercase">Criteria Gates:</span>
-              {selectedJob.criteria.map((c) => (
+              {(selectedJob.criteria || []).map((c) => (
                 <span
                   key={c.id}
                   className={`text-[10px] font-mono px-2 py-0.5 rounded ${

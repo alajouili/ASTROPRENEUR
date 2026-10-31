@@ -40,26 +40,48 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
   const isSuspicious =
     candidate.risk_level === 'high' || (candidate.risk_flags && candidate.risk_flags.length > 0);
 
-  // Criteria results mapping with complete backend schema normalization
+  // Criteria results mapping with complete backend schema normalization and resume text fallback
   const criteriaList = useMemo(() => {
-    const rawList = rankedCand?.criteria_results
-      ? Array.isArray(rankedCand.criteria_results)
-        ? rankedCand.criteria_results
-        : Object.entries(rankedCand.criteria_results).map(([id, val]: [string, any]) => ({
+    const rawData = rankedCand?.criteria_results || (detail as any)?.screening?.criteria_results;
+    const rawList = rawData
+      ? Array.isArray(rawData)
+        ? rawData
+        : Object.entries(rawData).map(([id, val]: [string, any]) => ({
             criterion_id: id,
             ...val,
           }))
       : [];
 
     return rawList.map((crit: any) => {
-      // Backend returns evidence as an array of strings in criteria_results:
-      // e.g. evidence: ["Built Python scripts with pandas to clean sales data."]
-      const quote =
+      // 1. Try explicit backend evidence
+      let quote =
         crit.evidence_quote ||
         (Array.isArray(crit.evidence) && crit.evidence.length > 0 ? crit.evidence[0] : null) ||
         (typeof crit.evidence === 'string' && crit.evidence.trim().length > 0 ? crit.evidence : null) ||
         crit.quote ||
         null;
+
+      // 2. Dynamic Verbatim Liaison Fallback: locate exact sentence in resume text if quote is missing
+      if (!quote && detail?.resume_text) {
+        const text = detail.resume_text;
+        const searchTerms = [
+          crit.label,
+          crit.criterion_id,
+          crit.id,
+          ...(crit.keywords || []),
+        ]
+          .filter(Boolean)
+          .map((s: string) => s.toLowerCase().trim());
+
+        const lines = text.split(/\r?\n+/);
+        for (const line of lines) {
+          const lLower = line.toLowerCase();
+          if (searchTerms.some((term) => term.length >= 2 && lLower.includes(term))) {
+            quote = line.trim();
+            break;
+          }
+        }
+      }
 
       const isMet = crit.result === 'met' || crit.met === true || (crit.score !== undefined && crit.score > 0);
       const isPartial = crit.result === 'partial';
@@ -78,7 +100,7 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
         downgraded: !!crit.downgraded,
       };
     });
-  }, [rankedCand]);
+  }, [rankedCand, detail]);
 
   // Auto-select first criterion quote when criteriaList is available
   useEffect(() => {

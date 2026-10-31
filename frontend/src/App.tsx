@@ -17,7 +17,8 @@ import { AuditPage } from './pages/AuditPage';
 import { AdversarialLabPage } from './pages/AdversarialLabPage';
 import { LoginPage } from './pages/LoginPage';
 import { api } from './services/api';
-import { Info, X } from 'lucide-react';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { Info, X, AlertTriangle } from 'lucide-react';
 
 const AppShell: React.FC = () => {
   const { user } = useAuth();
@@ -113,82 +114,84 @@ const AppShell: React.FC = () => {
 
         {/* Main Content Area */}
         <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute allowedRoles={['recruiter', 'hr_admin', 'employee']}>
-                  <HomeOverview userRole={currentRole} key={`home-${isMockMode}`} />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/screening"
-              element={
-                <ProtectedRoute allowedRoles={['recruiter', 'hr_admin']}>
-                  <ScreeningPage onDataChanged={loadGlobalCounts} key={`screening-${isMockMode}`} />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/approvals"
-              element={
-                <ProtectedRoute allowedRoles={['recruiter', 'hr_admin']}>
-                  <ApprovalPage onDataChanged={loadGlobalCounts} key={`approvals-${isMockMode}`} />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/audit"
-              element={
-                <ProtectedRoute allowedRoles={['hr_admin']}>
-                  <AuditPage key={`audit-${isMockMode}`} />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/lab"
-              element={
-                <ProtectedRoute allowedRoles={['recruiter', 'hr_admin']}>
-                  <AdversarialLabPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/inbox"
-              element={
-                <ProtectedRoute allowedRoles={['recruiter', 'hr_admin']}>
-                  <InboxPage key={`inbox-${isMockMode}`} />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/scheduling"
-              element={
-                <ProtectedRoute allowedRoles={['recruiter', 'hr_admin']}>
-                  <SchedulingPage key={`scheduling-${isMockMode}`} />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/assistant"
-              element={
-                <ProtectedRoute allowedRoles={['recruiter', 'hr_admin', 'employee']}>
-                  <AssistantPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/careers"
-              element={
-                <ProtectedRoute allowedRoles={['recruiter', 'hr_admin', 'employee']}>
-                  <InternalCareersPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <ErrorBoundary>
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute allowedRoles={['recruiter', 'hr_admin', 'employee']}>
+                    <HomeOverview userRole={currentRole} key={`home-${isMockMode}`} />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/screening"
+                element={
+                  <ProtectedRoute allowedRoles={['recruiter', 'hr_admin']}>
+                    <ScreeningPage onDataChanged={loadGlobalCounts} key={`screening-${isMockMode}`} />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/approvals"
+                element={
+                  <ProtectedRoute allowedRoles={['recruiter', 'hr_admin']}>
+                    <ApprovalPage onDataChanged={loadGlobalCounts} key={`approvals-${isMockMode}`} />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/audit"
+                element={
+                  <ProtectedRoute allowedRoles={['hr_admin']}>
+                    <AuditPage key={`audit-${isMockMode}`} />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/lab"
+                element={
+                  <ProtectedRoute allowedRoles={['recruiter', 'hr_admin']}>
+                    <AdversarialLabPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/inbox"
+                element={
+                  <ProtectedRoute allowedRoles={['recruiter', 'hr_admin']}>
+                    <InboxPage key={`inbox-${isMockMode}`} />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/scheduling"
+                element={
+                  <ProtectedRoute allowedRoles={['recruiter', 'hr_admin']}>
+                    <SchedulingPage key={`scheduling-${isMockMode}`} />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/assistant"
+                element={
+                  <ProtectedRoute allowedRoles={['recruiter', 'hr_admin', 'employee']}>
+                    <AssistantPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/careers"
+                element={
+                  <ProtectedRoute allowedRoles={['recruiter', 'hr_admin', 'employee']}>
+                    <InternalCareersPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </ErrorBoundary>
         </main>
 
         <footer className="border-t border-slate-200 dark:border-slate-800 mt-auto">

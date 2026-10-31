@@ -24,8 +24,9 @@ export const JobDetailModal: React.FC<JobDetailModalProps> = ({
 }) => {
   if (!isOpen || !job) return null;
 
-  const mustCriteria = job.criteria.filter((c) => c.kind === 'must');
-  const niceCriteria = job.criteria.filter((c) => c.kind === 'nice');
+  const allCriteria = job?.criteria || [];
+  const mustCriteria = allCriteria.filter((c) => c.kind === 'must');
+  const niceCriteria = allCriteria.filter((c) => c.kind === 'nice');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto">
@@ -78,7 +79,7 @@ export const JobDetailModal: React.FC<JobDetailModalProps> = ({
           <div className="space-y-4">
             <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5 uppercase font-mono tracking-wider">
               <Sliders className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Verifiable Evaluation Criteria ({job.criteria.length} total)</span>
+              <span>Verifiable Evaluation Criteria ({allCriteria.length} total)</span>
             </h3>
 
             {/* Must-Have Elimination Gates */}
