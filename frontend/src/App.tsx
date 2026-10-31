@@ -1,207 +1,119 @@
 import React, { useState, useEffect } from 'react';
-import { api, JobOffer, Candidate, CandidateDetail, PendingApproval, AuditResponse } from './services/api';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
-import { CandidateRanking } from './components/CandidateRanking';
-import { EvidenceModal } from './components/EvidenceModal';
-import { ApprovalQueue } from './components/ApprovalQueue';
-import { AuditLogView } from './components/AuditLogView';
-import { UploadResumeModal } from './components/UploadResumeModal';
-import { ShieldCheck, Sparkles, AlertCircle } from 'lucide-react';
+import { HomeOverview } from './pages/HomeOverview';
+import { ScreeningPage } from './pages/ScreeningPage';
+import { ApprovalPage } from './pages/ApprovalPage';
+import { InboxPage } from './pages/InboxPage';
+import { SchedulingPage } from './pages/SchedulingPage';
+import { AssistantPage } from './pages/AssistantPage';
+import { AuditPage } from './pages/AuditPage';
+import { LoginPage } from './pages/LoginPage';
+import { api } from './services/api';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'candidates' | 'approvals' | 'audit'>('candidates');
-  const [jobs, setJobs] = useState<JobOffer[]>([]);
-  const [selectedJob, setSelectedJob] = useState<JobOffer | null>(null);
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [selectedCandidateDetail, setSelectedCandidateDetail] = useState<CandidateDetail | null>(null);
-  const [approvals, setApprovals] = useState<PendingApproval[]>([]);
-  const [auditData, setAuditData] = useState<AuditResponse | null>(null);
+  const [userRole, setUserRole] = useState<string>('Recruiter');
+  const [isMockMode, setIsMockMode] = useState<boolean>(api.isMockMode());
+  const [pendingCount, setPendingCount] = useState<number>(4);
+  const [securityAlertCount, setSecurityAlertCount] = useState<number>(2);
+  const [inboxCount, setInboxCount] = useState<number>(3);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const [isLoadingCandidates, setIsLoadingCandidates] = useState<boolean>(false);
-  const [isLoadingApprovals, setIsLoadingApprovals] = useState<boolean>(false);
-  const [isLoadingAudit, setIsLoadingAudit] = useState<boolean>(false);
-  const [isUploadOpen, setIsUploadOpen] = useState<boolean>(false);
-
-  // Initial load: ensure job offer exists
   useEffect(() => {
-    initializeJobData();
-  }, []);
+    loadGlobalCounts();
+  }, [isMockMode]);
 
-  const initializeJobData = async () => {
+  const loadGlobalCounts = async () => {
     try {
-      const existingJobs = await api.getJobs();
-      if (existingJobs.length > 0) {
-        setJobs(existingJobs);
-        setSelectedJob(existingJobs[0]);
-        loadCandidates(existingJobs[0].id);
-      } else {
-        // Create default benchmark job offer
-        const newJob = await api.createJob({
-          title: 'Senior Backend Engineer - Python & Distributed Systems',
-          department: 'Core Infrastructure',
-          description: 'Architect high-throughput distributed microservices in Python. Enforce strict API security, relational data integrity, and deterministic testing.',
-          criteria: [
-            {
-              name: 'Python & AsyncIO Systems',
-              weight: 2.0,
-              description: 'FastAPI, Python AsyncIO, concurrency, high-performance architecture',
-              required: true,
-            },
-            {
-              name: 'Relational Databases & Performance',
-              weight: 1.5,
-              description: 'PostgreSQL, SQLAlchemy, indexing, transactional integrity',
-              required: true,
-            },
-            {
-              name: 'Security & Defense-in-Depth',
-              weight: 1.5,
-              description: 'API security, OAuth2/JWT, input sanitization, OWASP prevention',
-              required: false,
-            },
-            {
-              name: 'Testing & System Reliability',
-              weight: 1.0,
-              description: 'Pytest unit testing, automated verification pipelines',
-              required: false,
-            },
-          ],
-        });
-        setJobs([newJob]);
-        setSelectedJob(newJob);
-        loadCandidates(newJob.id);
-      }
-      loadApprovals();
-      loadAudit();
-    } catch (err) {
-      console.error('Initialization error:', err);
+      const stats = await api.getHomeStats();
+      setPendingCount(stats.pendingApprovals);
+      setSecurityAlertCount(stats.securityThreatsIntercepted);
+      setInboxCount(stats.inboxUnread);
+    } catch (e) {
+      console.error('Error fetching global counts', e);
     }
   };
 
-  const loadCandidates = async (jobId: string) => {
-    setIsLoadingCandidates(true);
-    try {
-      const data = await api.getRankedCandidates(jobId);
-      setCandidates(data);
-    } catch (err) {
-      console.error('Error loading candidates:', err);
-    } finally {
-      setIsLoadingCandidates(false);
-    }
+  const handleToggleMockMode = () => {
+    const nextMode = !isMockMode;
+    api.setMockMode(nextMode);
+    setIsMockMode(nextMode);
+    setToastMessage(
+      nextMode
+        ? 'Switched to Offline Mock Mode (Zero-latency local demo dataset active).'
+        : 'Switched to Live API Mode (Connected to FastAPI backend).'
+    );
+    setTimeout(() => setToastMessage(null), 4000);
+    loadGlobalCounts();
   };
 
-  const loadApprovals = async () => {
-    setIsLoadingApprovals(true);
-    try {
-      const data = await api.getApprovals();
-      setApprovals(data);
-    } catch (err) {
-      console.error('Error loading approvals:', err);
-    } finally {
-      setIsLoadingApprovals(false);
-    }
+  const handleRoleChange = (newRole: string) => {
+    setUserRole(newRole);
+    setToastMessage(`Switched active profile to ${newRole}`);
+    setTimeout(() => setToastMessage(null), 3500);
   };
-
-  const loadAudit = async () => {
-    setIsLoadingAudit(true);
-    try {
-      const data = await api.getAuditTrail();
-      setAuditData(data);
-    } catch (err) {
-      console.error('Error loading audit trail:', err);
-    } finally {
-      setIsLoadingAudit(false);
-    }
-  };
-
-  const handleSelectCandidate = async (candidateId: string) => {
-    try {
-      const detail = await api.getCandidateDetails(candidateId);
-      setSelectedCandidateDetail(detail);
-    } catch (err) {
-      console.error('Error fetching candidate details:', err);
-    }
-  };
-
-  const handleResumeUploaded = () => {
-    if (selectedJob) {
-      loadCandidates(selectedJob.id);
-    }
-    loadApprovals();
-    loadAudit();
-  };
-
-  const pendingApprovalsCount = approvals.filter((a) => a.status === 'PENDING').length;
-  const securityAlertCount = candidates.filter((c) => c.security_status === 'SUSPICIOUS_FLAGGED').length;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <Navbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        pendingCount={pendingApprovalsCount}
-        securityAlertCount={securityAlertCount}
-      />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'candidates' && (
-          <CandidateRanking
-            candidates={candidates}
-            onSelectCandidate={handleSelectCandidate}
-            onOpenUpload={() => setIsUploadOpen(true)}
-            isLoading={isLoadingCandidates}
-            jobTitle={selectedJob?.title || 'Senior Backend Engineer'}
-          />
-        )}
-
-        {activeTab === 'approvals' && (
-          <ApprovalQueue
-            approvals={approvals}
-            onRefresh={() => {
-              loadApprovals();
-              if (selectedJob) loadCandidates(selectedJob.id);
-              loadAudit();
-            }}
-          />
-        )}
-
-        {activeTab === 'audit' && (
-          <AuditLogView
-            auditData={auditData}
-            onRefresh={loadAudit}
-            isLoading={isLoadingAudit}
-          />
-        )}
-      </main>
-
-      {/* Evidence Breakdown Modal */}
-      {selectedCandidateDetail && (
-        <EvidenceModal
-          candidate={selectedCandidateDetail}
-          onClose={() => setSelectedCandidateDetail(null)}
+    <BrowserRouter>
+      <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-sky-500 selection:text-white">
+        {/* Global Navigation Bar */}
+        <Navbar
+          pendingCount={pendingCount}
+          securityAlertCount={securityAlertCount}
+          inboxCount={inboxCount}
+          userRole={userRole}
+          isMockMode={isMockMode}
+          onToggleMockMode={handleToggleMockMode}
         />
-      )}
 
-      {/* Upload & Screen Resume Modal */}
-      {isUploadOpen && selectedJob && (
-        <UploadResumeModal
-          jobId={selectedJob.id}
-          onClose={() => setIsUploadOpen(false)}
-          onSuccess={handleResumeUploaded}
-        />
-      )}
+        {/* Global Toast Alert */}
+        {toastMessage && (
+          <div className="max-w-7xl mx-auto w-full px-4 pt-4">
+            <div className="p-3.5 rounded-xl bg-slate-900 text-white text-xs font-medium shadow-lg flex justify-between items-center animate-fade-in border border-slate-700">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span>
+                <span>{toastMessage}</span>
+              </div>
+              <button
+                onClick={() => setToastMessage(null)}
+                className="text-slate-400 hover:text-white font-bold text-xs"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-6 mt-12">
-        <div className="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 space-y-1">
-          <p className="font-semibold text-slate-700">
-            TrustHR AI &bull; Secure Multi-Agent HR Recruitment Platform
-          </p>
-          <p>
-            Golden Rule: The agent executes, the human decides about people. Prompt-injection resilient &bull; Deterministic scoring &bull; Cryptographic audit trail.
-          </p>
-        </div>
-      </footer>
-    </div>
+        {/* Main Content Area */}
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Routes>
+            <Route path="/" element={<HomeOverview userRole={userRole} />} />
+            <Route path="/screening" element={<ScreeningPage onDataChanged={loadGlobalCounts} />} />
+            <Route path="/approvals" element={<ApprovalPage onDataChanged={loadGlobalCounts} />} />
+            <Route path="/inbox" element={<InboxPage />} />
+            <Route path="/scheduling" element={<SchedulingPage />} />
+            <Route path="/assistant" element={<AssistantPage />} />
+            <Route path="/audit" element={<AuditPage />} />
+            <Route
+              path="/login"
+              element={<LoginPage currentRole={userRole} onRoleChange={handleRoleChange} />}
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+
+        {/* Enterprise Compliance Footer */}
+        <footer className="bg-white border-t border-slate-200 py-6 mt-12">
+          <div className="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 space-y-1">
+            <p className="font-semibold text-slate-700">
+              TrustHR AI &bull; Secure Multi-Agent HR Recruitment Platform (EU AI Act High-Risk Compliant)
+            </p>
+            <p>
+              Golden Rule: <em>"The agent proposes, the human decides."</em> Forensic Prompt-Injection Defense &bull; Deterministic Mathematical Scoring &bull; Tamper-Evident SHA-256 Chained Ledger.
+            </p>
+          </div>
+        </footer>
+      </div>
+    </BrowserRouter>
   );
 };

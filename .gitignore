@@ -44,5 +44,7 @@ dist-ssr/
 *.sqlite
 *.sqlite3
 *.db
-data/
+data/*
+!data/samples/
+!data/benchmark_dataset.json
 uploads/

@@ -70,7 +70,7 @@ trusthr-ai/
 - [x] **Screen 2: Candidate Ranking** (`/screening`) — Ranked table, deterministic match score, risk badges, evidence quote inspector modal.
 - [x] **Screen 3: Human Approval Queue** (`/approvals`) — Candidate proposals, live draft editor, review notes, one-click Action Gateway dispatch.
 - [x] **Screen 4: Security & Audit Trail** (`/audit`) — SHA-256 chained blocks stream with cryptographic verification badge.
-- [ ] **Screen 5: Inbox Triage & Daily Digest** (`/inbox`) — Grouped by type and urgency, "Needs human" toggle.
-- [ ] **Screen 6: Interview Scheduling Calendar** (`/scheduling`) — Recruiter week view, proposed candidate slots.
-- [ ] **Screen 7: Employee Policy Assistant** (`/assistant`) — RAG chat with source citations.
-- [ ] **Screen 8: Login & Role Switcher** (`/login`) — Recruiter, HR Admin, Employee credentials.
+- [x] **Screen 5: Inbox Triage & Daily Digest** (`/inbox`) — Grouped by type and urgency, "Needs human" toggle.
+- [x] **Screen 6: Interview Scheduling Calendar** (`/scheduling`) — Recruiter week view, proposed candidate slots.
+- [x] **Screen 7: Employee Policy Assistant** (`/assistant`) — RAG chat with source citations.
+- [x] **Screen 8: Login & Role Switcher** (`/login`) — Recruiter, HR Admin, Employee credentials.
