@@ -1,0 +1,31 @@
+{
+  "title": "Senior Backend Engineer - Python & Distributed Systems",
+  "department": "Core Infrastructure",
+  "description": "We are seeking a Senior Backend Engineer to architect, build, and maintain high-throughput distributed systems and secure APIs in Python. The candidate will design reliable data models, implement asynchronous pipelines, and enforce strict security guardrails across microservices.",
+  "criteria": [
+    {
+      "name": "Python & AsyncIO Systems",
+      "weight": 2.0,
+      "description": "Demonstrated expertise in Python 3.10+, FastAPI or AsyncIO, concurrency, and high-performance server architecture.",
+      "required": true
+    },
+    {
+      "name": "Relational Databases & Performance",
+      "weight": 1.5,
+      "description": "Proficiency in PostgreSQL or SQLAlchemy, query optimization, indexing, and transactional integrity.",
+      "required": true
+    },
+    {
+      "name": "Security & Defense-in-Depth",
+      "weight": 1.5,
+      "description": "Hands-on experience with API security, authentication/authorization, input sanitization, and OWASP top 10 vulnerabilities.",
+      "required": false
+    },
+    {
+      "name": "Testing & System Reliability",
+      "weight": 1.0,
+      "description": "Rigorous unit testing (pytest), integration testing, and CI/CD pipelines.",
+      "required": false
+    }
+  ]
+}

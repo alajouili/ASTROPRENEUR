@@ -1,0 +1,59 @@
+# NOT YET EXECUTED: written without a Docker daemon available. Check it on your machine.
+# Usage:
+#   cp backend/.env.example backend/.env   # set JWT_SECRET (and LLM keys if wanted)
+#   POSTGRES_PASSWORD=choose-one docker compose up --build
+#   POSTGRES_PASSWORD=choose-one docker compose run --rm api python -m scripts.seed
+# App: http://localhost:8080   Mailpit UI: http://localhost:8025
+
+x-backend: &backend
+  build: ./backend
+  restart: unless-stopped
+  env_file: backend/.env
+  environment:
+    DATABASE_URL: postgresql+psycopg://trusthr:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/trusthr
+    UPLOAD_DIR: /app/var/uploads
+    EMBEDDED_WORKER: "false"
+    CORS_ORIGINS: '["http://localhost:8080"]'
+  volumes:
+    - uploads:/app/var/uploads
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: trusthr
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: trusthr
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trusthr -d trusthr"]
+      interval: 3s
+      retries: 20
+
+  # Safe email sink for the inbox milestone (M2): nothing leaves the machine.
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "127.0.0.1:8025:8025"
+
+  api:
+    <<: *backend
+
+  worker:
+    <<: *backend
+    command: ["python", "-m", "app.worker.runner"]
+
+  web:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  uploads:
