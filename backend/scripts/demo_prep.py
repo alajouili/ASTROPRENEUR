@@ -11,14 +11,14 @@ from pathlib import Path
 
 from sqlalchemy import select
 
-from app.agents.orchestrator import run_screening
-from app.approvals.service import propose_shortlist
+from app.agents.screening.service import propose_shortlist
 from app.audit.log import append as audit
 from app.auth.security import hash_password
 from app.config import get_settings
 from app.db import get_sessionmaker, init_db
 from app.models import Candidate, JobOffer, Proposal, User
 from app.security.files import store_upload, validate_upload
+from app.worker.runner import enqueue, run_until_empty
 from scripts.seed import DEMO_JOB, DEMO_USERS
 
 
@@ -98,7 +98,7 @@ def prep() -> None:
                     stored_path=str(stored.path),
                     file_sha256=stored.sha256,
                     file_kind=stored.kind,
-                    status="uploaded",
+                    status="received",
                 )
                 db.add(candidate)
                 db.flush()
@@ -107,26 +107,33 @@ def prep() -> None:
                 uploaded_candidates.append(candidate)
                 print(f"[+] Uploaded sample CV: {filename:32s} -> Candidate ID: {candidate.id[:8]}...")
             else:
+                if existing.status == "uploaded":
+                    existing.status = "received"
+                    db.flush()
                 uploaded_candidates.append(existing)
 
         # 4. Run screening orchestrator
-        unscreened = [c for c in uploaded_candidates if c.status == "uploaded"]
+        unscreened = [c for c in uploaded_candidates if c.status == "received"]
         if unscreened:
             print(f"[*] Screening {len(unscreened)} candidates through deterministic agent...")
-            run_screening(db, job.id, settings)
+            enqueue(db, type="screen_job", payload={"job_id": job.id}, created_by="demo_prep")
             db.commit()
+            run_until_empty()
             print("[+] Screening complete! Candidate scores & evidence verified.")
         else:
             print("[*] All candidates already screened.")
 
-        # 5. Propose shortlist if not yet proposed
-        pending_proposal = db.scalar(select(Proposal).where(Proposal.job_id == job.id, Proposal.status == "pending"))
-        if pending_proposal is None:
-            proposal = propose_shortlist(db, job.id, "demo_prep")
-            db.commit()
-            print(f"[+] Created shortlist proposal #{proposal.id[:8]} for human approval queue.")
+        # 5. Check proposal created by screening orchestrator
+        proposal = db.scalar(select(Proposal).where(Proposal.job_id == job.id).order_by(Proposal.created_at.desc()))
+        if proposal is not None:
+            print(f"[+] Shortlist proposal ready: #{proposal.id[:8]} for human approval queue.")
         else:
-            print(f"[*] Pending proposal ready: #{pending_proposal.id[:8]}")
+            proposal_id = propose_shortlist(db, job, 3)
+            db.commit()
+            if proposal_id:
+                print(f"[+] Created shortlist proposal #{proposal_id[:8]} for human approval queue.")
+            else:
+                print("[*] No proposal generated.")
 
         db.commit()
 
