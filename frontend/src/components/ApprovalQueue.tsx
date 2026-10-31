@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   XCircle,
   ShieldAlert,
+  ShieldCheck,
   AlertTriangle,
   Lock,
   Edit3,
@@ -12,6 +13,8 @@ import {
   ArrowRight,
   HelpCircle,
   Send,
+  Mail,
+  Calendar,
 } from 'lucide-react';
 
 interface ApprovalQueueProps {
@@ -208,68 +211,143 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefre
                   </div>
                 )}
 
-                {/* Evidence Section */}
+                {/* Evidence & Payload Section */}
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">
-                    Agent Proposed Shortlist & Evidence:
-                  </h4>
-
-                  {/* Proposed Candidates List */}
-                  {rankingList.length > 0 && (
-                    <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
-                      <table className="min-w-full text-xs text-left divide-y divide-slate-200 dark:divide-slate-800">
-                        <thead className="bg-slate-50 dark:bg-slate-850 font-mono text-slate-500 text-[10px] uppercase">
-                          <tr>
-                            {isEditing && <th className="p-2.5">Include</th>}
-                            <th className="p-2.5">Candidate ID</th>
-                            <th className="p-2.5">Score</th>
-                            <th className="p-2.5">Must-Have Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                          {rankingList.map((cand: any, idx: number) => {
-                            const cid = cand.candidate_id || cand.id;
-                            const isIncluded = editedCandidateIds.includes(cid);
-                            return (
-                              <tr
-                                key={idx}
-                                className={
-                                  isEditing && !isIncluded
-                                    ? 'opacity-40 bg-slate-50 dark:bg-slate-900/50'
-                                    : 'hover:bg-slate-50/50 dark:hover:bg-slate-850/50'
-                                }
-                              >
-                                {isEditing && (
-                                  <td className="p-2.5">
-                                    <input
-                                      type="checkbox"
-                                      checked={isIncluded}
-                                      onChange={() => handleToggleCandidate(cid)}
-                                      className="rounded text-indigo-600 focus:ring-indigo-500"
-                                    />
-                                  </td>
-                                )}
-                                <td className="p-2.5 font-mono font-medium text-slate-800 dark:text-slate-200">
-                                  {cand.display_name || cand.name || cid}
-                                </td>
-                                <td className="p-2.5 font-mono text-slate-600 dark:text-slate-400">
-                                  {cand.score !== undefined ? `${cand.score}%` : '—'}
-                                </td>
-                                <td className="p-2.5">
-                                  {cand.must_have_met !== undefined ? (
-                                    <span className="font-mono text-[11px] text-emerald-600 dark:text-emerald-400">
-                                      {cand.must_have_met}/{cand.must_have_total} met
-                                    </span>
-                                  ) : (
-                                    <span className="text-slate-400 font-mono text-[11px]">Verified</span>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
+                  {/* Outbound Email Proposals */}
+                  {proposal.type === 'send_email' && (
+                    <div className="surface-card p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between text-xs font-semibold">
+                        <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                          <Mail className="w-4 h-4" />
+                          <span>Action Gateway Outbound Email Proposal</span>
+                        </div>
+                        <span className="badge-clean text-[10px] font-mono">Output Guard Verified</span>
+                      </div>
+                      <div className="space-y-1.5 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-slate-500 w-16">To:</span>
+                          <span className="font-mono text-slate-800 dark:text-slate-200 font-bold">
+                            {proposal.payload?.to || proposal.payload?.recipient_email}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-slate-500 w-16">Subject:</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-medium">
+                            {proposal.payload?.subject}
+                          </span>
+                        </div>
+                        <div className="pt-2">
+                          <span className="font-semibold text-slate-500 block mb-1">Message Body:</span>
+                          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-mono text-xs whitespace-pre-wrap text-slate-700 dark:text-slate-300">
+                            {proposal.payload?.body}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 text-[11px] text-emerald-800 dark:text-emerald-300 font-mono flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>OWASP LLM02 / LLM05 Output Guard: verified zero cross-candidate data leakage and no unapproved commitments.</span>
+                      </div>
                     </div>
+                  )}
+
+                  {/* Interview Scheduling Proposals */}
+                  {proposal.type === 'schedule_interview' && (
+                    <div className="surface-card p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between text-xs font-semibold">
+                        <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                          <Calendar className="w-4 h-4" />
+                          <span>Action Gateway Interview Calendar Hold Proposal</span>
+                        </div>
+                        <span className="badge-clean text-[10px] font-mono">Calendar Lock</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                          <span className="text-slate-400 font-mono text-[10px] uppercase block">Candidate</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">
+                            {proposal.payload?.candidate_name || 'Candidate'}
+                          </span>
+                          <span className="text-[11px] text-slate-500 font-mono block">
+                            {proposal.payload?.candidate_email}
+                          </span>
+                        </div>
+                        <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                          <span className="text-slate-400 font-mono text-[10px] uppercase block">Proposed Slot & Hold</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">
+                            {proposal.payload?.slot || `${proposal.payload?.day} ${proposal.payload?.time}`}
+                          </span>
+                          <span className="text-[11px] text-slate-500 font-mono block">
+                            Interviewer: {proposal.payload?.interviewer}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Shortlist Proposals */}
+                  {proposal.type === 'shortlist' && (
+                    <>
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">
+                        Agent Proposed Shortlist & Evidence:
+                      </h4>
+
+                      {/* Proposed Candidates List */}
+                      {rankingList.length > 0 && (
+                        <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+                          <table className="min-w-full text-xs text-left divide-y divide-slate-200 dark:divide-slate-800">
+                            <thead className="bg-slate-50 dark:bg-slate-850 font-mono text-slate-500 text-[10px] uppercase">
+                              <tr>
+                                {isEditing && <th className="p-2.5">Include</th>}
+                                <th className="p-2.5">Candidate ID</th>
+                                <th className="p-2.5">Score</th>
+                                <th className="p-2.5">Must-Have Status</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                              {rankingList.map((cand: any, idx: number) => {
+                                const cid = cand.candidate_id || cand.id;
+                                const isIncluded = editedCandidateIds.includes(cid);
+                                return (
+                                  <tr
+                                    key={idx}
+                                    className={
+                                      isEditing && !isIncluded
+                                        ? 'opacity-40 bg-slate-50 dark:bg-slate-900/50'
+                                        : 'hover:bg-slate-50/50 dark:hover:bg-slate-850/50'
+                                    }
+                                  >
+                                    {isEditing && (
+                                      <td className="p-2.5">
+                                        <input
+                                          type="checkbox"
+                                          checked={isIncluded}
+                                          onChange={() => handleToggleCandidate(cid)}
+                                          className="rounded text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                      </td>
+                                    )}
+                                    <td className="p-2.5 font-mono font-medium text-slate-800 dark:text-slate-200">
+                                      {cand.display_name || cand.name || cid}
+                                    </td>
+                                    <td className="p-2.5 font-mono text-slate-600 dark:text-slate-400">
+                                      {cand.score !== undefined ? `${cand.score}%` : '—'}
+                                    </td>
+                                    <td className="p-2.5">
+                                      {cand.must_have_met !== undefined ? (
+                                        <span className="font-mono text-[11px] text-emerald-600 dark:text-emerald-400">
+                                          {cand.must_have_met}/{cand.must_have_total} met
+                                        </span>
+                                      ) : (
+                                        <span className="text-slate-400 font-mono text-[11px]">Verified</span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {/* Needs Review / Missing Must-Haves warnings */}

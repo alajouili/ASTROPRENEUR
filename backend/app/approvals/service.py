@@ -10,7 +10,28 @@ from app.audit.log import append as audit
 from app.auth.security import HR_ROLES
 from app.models import Proposal, User, utcnow
 
-PAYLOAD_MODELS = {"shortlist": ShortlistPayload}
+from pydantic import BaseModel
+
+class EmailPayload(BaseModel):
+    to: str
+    subject: str = "TrustHR Notification"
+    body: str
+
+class SchedulePayload(BaseModel):
+    candidate_id: str | None = None
+    candidate_name: str | None = None
+    candidate_email: str | None = None
+    role: str | None = None
+    slot: str
+    interviewer: str = "Recruiter"
+    day: str | None = None
+    time: str | None = None
+
+PAYLOAD_MODELS = {
+    "shortlist": ShortlistPayload,
+    "send_email": EmailPayload,
+    "schedule_interview": SchedulePayload,
+}
 
 
 class ApprovalError(Exception):

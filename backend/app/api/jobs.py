@@ -10,7 +10,7 @@ from app.audit.log import append as audit
 from app.auth.security import HR_ROLES, require_roles
 from app.config import get_settings
 from app.db import get_db
-from app.models import BackgroundTask, Candidate, JobOffer, User
+from app.models import BackgroundTask, Candidate, JobOffer, Screening, User
 from app.security.files import FileRejected, safe_display_name, store_upload, validate_upload
 from app.worker.runner import enqueue
 
@@ -120,6 +120,48 @@ def get_task(task_id: str, db: Session = Depends(get_db), user: User = Depends(h
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Task not found")
     return {"id": task.id, "type": task.type, "status": task.status, "progress_done": task.progress_done,
             "progress_total": task.progress_total, "error": task.error, "result": task.payload.get("result")}
+
+
+@router.get("/candidates/{candidate_id}")
+def get_candidate_detail(candidate_id: str, db: Session = Depends(get_db), user: User = Depends(hr_only)) -> dict:
+    cand = db.get(Candidate, candidate_id)
+    if not cand:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Candidate not found")
+    screening = db.scalar(select(Screening).where(Screening.candidate_id == cand.id))
+
+    raw_text = ""
+    try:
+        from pathlib import Path
+        path = Path(cand.stored_path)
+        if path.exists():
+            from app.security.extract import extract
+            extraction = extract(path.read_bytes(), cand.file_kind)
+            raw_text = extraction.visible_text
+    except Exception:
+        raw_text = ""
+
+    return {
+        "id": cand.id,
+        "job_id": cand.job_id,
+        "display_name": cand.display_name,
+        "email": cand.email,
+        "source_filename": cand.source_filename,
+        "status": cand.status,
+        "risk_level": cand.risk_level,
+        "risk_flags": cand.risk_flags,
+        "file_kind": cand.file_kind,
+        "resume_text": raw_text,
+        "screening": {
+            "score": screening.score,
+            "must_have_met": screening.must_have_met,
+            "must_have_total": screening.must_have_total,
+            "justification": screening.justification,
+            "criteria_results": screening.criteria_results,
+            "rejected_evidence": screening.rejected_evidence,
+            "blind_profile": screening.blind_profile,
+            "engine": screening.engine,
+        } if screening else None,
+    }
 
 
 @router.get("/jobs/{job_id}/ranking")
