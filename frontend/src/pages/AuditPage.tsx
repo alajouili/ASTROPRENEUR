@@ -45,6 +45,21 @@ export const AuditPage: React.FC = () => {
     }
   };
 
+  const handleSimulateTamper = async () => {
+    setIsVerifying(true);
+    setErrorMessage(null);
+    try {
+      // Pick a real row id to simulate out-of-band tampering without breaking database storage
+      const targetId = logs.length > 1 ? logs[1].id : (logs[0]?.id || 1);
+      const res = await api.verifyAuditChain(targetId);
+      setVerificationResult(res);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Simulate tamper failed.');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   const filteredLogs = logs.filter((log) => {
     if (actionFilter === 'ALL') return true;
     if (actionFilter === 'SECURITY') {
@@ -106,6 +121,7 @@ export const AuditPage: React.FC = () => {
         logs={filteredLogs}
         verificationResult={verificationResult}
         onVerify={handleVerifyChain}
+        onSimulateTamper={handleSimulateTamper}
         isVerifying={isVerifying}
         isLoading={isLoading}
       />

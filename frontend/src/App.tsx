@@ -13,6 +13,7 @@ import { InboxPage } from './pages/InboxPage';
 import { SchedulingPage } from './pages/SchedulingPage';
 import { AssistantPage } from './pages/AssistantPage';
 import { AuditPage } from './pages/AuditPage';
+import { AdversarialLabPage } from './pages/AdversarialLabPage';
 import { LoginPage } from './pages/LoginPage';
 import { api } from './services/api';
 import { AlertTriangle } from 'lucide-react';
@@ -137,6 +138,14 @@ const AppShell: React.FC = () => {
               element={
                 <ProtectedRoute allowedRoles={['hr_admin']}>
                   <AuditPage key={`audit-${isMockMode}`} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/lab"
+              element={
+                <ProtectedRoute allowedRoles={['recruiter', 'hr_admin']}>
+                  <AdversarialLabPage />
                 </ProtectedRoute>
               }
             />

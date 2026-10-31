@@ -591,11 +591,15 @@ export const api = {
     return request<AuditEntry[]>(`/api/audit?limit=${limit}`);
   },
 
-  async verifyAuditChain(): Promise<AuditVerifyResponse> {
+  async verifyAuditChain(simulateTamperId?: number): Promise<AuditVerifyResponse> {
     if (_mockMode) {
+      if (simulateTamperId !== undefined) {
+        return { ok: false, checked: 1, first_bad_id: simulateTamperId };
+      }
       return { ok: true, checked: _mockAuditLogs.length, first_bad_id: null };
     }
-    return request<AuditVerifyResponse>('/api/audit/verify');
+    const query = simulateTamperId !== undefined ? `?simulate_tamper_id=${simulateTamperId}` : '';
+    return request<AuditVerifyResponse>(`/api/audit/verify${query}`);
   },
 
   // ---- Overview Real KPIs ----

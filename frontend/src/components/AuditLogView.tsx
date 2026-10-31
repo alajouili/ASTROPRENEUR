@@ -16,6 +16,7 @@ interface AuditLogViewProps {
   logs: AuditEntry[];
   verificationResult: AuditVerifyResponse | null;
   onVerify: () => void;
+  onSimulateTamper: () => void;
   isVerifying: boolean;
   isLoading: boolean;
 }
@@ -24,6 +25,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({
   logs,
   verificationResult,
   onVerify,
+  onSimulateTamper,
   isVerifying,
   isLoading,
 }) => {
@@ -34,16 +36,16 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
             <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
-              Immutable Cryptographic Audit Trail
+              Tamper-Evident SHA-256 Audit Trail
             </h2>
             {verificationResult && (
               verificationResult.ok ? (
                 <span className="badge-clean font-mono text-[11px]">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Chain Intact ({verificationResult.checked} blocks verified)</span>
+                  <span>Chain Verified: {verificationResult.checked} blocks intact</span>
                 </span>
               ) : (
-                <span className="badge-danger font-mono text-[11px]">
+                <span className="badge-danger font-mono text-[11px] animate-pulse">
                   <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
                   <span>Tamper Detected at Block #{verificationResult.first_bad_id}</span>
                 </span>
@@ -51,15 +53,27 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({
             )}
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Every candidate upload, prompt-injection quarantine, deterministic score calculation, and human approval is cryptographically chained via SHA-256 blocks. PostgreSQL triggers prohibit modifications.
+            Every candidate upload, prompt-injection quarantine, deterministic score calculation, and human approval is chained backward via SHA-256 hashes. Database triggers prohibit in-place <code className="font-mono text-slate-700 dark:text-slate-300">UPDATE</code> / <code className="font-mono text-slate-700 dark:text-slate-300">DELETE</code> operations.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="badge-neutral font-mono text-xs hidden sm:inline-flex">
-            <Fingerprint className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="badge-neutral font-mono text-xs hidden lg:inline-flex">
+            <Fingerprint className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
             <span>EU AI Act Art. 12</span>
           </span>
+
+          {/* Simulate Tamper Button for Hackathon Demo */}
+          <button
+            onClick={onSimulateTamper}
+            disabled={isVerifying || logs.length === 0}
+            title="Demonstrate out-of-band DB tamper detection without altering actual storage"
+            className="px-3 py-1.5 rounded-lg border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 text-xs font-mono font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
+          >
+            <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+            <span>Simulate Tamper</span>
+          </button>
+
           <button
             onClick={onVerify}
             disabled={isVerifying}
@@ -79,6 +93,27 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Prominent Tamper Alert Banner when verification fails */}
+      {verificationResult && !verificationResult.ok && (
+        <div className="p-4 bg-rose-50 dark:bg-rose-950/60 border-2 border-rose-500 rounded-xl space-y-2 animate-fade-in">
+          <div className="flex items-center gap-2 text-rose-900 dark:text-rose-100 font-bold text-sm">
+            <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0" />
+            <span>Cryptographic Chain Break Detected! (Block #{verificationResult.first_bad_id})</span>
+          </div>
+          <p className="text-xs text-rose-800 dark:text-rose-300 leading-relaxed font-mono">
+            Integrity check failed: row #{verificationResult.first_bad_id}'s computed SHA-256 hash does not match the forward link. An out-of-band SQL modification or row deletion occurred. Recruitment actions referencing this block will be refused by the Action Gateway.
+          </p>
+          <div className="pt-1">
+            <button
+              onClick={onVerify}
+              className="px-3 py-1 text-xs font-mono font-semibold bg-rose-600 text-white rounded hover:bg-rose-700 transition-colors"
+            >
+              Re-verify Clean Chain
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Audit Log Stream */}
       <div className="surface-card overflow-hidden">
