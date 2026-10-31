@@ -74,12 +74,16 @@ export const CandidateRanking: React.FC<CandidateRankingProps> = ({
           if (Array.isArray(cand.criteria_results)) {
             const found = cand.criteria_results.find((cr: any) => cr.criterion_id === crit.id || cr.id === crit.id);
             if (found) {
-              critScore = found.score ?? (found.met ? 100 : 0);
+              critScore =
+                found.score ??
+                (found.result === 'met' ? 100 : found.result === 'partial' ? 50 : found.met ? 100 : 0);
             }
           } else if (typeof cand.criteria_results === 'object') {
             const found = (cand.criteria_results as any)[crit.id];
             if (found) {
-              critScore = found.score ?? (found.met ? 100 : 0);
+              critScore =
+                found.score ??
+                (found.result === 'met' ? 100 : found.result === 'partial' ? 50 : found.met ? 100 : 0);
             }
           }
         }
@@ -351,7 +355,7 @@ export const CandidateRanking: React.FC<CandidateRankingProps> = ({
                         {isSuspicious ? (
                           <span className="badge-danger font-semibold">
                             <ShieldAlert className="w-3.5 h-3.5 text-rose-500" />
-                            <span>Quarantined ({cand.risk_flags.length} flag{cand.risk_flags.length > 1 ? 's' : ''})</span>
+                            <span>Quarantined ({cand.risk_flags?.length || 1} flag{(cand.risk_flags?.length || 1) > 1 ? 's' : ''})</span>
                           </span>
                         ) : isMediumRisk ? (
                           <span className="badge-warning font-semibold">
