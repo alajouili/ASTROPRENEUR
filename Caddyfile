@@ -1,0 +1,23 @@
+# Caddyfile
+# Caddy acts as our gateway to the outside world.
+
+:80 {
+    # Security Headers (Task 2 Hardening)
+    header {
+        Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://localhost:8000"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    # Route API requests to the FastAPI backend
+    handle /api/* {
+        reverse_proxy api:8000
+    }
+
+    # Route everything else to the React frontend
+    handle {
+        reverse_proxy web:5173
+    }
+}

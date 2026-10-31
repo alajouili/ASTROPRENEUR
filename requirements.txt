@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+asyncpg
+pydantic
+python-dotenv
+transformers
+torch
+pwdlib[argon2]
+pyjwt
+slowapi

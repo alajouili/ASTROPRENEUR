@@ -1,0 +1,7 @@
+{
+  "name": "hr-web",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vite"
+  }
+}

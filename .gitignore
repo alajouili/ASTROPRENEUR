@@ -1,3 +1,14 @@
+
+.venv
+venv
+__pycache__
+*.pyc
+.env
+.git
+node_modules
+EOFcookies.txt
+*.db
+*.txt
 # Python
 __pycache__/
 *.py[cod]
