@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import {
   ShieldCheck,
+  ShieldAlert,
   Users,
   CheckCircle2,
   Mail,
@@ -68,6 +69,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: securityAlertCount > 0 ? securityAlertCount : null,
       badgeColor: 'rose',
       roles: ['hr_admin'],
+    },
+    {
+      to: '/lab',
+      label: 'Adversarial & Bias Lab',
+      icon: ShieldAlert,
+      roles: ['recruiter', 'hr_admin'],
     },
   ];
 

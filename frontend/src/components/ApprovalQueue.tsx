@@ -114,7 +114,7 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefre
 
         <div className="badge-neutral font-mono text-xs">
           <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span>Action Gateway Air-Gap</span>
+          <span>Action Gateway State Barrier</span>
         </div>
       </div>
 
@@ -319,6 +319,35 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefre
                 {/* Review Notes or Form */}
                 {isEditing ? (
                   <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    {/* Deterministic Action Gateway Pre-Flight Verification Checklist */}
+                    <div className="p-3.5 rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 text-xs space-y-2">
+                      <div className="flex items-center gap-1.5 font-bold font-mono text-indigo-900 dark:text-indigo-200 text-[11px] uppercase tracking-wider">
+                        <Lock className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                        <span>Action Gateway Deterministic Pre-Flight Checklist</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] font-mono text-slate-700 dark:text-slate-300">
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span>Human Authority: Verified HR Session</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span>Anti-CSRF Guard: Double-Submit Token</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span>Tamper Barrier: Payload Hash Verified</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span>State Boundary: Only Status <code>screened</code> Target</span>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 italic">
+                        *If any pre-condition fails at execution time, database changes roll back atomically with a 409 Conflict.
+                      </p>
+                    </div>
+
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                         Review Note / Rationale (Logged into tamper-evident audit trail)

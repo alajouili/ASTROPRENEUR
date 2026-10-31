@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { RankedCandidate, NotRankedCandidate, JobOffer } from '../services/api';
 import {
   ShieldAlert,
@@ -10,6 +11,7 @@ import {
   Sparkles,
   Play,
   RotateCw,
+  Scale,
 } from 'lucide-react';
 
 interface CandidateRankingProps {
@@ -82,6 +84,14 @@ export const CandidateRanking: React.FC<CandidateRankingProps> = ({
               )}
             </button>
           )}
+
+          <Link
+            to="/lab"
+            className="px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 text-xs font-mono font-medium flex items-center gap-1.5 transition-colors"
+          >
+            <Scale className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+            <span>Adversarial & Bias Lab</span>
+          </Link>
 
           <button onClick={onOpenUpload} className="btn-secondary text-xs py-2 px-3.5">
             <UserPlus className="w-3.5 h-3.5" />
