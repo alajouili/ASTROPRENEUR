@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, SchedulingSlot } from '../services/api';
+import { InterviewAntiAICopilot } from '../components/InterviewAntiAICopilot';
 import {
   Calendar,
   Clock,
@@ -13,6 +14,7 @@ import {
   Briefcase,
   Sparkles,
   ArrowRight,
+  ShieldAlert,
 } from 'lucide-react';
 
 const DAYS_OF_WEEK: Array<'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday'> = [
@@ -196,6 +198,11 @@ export const SchedulingPage: React.FC = () => {
             </div>
           );
         })}
+      </div>
+
+      {/* Live Technical Interview Anti-AI Teleprompter Interceptor */}
+      <div className="pt-2">
+        <InterviewAntiAICopilot />
       </div>
 
       {/* Propose Slot Modal */}

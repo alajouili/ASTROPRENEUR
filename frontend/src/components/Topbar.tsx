@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import { TrustHRLogo } from './TrustHRLogo';
 
 interface TopbarProps {
   onToggleSidebar: () => void;
@@ -35,17 +36,21 @@ export const Topbar: React.FC<TopbarProps> = ({
       case '/':
         return 'Overview & Governance Metrics';
       case '/screening':
-        return 'Candidate Resume Screening';
+        return 'ATS Pipeline & Candidate Screening';
       case '/approvals':
         return 'Human Approval & Action Gateway';
       case '/inbox':
         return 'Inbox Triage & Communications';
       case '/scheduling':
-        return 'Recruiter Interview Calendar';
+        return 'Interview Scheduling & Anti-AI Copilot';
+      case '/careers':
+        return 'Internal Mobility & Careers';
       case '/assistant':
-        return 'Employee Policy Assistant';
+        return 'Multilingual Voice & Policy Assistant';
       case '/audit':
         return 'Cryptographic Audit Trail';
+      case '/lab':
+        return 'Adversarial & Bias Security Lab';
       case '/login':
         return 'Authentication Console';
       default:
@@ -66,6 +71,10 @@ export const Topbar: React.FC<TopbarProps> = ({
         >
           <Menu className="w-5 h-5" />
         </button>
+
+        <div className="lg:hidden">
+          <TrustHRLogo size="sm" showText={false} />
+        </div>
 
         <div className="flex items-center gap-2 text-xs">
           <span className="text-slate-400 font-medium hidden sm:inline">TrustHR</span>
