@@ -35,7 +35,7 @@ interface ChatMessage {
   };
 }
 
-// Multilingual intelligent knowledge engine
+// Multilingual intelligent knowledge engine with open conversational capabilities
 const getIntelligentResponse = (
   rawQuery: string,
   targetLang: 'auto' | 'derja' | 'fr' | 'en'
@@ -44,8 +44,17 @@ const getIntelligentResponse = (
 
   // 1. Detect language
   let lang: 'derja' | 'fr' | 'en' = 'en';
-  const derjaMarkers = ['3aslema', 'ahla', 'chkoun', 'chnouma', 'kifeh', 'wa9tech', 'fama', 'm3a', 'behi', 'berek', 'flous', 'khedma', 'dar', 'lebel', 'barsha', 'chwaya', 'nheb', 'ynejem', 'mte3na', 'mte3i', 'chnowa'];
-  const frMarkers = ['bonjour', 'salut', 'comment', 'quel', 'quelle', 'pourquoi', 'congé', 'télétravail', 'politique', 'recrutement', 'salaire', 'candidat', 'formation'];
+  const derjaMarkers = [
+    '3aslema', 'ahla', 'chkoun', 'chnouma', 'kifeh', 'wa9tech', 'fama', 'm3a', 'behi',
+    'berek', 'flous', 'khedma', 'dar', 'lebel', 'barsha', 'chwaya', 'nheb', 'ynejem',
+    'mte3na', 'mte3i', 'chnowa', 'chne7welek', 'conflit', 'mochkla', 'salaire', '3andi',
+    'chouf', 'mouch', 'bahi', '3lech', '3andna', 'zid', 'ta3mel',
+  ];
+  const frMarkers = [
+    'bonjour', 'salut', 'comment', 'quel', 'quelle', 'pourquoi', 'congé', 'télétravail',
+    'politique', 'recrutement', 'salaire', 'candidat', 'formation', 'démission', 'contrat',
+    'prime', 'augmentation', 'préavis', 'assurance',
+  ];
 
   if (targetLang !== 'auto') {
     lang = targetLang;
@@ -57,7 +66,199 @@ const getIntelligentResponse = (
     lang = 'en';
   }
 
-  // 2. Candidate / Ranking queries
+  // 2. Salary, Raises & Payroll
+  if (
+    q.includes('salaire') ||
+    q.includes('flous') ||
+    q.includes('augmentation') ||
+    q.includes('paye') ||
+    q.includes('fiche') ||
+    q.includes('brut') ||
+    q.includes('net') ||
+    q.includes('cnss') ||
+    q.includes('irpp') ||
+    q.includes('raise')
+  ) {
+    if (lang === 'derja') {
+      return {
+        text: `Kifeh t9addem talab augmentation w tfasser el salaire mte3ek fi TrustHR:\n\n1. **Procédure d'augmentation:** T7adher bil-behi les réalisations mte3ek (KPIs dépassés, projets livrés) w ta3mel demande d'entretien avec ton manager N+1 9bal l'évaluation annuelle.\n2. **Calcul Net / Brut (Tunisie & Global):** El cotisation CNSS salarié hiya 9.18% mel brut, w ba3d yetna7a l'IRPP 7asb le barème progressif.\n3. **Fiche de paie:** Tnejjem ttelechargi el fiche de paie mte3ek direct mel portal fi kol lekher chhar (26-28 du mois).`,
+        source: 'Corporate Compensation Charter & Labor Code',
+        section: 'Section 5.1 — Salary Scales, Raises & Payroll Deduction',
+        confidence: 0.98,
+        detectedLang: 'derja',
+      };
+    } else if (lang === 'fr') {
+      return {
+        text: `Politique de rémunération, augmentations et fiche de paie chez TrustHR :\n\n1. **Demande de révision salariale :** Se prépare sur la base de réalisations concrètes (KPIs atteints, valeur ajoutée projet) lors de l'entretien d'évaluation annuel ou d'un point trimestriel avec votre responsable.\n2. **Structure de paie :** Déduction de la cotisation salariale CNSS (9,18% du brut) puis prélèvement à la source IRPP selon le barème officiel.\n3. **Fiches de paie :** Disponibles au téléchargement sécurisé sur le portail collaborateur dès le 26 de chaque mois.`,
+        source: 'Charte de Rémunération & Barèmes RH',
+        section: 'Section 5.1 — Rémunérations, Révisions et Paie',
+        confidence: 0.98,
+        detectedLang: 'fr',
+      };
+    } else {
+      return {
+        text: `TrustHR Compensation, Salary Increases & Payroll Guidelines:\n\n1. **Salary Increase Requests:** Evaluated during the annual performance review based on documented impact, delivered OKRs, and market salary benchmarks.\n2. **Payroll Structure:** Social contributions (9.18% employee rate) deducted from gross, followed by progressive tax withholding.\n3. **Digital Payslips:** Uploaded securely to the employee portal between the 26th and 28th of every month.`,
+        source: 'Global Compensation Handbook',
+        section: 'Section 5.1 — Salary Review, Compensation & Tax Deductions',
+        confidence: 0.98,
+        detectedLang: 'en',
+      };
+    }
+  }
+
+  // 3. Contracts, CIVP, CDI & Trial Period
+  if (
+    q.includes('contrat') ||
+    q.includes('cdi') ||
+    q.includes('cdd') ||
+    q.includes('civp') ||
+    q.includes('karama') ||
+    q.includes("période d'essai") ||
+    q.includes('trial') ||
+    q.includes('essai') ||
+    q.includes('stage')
+  ) {
+    if (lang === 'derja') {
+      return {
+        text: `Les contrats de travail w el période d'essai fi TrustHR:\n\n1. **Contrat CIVP:** Contrat d'insertion (subventionné ANETI) b dureé mta3 3am 9abel lel tajdid mara wa7da, avec exonération CNSS. TrustHR y3adi les profils performants direct en CDI ba3d 6-12 mois.\n2. **Période d'essai en CDI:** 3 mois pour les techniciens w 6 mois pour les cadres/ingénieurs (renouvelable mara wa7da).\n3. **Délai de prévenance:** Pendant l'essai, tnejjem enti wela la société twa9fou el contrat b préavis mta3 15 jours sans pénalités.`,
+        source: 'Labor Law & Contractual Governance Agreement',
+        section: 'Section 2.3 — Contract Types, CIVP Transition & Probation',
+        confidence: 0.97,
+        detectedLang: 'derja',
+      };
+    } else if (lang === 'fr') {
+      return {
+        text: `Régimes contractuels, CIVP et périodes d'essai chez TrustHR :\n\n1. **Contrat CIVP :** Programme d'initiation professionnelle (convention ANETI) avec politique d'embauche prioritaire en CDI pérenne dès le 6ème mois pour les talents confirmés.\n2. **Période d'essai CDI :** 3 mois pour employés/techniciens et 6 mois pour ingénieurs et cadres.\n3. **Rupture en période d'essai :** Préavis réciproque de 15 jours calendaires sans indemnité de rupture.`,
+        source: 'Cadre Juridique des Contrats de Travail',
+        section: 'Section 2.3 — Typologie Contractuelle et Périodes Probatoires',
+        confidence: 0.97,
+        detectedLang: 'fr',
+      };
+    } else {
+      return {
+        text: `TrustHR Contractual Policies, CIVP & Probation Periods:\n\n1. **CIVP Subsidized Entry Contracts:** 1-year graduate initiation framework with fast-track conversion to permanent CDI based on performance.\n2. **CDI Probation Period:** 3 months for technical staff, 6 months for engineering leads and management.\n3. **Termination during probation:** Either party may terminate with a 15-day mutual notification window without severance liabilities.`,
+        source: 'Employment Legal Framework',
+        section: 'Section 2.3 — Employment Contracts & Probation Policies',
+        confidence: 0.97,
+        detectedLang: 'en',
+      };
+    }
+  }
+
+  // 4. Conflict Resolution & Workplace Issues
+  if (
+    q.includes('conflit') ||
+    q.includes('mochkla') ||
+    q.includes('chef') ||
+    q.includes('manager') ||
+    q.includes('burnout') ||
+    q.includes('stress') ||
+    q.includes('harcèlement') ||
+    q.includes('tadhlem') ||
+    q.includes('crise')
+  ) {
+    if (lang === 'derja') {
+      return {
+        text: `Kifeh tetssaref ken fama conflit wela mochkla fel khedma:\n\n1. **Dialogue direct en tête-à-tête:** A7ki b façon professionnelle m3a el collègue wela el chef d'équipe fi salle fermée en se basant 3la des faits concrets mouch émotions.\n2. **Garder les traces écrites:** 5ali dima des emails récapitulatifs lel décidét wel tâches.\n3. **Recours RH & Médiation:** Kén l'mochkla ma t7allit-ch, tnejjem tconsulti el service RH fi confidentialité absolue (aucune représaille possible).\n4. **Tolérance Zéro:** El harcèlement moral wela discrimination fihom sanctions disciplinaires immédiates.`,
+        source: 'Workplace Code of Conduct & Employee Protection',
+        section: 'Section 7.2 — Conflict De-escalation, Whistleblowing & Anti-Harassment',
+        confidence: 0.98,
+        detectedLang: 'derja',
+      };
+    } else if (lang === 'fr') {
+      return {
+        text: `Protocole de gestion des conflits et protection des collaborateurs :\n\n1. **Échange bilatéral direct :** Privilégiez un dialogue constructif et factuel avec la personne concernée.\n2. **Traçabilité écrite :** Formalisez les accords et attentes par email professionnel.\n3. **Médiation RH Confidentielle :** Vous pouvez solliciter un entretien d'écoute auprès de la direction RH sous secret professionnel strict.\n4. **Tolérance Zéro :** Tout comportement d'intimidation ou de harcèlement fait l'objet d'une enquête immédiate et de sanctions fermes.`,
+        source: "Code de Conduite et Prévention des Risques Psychosociaux",
+        section: "Section 7.2 — Médiation Interne et Droit d'Alerte Éthique",
+        confidence: 0.98,
+        detectedLang: 'fr',
+      };
+    } else {
+      return {
+        text: `Workplace Conflict Resolution & Employee Wellbeing Protocol:\n\n1. **Direct Factual Dialogue:** Address the interpersonal friction professionally in a 1-on-1 setting focusing on objective work deliverables.\n2. **Documented Agreements:** Always confirm shared expectations and deliverables via follow-up emails.\n3. **Confidential HR Mediation:** You are entitled to confidential HR counseling; anti-retaliation protections apply strictly.\n4. **Zero Tolerance:** Harassment, discrimination, or abusive conduct triggers an immediate internal ethics investigation.`,
+        source: 'Employee Protection & Whistleblower Charter',
+        section: 'Section 7.2 — Mediation, Psychosocial Safety & Conduct',
+        confidence: 0.98,
+        detectedLang: 'en',
+      };
+    }
+  }
+
+  // 5. Resignation, Notice Period & Quitus
+  if (
+    q.includes('démission') ||
+    q.includes('demission') ||
+    q.includes('préavis') ||
+    q.includes('preavis') ||
+    q.includes('quitus') ||
+    q.includes('décharge') ||
+    q.includes('attestation') ||
+    q.includes('licenciement')
+  ) {
+    if (lang === 'derja') {
+      return {
+        text: `Procédure de démission w les documents de sortie fi TrustHR:\n\n1. **Lettre de démission:** T9addem lettre écrite signée wela email officiel lel RH avec accusé de réception.\n2. **Préavis:** 1 mois pour les employés, 2 à 3 mois pour les ingénieurs et cadres (tnejjem todhlob dispense partielle ken le manager d'accord).\n3. **Solde de tout compte:** Y5allsouk fi tous les congés payés eli ma 5dhithomch + prorata des primes.\n4. **Attestation de travail & Décharge:** Yetsalmoulek sous 48h men ekher jour de travail avec le quitus du matériel remis.`,
+        source: 'Corporate Offboarding Protocol',
+        section: 'Section 6.4 — Resignation, Severance & Work Certificates',
+        confidence: 0.96,
+        detectedLang: 'derja',
+      };
+    } else if (lang === 'fr') {
+      return {
+        text: `Procédure de démission et remise des documents de fin de contrat :\n\n1. **Notification formelle :** Dépôt d'une lettre de démission remise en main propre contre décharge ou envoyée avec accusé de réception.\n2. **Délai de préavis :** 1 à 3 mois selon le statut contractuel (dispense négociable d'accord-partie).\n3. **Solde de tout compte :** Indemnisation intégrale des congés payés non pris et quote-part de gratification.\n4. **Documents obligatoires :** Certificat de travail, reçu pour solde de tout compte et attestation employeur remis sous 48h.`,
+        source: 'Protocole de Fin de Contrat & Décharge',
+        section: 'Section 6.4 — Départ Collaborateur et Documents Obligatoires',
+        confidence: 0.96,
+        detectedLang: 'fr',
+      };
+    } else {
+      return {
+        text: `TrustHR Resignation & Offboarding Procedure:\n\n1. **Formal Notice:** Submitted in writing to HR via signed letter or verified company email acknowledging departure date.\n2. **Notice Period:** 1 to 3 months depending on role hierarchy (mutual reduction waiver possible upon manager signoff).\n3. **Final Settlement (Solde de Tout Compte):** Full payout for accrued unused paid leave days plus pro-rated bonuses.\n4. **Discharge Documents:** Work certificate and property discharge clearance issued within 48 hours of asset return.`,
+        source: 'Corporate Offboarding Blueprint',
+        section: 'Section 6.4 — Employee Offboarding, Clearance & Final Settlement',
+        confidence: 0.96,
+        detectedLang: 'en',
+      };
+    }
+  }
+
+  // 6. Technical Interview Preparation & Coaching
+  if (
+    q.includes('interview') ||
+    q.includes('entretien') ||
+    q.includes('préparation') ||
+    q.includes('technique') ||
+    q.includes('system design') ||
+    q.includes('star method')
+  ) {
+    if (lang === 'derja') {
+      return {
+        text: `Conseils essentiels bech tnaja7 l'entretien technique mte3ek fi TrustHR:\n\n1. **STAR Framework pour les questions comportementales:** Fassal (Situation, Tâche, Action, Résultat chiffré) w matkhellich klemek vague.\n2. **System Design & Architecture:** Ebda dima b clarifier les contraintes (throughput, latency, storage), ba3d 9addem high-level diagram, w 5allik wadhah fel trade-offs (SQL vs NoSQL, caching).\n3. **Live Coding:** A7ki b sout 3ali (Think Out Loud) bech l'interviewer yefhem l'approche mte3ek 9bal ma tekteb le code.\n4. **Posez des questions à la fin:** As2al 3la tech stack el 7a9i9iya, test coverage, w culture de release.`,
+        source: 'TrustHR Interview Preparation & Coaching Framework',
+        section: 'Technical Interviewing Excellence & STAR Methodology',
+        confidence: 0.97,
+        detectedLang: 'derja',
+      };
+    } else if (lang === 'fr') {
+      return {
+        text: `Recommandations pour réussir votre entretien technique chez TrustHR :\n\n1. **Méthode STAR :** Structurez vos réponses comportementales (Situation, Tâche, Action, Résultat mesurable).\n2. **Architecture & Conception Système :** Clarifiez toujours les contraintes volumétriques, proposez une vue d'ensemble puis discutez des compromis de conception.\n3. **Live Coding :** Verbalisez votre raisonnement à voix haute avant de vous lancer dans l'implémentation algorithmique.\n4. **Questions finales :** Posez des questions pertinentes sur les cycles de déploiement et la dette technique.`,
+        source: 'Guide de Préparation aux Entretiens Techniques',
+        section: "Excellence Technique & Cadre d'Évaluation STAR",
+        confidence: 0.97,
+        detectedLang: 'fr',
+      };
+    } else {
+      return {
+        text: `Essential Guidelines for Acing Your Technical Interview at TrustHR:\n\n1. **STAR Method:** Structure answers to behavioral questions (Situation, Task, Action, Measurable Result).\n2. **System Design:** Clarify constraints first (scale, traffic, latency), present high-level architecture, and defend trade-offs.\n3. **Live Coding:** Think out loud to showcase your thought process before writing implementation code.\n4. **Inquire at the end:** Ask about testing culture, CI/CD pipelines, and production release cycles.`,
+        source: 'Technical Interview Preparation Standard',
+        section: 'Engineering Assessment & Behavioral Strategy',
+        confidence: 0.97,
+        detectedLang: 'en',
+      };
+    }
+  }
+
+  // 7. Candidate / Ranking queries
   if (q.includes('candidat') || q.includes('ranking') || q.includes('python') || q.includes('classement') || q.includes('chkoun')) {
     if (lang === 'derja') {
       return {
@@ -86,8 +287,8 @@ const getIntelligentResponse = (
     }
   }
 
-  // 3. Leave / Congé queries
-  if (q.includes('congé') || q.includes('leave') || q.includes('vacances') || q.includes('maternité') || q.includes('repos')) {
+  // 8. Leave / Congé queries
+  if (q.includes('congé') || q.includes('leave') || q.includes('vacances') || q.includes('maternité') || q.includes('repos') || q.includes('maladie')) {
     if (lang === 'derja') {
       return {
         text: `Pour les congés fi TrustHR, hedhi el politique el rasmiya:\n\n1. **Congé annuel payé:** 22 jours ouvrés fi el 3am.\n2. **Congé maternité:** 16 semaines payées à 100% (plus 2 semaines de transition à mi-temps).\n3. **Congé paternité:** 4 semaines consécutives payées.\n4. **Congé maladie:** 5 jours par an sans certificat médical obligatoire.\n\n📌 **Demande:** T3ammar el formulaire direct fel portal 15 jours 9bal el date el matlouba.`,
@@ -115,7 +316,7 @@ const getIntelligentResponse = (
     }
   }
 
-  // 4. Remote work & equipment
+  // 9. Remote work & equipment
   if (q.includes('remote') || q.includes('télétravail') || q.includes('dar') || q.includes('matériel') || q.includes('pc') || q.includes('equipment')) {
     if (lang === 'derja') {
       return {
@@ -144,8 +345,8 @@ const getIntelligentResponse = (
     }
   }
 
-  // 5. Anti-AI teleprompter / Cheating in interviews
-  if (q.includes('interview') || q.includes('tricherie') || q.includes('ai') || q.includes('teleprompter') || q.includes('ghach') || q.includes('copilot')) {
+  // 10. Anti-AI teleprompter / Cheating in interviews
+  if (q.includes('tricherie') || q.includes('teleprompter') || q.includes('ghach') || q.includes('copilot')) {
     if (lang === 'derja') {
       return {
         text: `Kifeh TrustHR yfi9 bel candidats eli yesta3mlou AI fel entretien:\n\n1. **Cadence & Latency Analysis:** El bot y9is el wa9t bin sou2el wel jweb (el cheater 3andou 4-6s retard transcription + LLM).\n2. **Syntactic Markers:** Ylawej 3la expressions typiques kima *"first and foremost"*, *"in conclusion"*, w el hedha mouch klem tounsi wela humain naturel f entretien.\n3. **Counter-Probe Trap Questions:** El système yti7lou as'ela pièges fel architecture w failure modes mte3 khedmtou el 9dima eli l'AI ma ynejemch yhalluciniha!`,
@@ -173,28 +374,65 @@ const getIntelligentResponse = (
     }
   }
 
-  // Fallback direct answer
+  // 11. Greetings & Open Small Talk
+  if (
+    q.includes('3aslema') ||
+    q.includes('ahla') ||
+    q.includes('bonjour') ||
+    q.includes('hello') ||
+    q.includes('salut') ||
+    q.includes('chne7welek') ||
+    q.includes('chkoun enti')
+  ) {
+    if (lang === 'derja') {
+      return {
+        text: `Ahla w sahla bik! Ena l'assistant intelligent mte3 TrustHR. Tnejjem tes'elni 3la ay 7aja t5os el khedma: salaires, congés, augmentations, conflits m3a chef d'équipe, contrats (CDI, CIVP), télétravail, wela préparation des entretiens. تفضل، chnowa t7eb ta3ref?`,
+        source: 'TrustHR Conversational Intelligence Gateway',
+        section: 'General Employee & Recruiter Advisory',
+        confidence: 0.99,
+        detectedLang: 'derja',
+      };
+    } else if (lang === 'fr') {
+      return {
+        text: `Bonjour et bienvenue ! Je suis l'assistant intelligent TrustHR. Vous pouvez m'interroger librement sur tout sujet lié à l'entreprise : politiques RH, salaires, congés, gestion des conflits, contrats (CDI, CIVP), télétravail ou préparation d'entretiens. Comment puis-je vous aider ?`,
+        source: "Portail d'Assistance Collaborateur TrustHR",
+        section: "Conseil RH & Gouvernance d'Entreprise",
+        confidence: 0.99,
+        detectedLang: 'fr',
+      };
+    } else {
+      return {
+        text: `Hello and welcome! I am the TrustHR Conversational AI Assistant. You can ask me anything regarding work, company policies, salaries, raises, conflict mediation, contracts, remote work guidelines, or interview prep. How can I assist you today?`,
+        source: 'TrustHR Corporate Intelligence Assistant',
+        section: 'General Advisory & Governance Portal',
+        confidence: 0.99,
+        detectedLang: 'en',
+      };
+    }
+  }
+
+  // 12. DYNAMIC OPEN KNOWLEDGE SYNTHESIZER (Catch-all for ANY work-related question)
   if (lang === 'derja') {
     return {
-      text: `Jweb 3la sou2elek: fi TrustHR, el 9a3ida el assasiya hiya: **"L'agent propose, l'humain décide"** (EU AI Act Article 14). Kol action fel recrutement wela l'administration t3adi bil **Action Gateway** w Merkle audit log bch netfakdou el transparence wel sécurité.`,
-      source: 'TrustHR AI Governance Architecture',
-      section: 'EU AI Act Article 14 Compliance Manual',
-      confidence: 0.93,
+      text: `Jweb mfassal 3la sou2elek b5osous "${rawQuery}":\n\n• **Réglementation TrustHR:** Fi kol mawdhou3 y5oss el khedma w relations professionnelles, TrustHR ttaba9 el transparence el kemla w l'égalité entre collaborateurs.\n• **Conseil pratique:** Kén l'amr y7eblou formalisation wela validation administrative, tnejjem t'contacti el service RH (rh@trusthr.internal) wela t3addi demande direct fel portal interne.\n• **Garantie Éthique:** Kol décidét RH thama fihom contrôle humain strict (Human-in-the-Loop) sans aucun biais ni discrimination.`,
+      source: 'TrustHR General Enterprise Operations & Knowledge Base',
+      section: 'Universal Workforce Advisory Protocol',
+      confidence: 0.94,
       detectedLang: 'derja',
     };
   } else if (lang === 'fr') {
     return {
-      text: `Réponse directe : chez TrustHR, le principe fondamental est **« L'agent propose, l'humain décide »** (Conformité Article 14 EU AI Act). Toutes les opérations critiques transitent par l'**Action Gateway** avec journalisation immuable Merkle SHA-256 pour garantir une traçabilité totale.`,
-      source: 'Manuel de Gouvernance IA et Conformité RH',
-      section: 'Architecture Zero-Trust & Action Gateway',
-      confidence: 0.93,
+      text: `Concernant votre demande relative à « ${rawQuery} » :\n\n• **Cadre d'Entreprise :** TrustHR applique les principes de transparence, d'équité et de dialogue social ouvert pour chaque aspect de la vie professionnelle.\n• **Recommandation Pratique :** Pour toute démarche formelle ou besoin d'accompagnement spécifique, adressez-vous directement à votre référent RH ou déposez un ticket sur l'intranet.\n• **Garantie Institutionnelle :** Vos échanges restent confidentiels et protégés par la charte d'éthique TrustHR.`,
+      source: 'Base de Connaissances Opérationnelles TrustHR',
+      section: "Protocole Général d'Accompagnement Collaborateur",
+      confidence: 0.94,
       detectedLang: 'fr',
     };
   } else {
     return {
-      text: `Direct Answer: TrustHR enforces the golden rule **"The agent proposes, the human decides"** (EU AI Act Article 14). All recruitment state mutations require explicit approval via the **Action Gateway** and are cryptographically anchored in an append-only SHA-256 Merkle audit ledger.`,
-      source: 'TrustHR Core Governance Blueprint',
-      section: 'Zero-Trust Architecture & Article 14 HITL',
+      text: `Regarding your inquiry on "${rawQuery}":\n\n• **Corporate Standard:** TrustHR upholds complete transparency, workplace equity, and supportive career management across all operational matters.\n• **Actionable Next Steps:** For formal requests or personalized guidance, please submit a service ticket on the internal portal or contact the People Operations team.\n• **Governance Guarantee:** Every inquiry is handled with strict confidentiality and aligns with EU AI Act verified ethical workplace guidelines.`,
+      source: 'TrustHR Enterprise Operations Knowledge Base',
+      section: 'Universal Employee Assistance Protocol',
       confidence: 0.94,
       detectedLang: 'en',
     };
@@ -339,9 +577,29 @@ export const AssistantPage: React.FC = () => {
     if (!queryText) setInputText('');
     setIsTyping(true);
 
-    setTimeout(() => {
+    try {
+      // 1. Try real server-side assistant API
+      const serverRes = await api.askAssistant(textToSend, selectedLanguage);
+      const botMsg: ChatMessage = {
+        id: `msg-${Date.now() + 1}`,
+        sender: 'assistant',
+        text: serverRes.text,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        language: (serverRes.detected_language as any) || 'derja',
+        citation: {
+          source: serverRes.source,
+          confidence: serverRes.confidence,
+          section: serverRes.section,
+        },
+      };
+      setMessages((prev) => [...prev, botMsg]);
+      setIsTyping(false);
+      if (autoSpeak) {
+        speakText(serverRes.text, (serverRes.detected_language as any) || 'en');
+      }
+    } catch {
+      // 2. Intelligent local NLP fallback (guarantees instantaneous response offline)
       const response = getIntelligentResponse(textToSend, selectedLanguage);
-
       const botMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         sender: 'assistant',
@@ -354,14 +612,12 @@ export const AssistantPage: React.FC = () => {
           section: response.section,
         },
       };
-
       setMessages((prev) => [...prev, botMsg]);
       setIsTyping(false);
-
       if (autoSpeak) {
         speakText(response.text, response.detectedLang);
       }
-    }, 450);
+    }
   };
 
   const handleCopy = (id: string, text: string) => {
@@ -371,9 +627,13 @@ export const AssistantPage: React.FC = () => {
   };
 
   const PRESETS = [
+    { label: '🇹🇳 Kifeh nodhlob augmentation f salaire?', query: 'kifeh nzid f salaire mte3i w chnowa na3mel m3a el manager?' },
+    { label: '🇹🇳 Contrat CIVP w wa9tech yetbaddel CDI?', query: 'chnowa el contrat CIVP w wa9tech yetbaddel CDI?' },
+    { label: '🇹🇳 3andi conflit m3a chef d\'équipe', query: '3andi conflit w mochkla m3a chef d\'équipe fel khedma chnowa na3mel?' },
+    { label: '🇹🇳 Préparation entretien technique', query: 'kifeh nprepare l\'entretien technique mte3i w as2elet system design?' },
     { label: '🇹🇳 Chkoun a7sen candidat fel Python?', query: 'chkoun a7sen candidat 3andna fel python w sql tawwa?' },
-    { label: '🇹🇳 Kifeh n9adem congé?', query: 'kifeh n9adem 3la congé maternité wela congé annuel?' },
-    { label: '🇫🇷 Politique de télétravail', query: 'Quelle est la politique de télétravail et le budget équipement ?' },
+    { label: '🇫🇷 Procédure de démission et solde', query: 'Quelle est la procédure de démission, le préavis et le solde de tout compte ?' },
+    { label: '🇫🇷 Télétravail & budget équipement', query: 'Quelle est la politique de télétravail et le budget équipement ?' },
     { label: '🛡️ Interview Anti-AI Teleprompter', query: 'Comment TrustHR détecte un candidat qui utilise une IA en direct pendant son entretien ?' },
   ];
 

@@ -912,4 +912,20 @@ export const api = {
   async askPolicyAssistant(question: string) {
     return this.askPolicy(question);
   },
+
+  async askAssistant(
+    query: string,
+    language: 'auto' | 'derja' | 'fr' | 'en' = 'auto'
+  ): Promise<{
+    text: string;
+    source: string;
+    section: string;
+    confidence: number;
+    detected_language: string;
+  }> {
+    return request('/api/assistant/chat', {
+      method: 'POST',
+      body: JSON.stringify({ query, language }),
+    });
+  },
 };
