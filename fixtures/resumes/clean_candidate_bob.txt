@@ -1,0 +1,22 @@
+Bob Jenkins
+Email: bob.jenkins@mockmail.internal
+Phone: +1-555-0188
+Location: Chicago, IL
+
+PROFESSIONAL SUMMARY
+Junior Software Developer with 1 year of experience in basic web development and script writing. Looking to expand knowledge into backend infrastructure.
+
+CORE SKILLS
+- JavaScript, Basic Python, HTML/CSS
+- MySQL basics
+- Git, GitHub
+
+WORK EXPERIENCE
+
+Junior Web Developer — Local Commerce LLC (2023 – Present)
+- Assisted in maintaining internal web portals using PHP and basic JavaScript.
+- Wrote simple Python utility scripts to parse CSV files and generate monthly sales summaries.
+- Conducted manual testing on frontend UI components before releases.
+
+EDUCATION
+Associate Degree in Information Technology — City College of Chicago (2021 – 2023)
