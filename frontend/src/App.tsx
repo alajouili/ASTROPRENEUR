@@ -12,6 +12,7 @@ import { ApprovalPage } from './pages/ApprovalPage';
 import { InboxPage } from './pages/InboxPage';
 import { SchedulingPage } from './pages/SchedulingPage';
 import { AssistantPage } from './pages/AssistantPage';
+import { InternalCareersPage } from './pages/InternalCareersPage';
 import { AuditPage } from './pages/AuditPage';
 import { AdversarialLabPage } from './pages/AdversarialLabPage';
 import { LoginPage } from './pages/LoginPage';
@@ -174,6 +175,14 @@ const AppShell: React.FC = () => {
               element={
                 <ProtectedRoute allowedRoles={['recruiter', 'hr_admin', 'employee']}>
                   <AssistantPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/careers"
+              element={
+                <ProtectedRoute allowedRoles={['recruiter', 'hr_admin', 'employee']}>
+                  <InternalCareersPage />
                 </ProtectedRoute>
               }
             />

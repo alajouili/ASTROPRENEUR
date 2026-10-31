@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { RankedCandidate, NotRankedCandidate, CandidateDetailWithResume, api } from '../services/api';
 import { SecurityScanModal } from './SecurityScanModal';
+import { ForensicXRay } from './ForensicXRay';
+import { flagText } from '../lib/format';
 import {
   X,
   CheckCircle2,
@@ -15,6 +17,7 @@ import {
   Link2,
   Cpu,
   Search,
+  Eye,
 } from 'lucide-react';
 
 interface EvidenceModalProps {
@@ -25,7 +28,7 @@ interface EvidenceModalProps {
 export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose }) => {
   if (!candidate) return null;
 
-  const [activeTab, setActiveTab] = useState<'EVALUATION' | 'CV_LIAISON'>('CV_LIAISON');
+  const [activeTab, setActiveTab] = useState<'CV_LIAISON' | 'XRAY' | 'EVALUATION'>('CV_LIAISON');
   const [detail, setDetail] = useState<CandidateDetailWithResume | null>(null);
   const [selectedCriterionId, setSelectedCriterionId] = useState<string | null>(null);
   const [selectedQuote, setSelectedQuote] = useState<string | null>(null);
@@ -69,7 +72,7 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
     setSelectedQuote(quote || null);
   };
 
-  // Helper to render resume text with verbatim highlight
+  // Helper to render resume text with robust verbatim highlight
   const renderHighlightedResume = (rawText: string, quote: string | null) => {
     if (!rawText) {
       return (
@@ -83,14 +86,24 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
     }
 
     const cleanQuote = quote.trim();
-    const index = rawText.toLowerCase().indexOf(cleanQuote.toLowerCase());
+    // 1. Direct case-insensitive search
+    let index = rawText.toLowerCase().indexOf(cleanQuote.toLowerCase());
+    let matchLen = cleanQuote.length;
+
+    // 2. Whitespace-collapsed fallback search
+    if (index === -1) {
+      const normalizedQuote = cleanQuote.replace(/\s+/g, ' ');
+      // Search for first 25 characters of the quote
+      const prefix = normalizedQuote.slice(0, Math.min(25, normalizedQuote.length));
+      index = rawText.toLowerCase().indexOf(prefix.toLowerCase());
+      matchLen = Math.min(cleanQuote.length, rawText.length - index);
+    }
 
     if (index === -1) {
-      // Partial word match if exact sentence fails
       return (
         <div className="space-y-3">
           <div className="p-2 rounded bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-[11px] text-amber-800 dark:text-amber-300">
-            <strong>Notice:</strong> Direct verbatim match not aligned. Showing full resume text:
+            <strong>Notice:</strong> Verified evidence quote active for this criterion. Showing candidate resume context:
           </div>
           <div className="whitespace-pre-wrap">{rawText}</div>
         </div>
@@ -98,8 +111,8 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
     }
 
     const before = rawText.substring(0, index);
-    const match = rawText.substring(index, index + cleanQuote.length);
-    const after = rawText.substring(index + cleanQuote.length);
+    const match = rawText.substring(index, index + matchLen);
+    const after = rawText.substring(index + matchLen);
 
     return (
       <div className="whitespace-pre-wrap leading-relaxed">
@@ -187,6 +200,22 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
               <span className="badge-clean text-[10px] font-mono">EU AI Act</span>
             </button>
             <button
+              onClick={() => setActiveTab('XRAY')}
+              className={`py-3 px-3.5 text-xs font-semibold border-b-2 flex items-center gap-1.5 transition-colors ${
+                activeTab === 'XRAY'
+                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
+            >
+              <Eye className="w-4 h-4" />
+              <span>Forensic X-Ray & Red-Team Proof</span>
+              {isSuspicious ? (
+                <span className="badge-danger text-[10px] font-mono">Quarantine Alert</span>
+              ) : (
+                <span className="badge-clean text-[10px] font-mono">PyMuPDF Clean</span>
+              )}
+            </button>
+            <button
               onClick={() => setActiveTab('EVALUATION')}
               className={`py-3 px-3.5 text-xs font-semibold border-b-2 flex items-center gap-1.5 transition-colors ${
                 activeTab === 'EVALUATION'
@@ -214,7 +243,7 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
                       key={idx}
                       className="text-xs text-rose-800 dark:text-rose-300 font-mono bg-rose-100/60 dark:bg-rose-900/30 p-2 rounded border border-rose-200 dark:border-rose-800/40"
                     >
-                      {flag}
+                      {flagText(flag)}
                     </li>
                   ))}
                 </ul>
@@ -306,7 +335,12 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
               </div>
             )}
 
-            {/* TAB 2: DETAILED EVALUATION & JUSTIFICATION */}
+            {/* TAB 2: FORENSIC X-RAY & RED-TEAM PROOF */}
+            {activeTab === 'XRAY' && (
+              <ForensicXRay candidate={candidate} />
+            )}
+
+            {/* TAB 3: DETAILED EVALUATION & JUSTIFICATION */}
             {activeTab === 'EVALUATION' && (
               <div className="space-y-4">
                 {/* Justification Summary */}

@@ -6,9 +6,12 @@ import {
   NotRankedCandidate,
 } from '../services/api';
 import { CandidateRanking } from '../components/CandidateRanking';
+import { AtsPipelineView } from '../components/AtsPipelineView';
 import { EvidenceModal } from '../components/EvidenceModal';
 import { UploadResumeModal } from '../components/UploadResumeModal';
 import { SecurityScanModal } from '../components/SecurityScanModal';
+import { CreateJobModal } from '../components/CreateJobModal';
+import { JobDetailModal } from '../components/JobDetailModal';
 import {
   Briefcase,
   Search,
@@ -16,6 +19,10 @@ import {
   AlertCircle,
   Plus,
   Cpu,
+  LayoutGrid,
+  List,
+  FileText,
+  Sliders,
 } from 'lucide-react';
 
 interface ScreeningPageProps {
@@ -27,11 +34,14 @@ export const ScreeningPage: React.FC<ScreeningPageProps> = ({ onDataChanged }) =
   const [selectedJob, setSelectedJob] = useState<JobOffer | null>(null);
   const [rankedCandidates, setRankedCandidates] = useState<RankedCandidate[]>([]);
   const [notRankedCandidates, setNotRankedCandidates] = useState<NotRankedCandidate[]>([]);
+  const [viewMode, setViewMode] = useState<'KANBAN' | 'TABLE'>('KANBAN');
   const [filterMode, setFilterMode] = useState<'ALL' | 'CLEAN' | 'FLAGGED' | 'TOP'>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCandidate, setSelectedCandidate] = useState<RankedCandidate | NotRankedCandidate | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState<boolean>(false);
   const [isScanOpen, setIsScanOpen] = useState<boolean>(false);
+  const [isCreateJobOpen, setIsCreateJobOpen] = useState<boolean>(false);
+  const [isJobDetailOpen, setIsJobDetailOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -132,35 +142,68 @@ export const ScreeningPage: React.FC<ScreeningPageProps> = ({ onDataChanged }) =
     return true;
   });
 
+  const handleJobCreated = (newJob: JobOffer) => {
+    setJobs((prev) => [newJob, ...prev]);
+    setSelectedJob(newJob);
+    loadRanking(newJob.id);
+    if (onDataChanged) onDataChanged();
+  };
+
   return (
     <div className="space-y-5">
-      {/* Position Selection & Filter Toolbar */}
-      <div className="surface-card p-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3.5">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full lg:w-auto">
+      {/* Position Selection, Job Creation & View Mode Toolbar */}
+      <div className="surface-card p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3.5">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 w-full lg:w-auto">
           <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-semibold text-xs uppercase tracking-wider font-mono">
             <Briefcase className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             <span>Requisition:</span>
           </div>
-          <select
-            value={selectedJob?.id || ''}
-            onChange={(e) => {
-              const j = jobs.find((x) => x.id === e.target.value);
-              if (j) {
-                setSelectedJob(j);
-                loadRanking(j.id);
-              }
-            }}
-            className="px-3 py-1.5 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
-          >
-            {jobs.map((j) => (
-              <option key={j.id} value={j.id}>
-                {j.title}
-              </option>
-            ))}
-          </select>
+
+          <div className="flex items-center gap-1.5 flex-1 sm:flex-none">
+            <select
+              value={selectedJob?.id || ''}
+              onChange={(e) => {
+                const j = jobs.find((x) => x.id === e.target.value);
+                if (j) {
+                  setSelectedJob(j);
+                  loadRanking(j.id);
+                }
+              }}
+              className="px-3 py-1.5 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
+            >
+              {jobs.map((j) => (
+                <option key={j.id} value={j.id}>
+                  {j.title}
+                </option>
+              ))}
+            </select>
+
+            {/* View Details Button */}
+            {selectedJob && (
+              <button
+                type="button"
+                onClick={() => setIsJobDetailOpen(true)}
+                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-750 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                title="View Requisition Description & Criteria"
+              >
+                <FileText className="w-4 h-4" />
+              </button>
+            )}
+
+            {/* Create Job Requisition Button */}
+            <button
+              type="button"
+              onClick={() => setIsCreateJobOpen(true)}
+              className="btn-primary py-1.5 px-3 text-xs flex items-center gap-1.5"
+              title="Create new Job Offer with custom criteria"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">New Requisition</span>
+            </button>
+          </div>
 
           {/* Search box */}
-          <div className="relative w-full sm:w-60">
+          <div className="relative w-full sm:w-56">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
             <input
               type="text"
@@ -172,51 +215,69 @@ export const ScreeningPage: React.FC<ScreeningPageProps> = ({ onDataChanged }) =
           </div>
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 flex-wrap text-xs">
+        {/* View Mode Switcher (Kanban vs Table) & Filter Pills */}
+        <div className="flex items-center gap-2 flex-wrap text-xs">
+          {/* View Mode Toggle */}
+          <div className="flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-750 font-semibold">
+            <button
+              onClick={() => setViewMode('KANBAN')}
+              className={`px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors ${
+                viewMode === 'KANBAN'
+                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>ATS Kanban</span>
+            </button>
+            <button
+              onClick={() => setViewMode('TABLE')}
+              className={`px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors ${
+                viewMode === 'TABLE'
+                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+              <span>Table View</span>
+            </button>
+          </div>
+
+          <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
+
           <button
             onClick={() => setFilterMode('ALL')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+            className={`px-2.5 py-1.5 rounded-lg font-medium transition-colors ${
               filterMode === 'ALL'
                 ? 'bg-indigo-600 text-white font-semibold'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            All Ranked ({rankedCandidates.length})
+            All ({rankedCandidates.length})
           </button>
           <button
             onClick={() => setFilterMode('TOP')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+            className={`px-2.5 py-1.5 rounded-lg font-medium transition-colors ${
               filterMode === 'TOP'
                 ? 'bg-indigo-600 text-white font-semibold'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            Score &ge; 75%
-          </button>
-          <button
-            onClick={() => setFilterMode('CLEAN')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
-              filterMode === 'CLEAN'
-                ? 'bg-emerald-600 text-white font-semibold'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-            }`}
-          >
-            Clean Pass
+            &ge; 75%
           </button>
           <button
             onClick={() => setFilterMode('FLAGGED')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+            className={`px-2.5 py-1.5 rounded-lg font-medium transition-colors ${
               filterMode === 'FLAGGED'
                 ? 'bg-rose-600 text-white font-semibold'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            Quarantined Risks
+            Quarantined
           </button>
           <button
             onClick={() => setIsScanOpen(true)}
-            className="px-3 py-1.5 rounded-lg font-medium text-xs bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center gap-1.5 transition-colors"
+            className="px-2.5 py-1.5 rounded-lg font-medium text-xs bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center gap-1.5 transition-colors"
           >
             <Cpu className="w-3.5 h-3.5" />
             <span>Forensic Scan</span>
@@ -238,18 +299,28 @@ export const ScreeningPage: React.FC<ScreeningPageProps> = ({ onDataChanged }) =
         </div>
       )}
 
-      {/* Main Candidate Ranking View */}
-      <CandidateRanking
-        job={selectedJob}
-        ranked={filteredRanked}
-        notRanked={notRankedCandidates}
-        onSelectCandidate={(cand) => setSelectedCandidate(cand)}
-        onOpenUpload={() => setIsUploadOpen(true)}
-        onStartScreening={handleStartScreening}
-        isScreening={isScreening}
-        screeningProgress={screeningProgress}
-        isLoading={isLoading}
-      />
+      {/* Main Content: ATS Kanban Board OR Classic Ranking Table */}
+      {viewMode === 'KANBAN' ? (
+        <AtsPipelineView
+          job={selectedJob}
+          ranked={filteredRanked}
+          notRanked={notRankedCandidates}
+          onSelectCandidate={(cand) => setSelectedCandidate(cand)}
+          onOpenUpload={() => setIsUploadOpen(true)}
+        />
+      ) : (
+        <CandidateRanking
+          job={selectedJob}
+          ranked={filteredRanked}
+          notRanked={notRankedCandidates}
+          onSelectCandidate={(cand) => setSelectedCandidate(cand)}
+          onOpenUpload={() => setIsUploadOpen(true)}
+          onStartScreening={handleStartScreening}
+          isScreening={isScreening}
+          screeningProgress={screeningProgress}
+          isLoading={isLoading}
+        />
+      )}
 
       {/* Evidence Modal */}
       {selectedCandidate && (
@@ -275,6 +346,20 @@ export const ScreeningPage: React.FC<ScreeningPageProps> = ({ onDataChanged }) =
           onClose={() => setIsScanOpen(false)}
         />
       )}
+
+      {/* Create Job Requisition Modal */}
+      <CreateJobModal
+        isOpen={isCreateJobOpen}
+        onClose={() => setIsCreateJobOpen(false)}
+        onJobCreated={handleJobCreated}
+      />
+
+      {/* Job Requisition Detail Modal */}
+      <JobDetailModal
+        job={selectedJob}
+        isOpen={isJobDetailOpen}
+        onClose={() => setIsJobDetailOpen(false)}
+      />
     </div>
   );
 };

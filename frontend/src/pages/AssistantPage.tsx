@@ -8,11 +8,15 @@ import {
   Copy,
   FileText,
   Info,
+  Mic,
+  MicOff,
   RefreshCw,
   RotateCcw,
   SearchX,
   ShieldAlert,
   TriangleAlert,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 
 const MAX_LENGTH = 1000;
@@ -29,6 +33,13 @@ type Message =
   | { id: string; kind: 'user'; text: string }
   | { id: string; kind: 'answer'; reply: AssistantAnswer }
   | { id: string; kind: 'error'; text: string; question: string };
+
+// Voice (Member 3): browser speech recognition and read-aloud. Recognition language for the
+// microphone; answers come from the backend in any case.
+type VoiceLang = 'en' | 'fr' | 'derja';
+const RECOGNITION_LANG: Record<VoiceLang, string> = { en: 'en-US', fr: 'fr-FR', derja: 'ar-TN' };
+const VOICE_LABEL: Record<VoiceLang, string> = { en: 'English', fr: 'Français', derja: 'Tounsi (Derja)' };
+const speechLangFor = (text: string) => (/[àâçéèêëîïôûùüÿœ]|(le|la|les|des|vous|est|jours)/i.test(text) ? 'fr-FR' : 'en-US');
 
 const newId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -48,6 +59,59 @@ export const AssistantPage: React.FC = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [voiceLang, setVoiceLang] = useState<VoiceLang>('en');
+  const [isListening, setIsListening] = useState(false);
+  const [speakingId, setSpeakingId] = useState<string | null>(null);
+  const [autoSpeak, setAutoSpeak] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const SpeechRecognitionImpl = typeof window !== 'undefined'
+    ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    : undefined;
+  const canListen = Boolean(SpeechRecognitionImpl);
+  const canSpeak = typeof window !== 'undefined' && 'speechSynthesis' in window;
+
+  useEffect(() => () => {
+    recognitionRef.current?.abort?.();
+    if (canSpeak) window.speechSynthesis.cancel();
+  }, []);
+
+  const toggleListening = () => {
+    if (!canListen) return;
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+    const recognition = new SpeechRecognitionImpl();
+    recognition.lang = RECOGNITION_LANG[voiceLang];
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.onresult = (event: any) => setInput((prev) => (prev ? prev + ' ' : '') + event.results[0][0].transcript);
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    recognitionRef.current = recognition;
+    try {
+      recognition.start();
+      setIsListening(true);
+    } catch {
+      setIsListening(false);
+    }
+  };
+
+  const speak = (id: string, text: string) => {
+    if (!canSpeak) return;
+    window.speechSynthesis.cancel();
+    if (speakingId === id) {
+      setSpeakingId(null);
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = speechLangFor(text);
+    utterance.onend = () => setSpeakingId(null);
+    utterance.onerror = () => setSpeakingId(null);
+    setSpeakingId(id);
+    window.speechSynthesis.speak(utterance);
+  };
 
   useEffect(() => {
     api.getAssistantStatus().then(setStatus).catch((e) => setStatusError(e.message || 'The assistant is unavailable.'));
@@ -72,7 +136,9 @@ export const AssistantPage: React.FC = () => {
     setIsSending(true);
     try {
       const reply = await api.askAssistant(question, context);
-      setMessages((prev) => [...prev, { id: newId(), kind: 'answer', reply }]);
+      const id = newId();
+      setMessages((prev) => [...prev, { id, kind: 'answer', reply }]);
+      if (autoSpeak) speak(id, reply.answer);
     } catch (e: any) {
       const message =
         e?.status === 429
@@ -208,6 +274,16 @@ export const AssistantPage: React.FC = () => {
                       {copiedId === m.id ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
                   </div>
+                  {canSpeak && (
+                    <button
+                      onClick={() => speak(m.id, reply.answer)}
+                      className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                      aria-label={speakingId === m.id ? 'Stop reading' : 'Read the answer aloud'}
+                    >
+                      {speakingId === m.id ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                      {speakingId === m.id ? 'Stop' : 'Listen'}
+                    </button>
+                  )}
                   {reply.sources.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {reply.sources.map((src) => (
@@ -276,6 +352,17 @@ export const AssistantPage: React.FC = () => {
               placeholder="Ask a question about a company policy…"
               className="input-base resize-none max-h-40 py-2.5"
             />
+            {canListen && (
+              <button
+                type="button"
+                onClick={toggleListening}
+                className={`btn-secondary h-[42px] w-[42px] p-0 shrink-0 ${isListening ? 'ring-2 ring-rose-400 text-rose-600' : ''}`}
+                aria-label={isListening ? 'Stop dictation' : 'Dictate your question'}
+                title={`Dictate (${VOICE_LABEL[voiceLang]})`}
+              >
+                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              </button>
+            )}
             <button
               type="submit"
               disabled={!input.trim() || isSending}
@@ -286,7 +373,30 @@ export const AssistantPage: React.FC = () => {
             </button>
           </div>
           <div className="flex justify-between mt-1.5 px-1 text-xs text-slate-400">
-            <span>Enter to send · Shift+Enter for a new line</span>
+            <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span>Enter to send · Shift+Enter for a new line</span>
+              {canListen && (
+                <label className="inline-flex items-center gap-1">
+                  Voice
+                  <select
+                    value={voiceLang}
+                    onChange={(e) => setVoiceLang(e.target.value as VoiceLang)}
+                    className="bg-transparent border-0 p-0 text-xs text-slate-500 focus:ring-0"
+                    aria-label="Dictation language"
+                  >
+                    {(Object.keys(VOICE_LABEL) as VoiceLang[]).map((l) => (
+                      <option key={l} value={l}>{VOICE_LABEL[l]}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {canSpeak && (
+                <label className="inline-flex items-center gap-1 cursor-pointer">
+                  <input type="checkbox" checked={autoSpeak} onChange={(e) => setAutoSpeak(e.target.checked)} className="rounded border-slate-300" />
+                  Read answers aloud
+                </label>
+              )}
+            </span>
             {input.length > MAX_LENGTH * 0.8 && <span>{input.length}/{MAX_LENGTH}</span>}
           </div>
         </form>
