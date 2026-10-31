@@ -6,19 +6,18 @@ import {
   Moon,
   Wifi,
   WifiOff,
-  Search,
   User,
   ShieldCheck,
   Zap,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 interface TopbarProps {
   onToggleSidebar: () => void;
   isMockMode: boolean;
   onToggleMockMode: () => void;
   onOpenPitchDemo?: () => void;
-  userRole: string;
 }
 
 export const Topbar: React.FC<TopbarProps> = ({
@@ -26,15 +25,15 @@ export const Topbar: React.FC<TopbarProps> = ({
   isMockMode,
   onToggleMockMode,
   onOpenPitchDemo,
-  userRole,
 }) => {
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
   const location = useLocation();
 
   const getPageTitle = (pathname: string) => {
     switch (pathname) {
       case '/':
-        return 'Overview & Defense Metrics';
+        return 'Overview & Governance Metrics';
       case '/screening':
         return 'Candidate Resume Screening';
       case '/approvals':
@@ -44,15 +43,17 @@ export const Topbar: React.FC<TopbarProps> = ({
       case '/scheduling':
         return 'Recruiter Interview Calendar';
       case '/assistant':
-        return 'Employee Policy Assistant (RAG)';
+        return 'Employee Policy Assistant';
       case '/audit':
         return 'Cryptographic Audit Trail';
       case '/login':
-        return 'Authentication & Role Profiles';
+        return 'Authentication Console';
       default:
         return 'TrustHR AI Workspace';
     }
   };
+
+  const userRole = user?.role ? user.role.replace('_', ' ') : 'Guest';
 
   return (
     <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors">
@@ -82,18 +83,18 @@ export const Topbar: React.FC<TopbarProps> = ({
           <button
             onClick={onOpenPitchDemo}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-all transform active:scale-95"
-            title="Launch 5-Minute Interactive Hackathon Pitch Mode with Teleprompter"
+            title="Launch 5-Minute Interactive Hackathon Pitch Guide"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-amber-300 animate-ping"></span>
-            <span className="hidden sm:inline">5-Min Pitch Mode</span>
+            <span className="hidden sm:inline">5-Min Pitch Guide</span>
             <span className="sm:hidden font-mono text-[11px]">Pitch</span>
           </button>
         )}
 
-        {/* Mock Data / Live API Toggle */}
+        {/* Demo Mode Toggle */}
         <button
           onClick={onToggleMockMode}
-          title="Toggle between Zero-Latency Offline Mock Data and Live FastAPI backend"
+          title="Toggle between Demo Simulation Mode and Real Live Backend API"
           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
             isMockMode
               ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800/60 hover:bg-amber-100'
@@ -103,14 +104,14 @@ export const Topbar: React.FC<TopbarProps> = ({
           {isMockMode ? (
             <>
               <WifiOff className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span className="hidden md:inline">Mock Mode</span>
-              <span className="md:hidden">Mock</span>
+              <span className="hidden md:inline font-mono">Demo Data Mode</span>
+              <span className="md:hidden font-mono">Demo</span>
             </>
           ) : (
             <>
               <Wifi className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 animate-pulse" />
-              <span className="hidden md:inline">Live API</span>
-              <span className="md:hidden">Live</span>
+              <span className="hidden md:inline font-mono">Live Gateway API</span>
+              <span className="md:hidden font-mono">Live</span>
             </>
           )}
         </button>
@@ -128,11 +129,11 @@ export const Topbar: React.FC<TopbarProps> = ({
           )}
         </button>
 
-        {/* Role Indicator Pill */}
+        {/* User Role Pill */}
         <Link
           to="/login"
-          title="Click to switch role or view credentials"
-          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-750 transition-colors"
+          title="Session details / switch user"
+          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-750 hover:border-indigo-500 transition-colors capitalize font-mono text-[11px]"
         >
           <User className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
           <span>{userRole}</span>
