@@ -2,103 +2,186 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * TrustHR design system.
+ * Sans-serif (Inter) for all interface text; monospace only for data that is code-like
+ * (hashes, ids, file names). Calm neutrals, one accent (indigo), status colours for status only.
+ */
+
 @layer base {
   :root {
-    --bg-app: #f8fafc;
+    --bg-app: #f6f7f9;
     --bg-surface: #ffffff;
     --text-primary: #0f172a;
     --text-secondary: #64748b;
-    --border-subtle: #e2e8f0;
+    --border-subtle: #e5e7eb;
   }
 
   .dark {
-    --bg-app: #0a0f1d;
+    --bg-app: #0b1020;
     --bg-surface: #111827;
-    --text-primary: #f8fafc;
+    --text-primary: #f1f5f9;
     --text-secondary: #94a3b8;
     --border-subtle: #1f2937;
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     margin: 0;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: var(--bg-app);
     color: var(--text-primary);
+    line-height: 1.5;
+  }
+
+  h1, h2, h3, h4 {
+    letter-spacing: -0.011em;
+  }
+
+  /* Visible keyboard focus everywhere, invisible for mouse clicks. */
+  :focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+    border-radius: 6px;
   }
 }
 
-/* Custom Scrollbar */
+/* Monospace is for data, not for interface labels: small upper-case labels, badges and
+   buttons always use the interface font, whatever utility classes they carry. */
+.uppercase.font-mono,
+[class*='badge-'].font-mono,
+[class*='btn-'].font-mono {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: 0.04em;
+}
+[class*='badge-'].font-mono,
+[class*='btn-'].font-mono {
+  letter-spacing: 0;
+}
+/* Same for interface text: buttons, headings, table headers, labels and emphasised figures.
+   Normal-weight monospace (hashes, file names, ids) is kept. */
+button.font-mono,
+th.font-mono,
+thead.font-mono,
+label.font-mono,
+h1.font-mono, h2.font-mono, h3.font-mono, h4.font-mono,
+.font-semibold.font-mono,
+.font-bold.font-mono,
+.font-extrabold.font-mono {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #d1d5db;
   border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 .dark ::-webkit-scrollbar-thumb {
   background: #334155;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background-clip: content-box;
 }
 
-/* Enterprise Surface Classes */
-.surface-card {
-  @apply bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 rounded-xl shadow-sm transition-all;
+/* Subtle entrance for feedback banners and modals (respects reduced motion). */
+@keyframes trusthr-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.animate-fade-in {
+  animation: trusthr-fade-in 180ms ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in { animation: none; }
 }
 
-.surface-panel {
-  @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl;
-}
+@layer components {
+  /* Surfaces */
+  .surface-card {
+    @apply bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors;
+  }
 
-/* Standardized Buttons */
-.btn-primary {
-  @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 shadow-sm transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
-}
+  .surface-panel {
+    @apply bg-white/90 dark:bg-slate-900/90 backdrop-blur border border-slate-200/90 dark:border-slate-800 rounded-xl;
+  }
 
-.btn-secondary {
-  @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 active:bg-slate-100 transition-all shadow-sm disabled:opacity-50;
-}
+  /* Typography */
+  .page-title {
+    @apply text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-white;
+  }
+  .page-subtitle {
+    @apply text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-3xl;
+  }
+  .section-title {
+    @apply text-sm font-semibold text-slate-900 dark:text-white;
+  }
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400;
+  }
 
-.btn-danger {
-  @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/40 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-all;
-}
+  /* Buttons */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 shadow-sm transition-colors disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/70 shadow-sm transition-colors disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-rose-700 dark:text-rose-300 bg-white dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors disabled:opacity-50;
+  }
+  .btn-success {
+    @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-emerald-700 dark:text-emerald-300 bg-white dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors disabled:opacity-50;
+  }
 
-.btn-success {
-  @apply inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-all;
-}
+  /* Inputs */
+  .input-base {
+    @apply w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 transition-colors;
+  }
 
-/* Standardized Inputs */
-.input-base {
-  @apply w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all;
-}
+  /* Badges: status colours only */
+  .badge-clean {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/15 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-400/20;
+  }
+  .badge-warning {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-950/50 dark:text-amber-300 dark:ring-amber-400/20;
+  }
+  .badge-danger {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/15 dark:bg-rose-950/50 dark:text-rose-300 dark:ring-rose-400/20;
+  }
+  .badge-info {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-600/15 dark:bg-indigo-950/50 dark:text-indigo-300 dark:ring-indigo-400/20;
+  }
+  .badge-neutral {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-500/15 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-400/20;
+  }
 
-/* Standardized Badges */
-.badge-clean {
-  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/40;
-}
+  /* Tables: scroll horizontally on small screens instead of being cut off. */
+  .table-wrap {
+    @apply w-full overflow-x-auto;
+  }
 
-.badge-warning {
-  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/80 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/40;
-}
-
-.badge-danger {
-  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/80 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800/40;
-}
-
-.badge-info {
-  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800/40;
-}
-
-.badge-neutral {
-  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700;
+  /* States */
+  .empty-state {
+    @apply flex flex-col items-center justify-center text-center gap-2 py-12 px-6 text-sm text-slate-500 dark:text-slate-400;
+  }
+  .skeleton {
+    @apply animate-pulse rounded-md bg-slate-200/70 dark:bg-slate-800;
+  }
 }

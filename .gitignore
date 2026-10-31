@@ -58,6 +58,7 @@ dist-ssr/
 *.db
 data/*
 !data/samples/
+!data/policies/
 !data/benchmark_dataset.json
 uploads/
 

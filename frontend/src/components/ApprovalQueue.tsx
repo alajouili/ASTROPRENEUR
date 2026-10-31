@@ -405,9 +405,16 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefre
                       <Lock className="w-3.5 h-3.5" />
                       <span>Action Gateway Execution Result:</span>
                     </div>
-                    <pre className="text-[11px] font-mono text-slate-700 dark:text-slate-300 overflow-x-auto">
-                      {JSON.stringify(proposal.execution_result, null, 2)}
-                    </pre>
+                    <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
+                      {Object.entries(proposal.execution_result).map(([key, value]) => (
+                        <React.Fragment key={key}>
+                          <dt className="text-slate-500 dark:text-slate-400 capitalize">{key.replace(/_/g, ' ')}</dt>
+                          <dd className="text-slate-800 dark:text-slate-200 break-all">
+                            {Array.isArray(value) ? (value.length ? `${value.length} item(s)` : 'none') : typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value)}
+                          </dd>
+                        </React.Fragment>
+                      ))}
+                    </dl>
                   </div>
                 )}
 
@@ -490,7 +497,8 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefre
                     <div className="text-xs text-slate-500 font-mono">
                       {proposal.reviewed_by && (
                         <span>
-                          Reviewed by: <strong>{proposal.reviewed_by}</strong> &bull; Note: &ldquo;{proposal.review_note}&rdquo;
+                          Reviewed{proposal.reviewed_at ? ` on ${new Date(proposal.reviewed_at).toLocaleString()}` : ''} by user <span title={proposal.reviewed_by}>{proposal.reviewed_by.slice(0, 8)}</span>
+                          {proposal.review_note ? <> &bull; Note: &ldquo;{proposal.review_note}&rdquo;</> : null}
                         </span>
                       )}
                     </div>

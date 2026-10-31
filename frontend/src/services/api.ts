@@ -221,6 +221,34 @@ export interface HomeStats {
 
 export type { MockInboxItem as InboxItem, MockSchedulingSlot as SchedulingSlot, MockPolicyAnswer as PolicyAnswer };
 
+// ---- Policy assistant (POST /api/assistant/ask) ----
+export interface AssistantTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface AssistantSource {
+  id: string;
+  document: string;
+  section: string;
+  excerpt: string;
+}
+
+export interface AssistantAnswer {
+  answer: string;
+  found: boolean;
+  mode: string; // e.g. "groq:openai/gpt-oss-120b" or "offline-retrieval (SIMULATED, no LLM)"
+  notice: string | null;
+  flagged: boolean;
+  sources: AssistantSource[];
+}
+
+export interface AssistantStatus {
+  mode: string;
+  llm_configured: boolean;
+  documents: string[];
+}
+
 export class ApiError extends Error {
   constructor(public status: number, message: string, public details?: any) {
     super(message);
@@ -912,15 +940,35 @@ export const api = {
   },
 
   async askPolicy(question: string) {
-    const found = MOCK_POLICY_KB.find(
-      (k) =>
-        k.question.toLowerCase().includes(question.toLowerCase()) ||
-        question.toLowerCase().includes(k.question.toLowerCase())
-    );
-    return found || MOCK_POLICY_KB[0];
+    // Sample data only: an exact match from the sample list, never an unrelated answer.
+    const q = question.toLowerCase();
+    return MOCK_POLICY_KB.find((k) => k.question.toLowerCase().includes(q) || q.includes(k.question.toLowerCase())) || null;
+  },
+
+  async getAssistantStatus(): Promise<AssistantStatus> {
+    if (_mockMode) {
+      return { mode: 'sample data (no backend)', llm_configured: false, documents: [] };
+    }
+    return request<AssistantStatus>('/api/assistant/status');
+  },
+
+  /** Ask the policy assistant. The conversation so far gives context to follow-up questions. */
+  async askAssistant(question: string, history: AssistantTurn[] = []): Promise<AssistantAnswer> {
+    if (_mockMode) {
+      const hit = await this.askPolicy(question);
+      return hit
+        ? { answer: hit.answer, found: true, mode: 'sample data (no backend)', notice: 'Sample data mode: this is a pre-written example, not an answer from the policy documents.', flagged: false,
+            sources: [{ id: hit.id, document: hit.source, section: hit.section, excerpt: '' }] }
+        : { answer: 'Sample data mode only knows a few pre-written questions. Switch to live data to ask the real policy assistant.', found: false,
+            mode: 'sample data (no backend)', notice: null, flagged: false, sources: [] };
+    }
+    return request<AssistantAnswer>('/api/assistant/ask', {
+      method: 'POST',
+      body: JSON.stringify({ question, history: history.slice(-8) }),
+    });
   },
 
   async askPolicyAssistant(question: string) {
-    return this.askPolicy(question);
+    return this.askAssistant(question);
   },
 };

@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     mailpit_api_url: str = "http://localhost:8025"
 
     shortlist_size: int = 5
+
+    # Policy Assistant: company policy documents (Markdown), read-only.
+    policy_dir: Path = Path("data/policies")
+    assistant_questions_per_minute: int = 20
     embedded_worker: bool = False  # dev convenience: run the worker inside the API process
 
     @model_validator(mode="after")
