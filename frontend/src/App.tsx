@@ -87,13 +87,13 @@ export const App: React.FC = () => {
         {/* Main Content Area */}
         <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Routes>
-            <Route path="/" element={<HomeOverview userRole={userRole} />} />
-            <Route path="/screening" element={<ScreeningPage onDataChanged={loadGlobalCounts} />} />
-            <Route path="/approvals" element={<ApprovalPage onDataChanged={loadGlobalCounts} />} />
-            <Route path="/inbox" element={<InboxPage />} />
-            <Route path="/scheduling" element={<SchedulingPage />} />
+            <Route path="/" element={<HomeOverview userRole={userRole} key={`home-${isMockMode}`} />} />
+            <Route path="/screening" element={<ScreeningPage onDataChanged={loadGlobalCounts} key={`screening-${isMockMode}`} />} />
+            <Route path="/approvals" element={<ApprovalPage onDataChanged={loadGlobalCounts} key={`approvals-${isMockMode}`} />} />
+            <Route path="/inbox" element={<InboxPage key={`inbox-${isMockMode}`} />} />
+            <Route path="/scheduling" element={<SchedulingPage key={`scheduling-${isMockMode}`} />} />
             <Route path="/assistant" element={<AssistantPage />} />
-            <Route path="/audit" element={<AuditPage />} />
+            <Route path="/audit" element={<AuditPage key={`audit-${isMockMode}`} />} />
             <Route
               path="/login"
               element={<LoginPage currentRole={userRole} onRoleChange={handleRoleChange} />}

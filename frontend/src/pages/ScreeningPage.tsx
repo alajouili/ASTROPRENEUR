@@ -113,7 +113,7 @@ export const ScreeningPage: React.FC<ScreeningPageProps> = ({ onDataChanged }) =
           <button
             onClick={() => setFilterMode('TOP')}
             className={`px-3 py-1.5 rounded-lg font-semibold transition-colors ${
-              filterMode === 'TOP' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              filterMode === 'TOP' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
             Score &ge; 75%

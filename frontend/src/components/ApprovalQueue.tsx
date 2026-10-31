@@ -185,6 +185,14 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefre
                           <span>Edit Draft Before Approval</span>
                         </button>
                       )}
+                      {isPending && isEditing && (
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="flex items-center gap-1 text-slate-500 hover:text-slate-700 font-medium"
+                        >
+                          <span>Cancel Edit</span>
+                        </button>
+                      )}
                     </div>
 
                     {isEditing ? (

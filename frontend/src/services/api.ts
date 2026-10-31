@@ -137,13 +137,19 @@ export const api = {
 
   async getHomeStats() {
     if (_mockMode) {
+      const pendingCount = _mockApprovals.filter(a => a.status === 'PENDING').length;
+      const flaggedCount = _mockCandidates.filter(c => c.security_status === 'SUSPICIOUS_FLAGGED').length;
+      const avgScore = _mockCandidates.length > 0
+        ? _mockCandidates.reduce((acc, c) => acc + c.overall_score, 0) / _mockCandidates.length
+        : 84.2;
       return {
         ...MOCK_HOME_STATS,
-        candidatesScreened: _mockCandidates.length + 120,
-        pendingApprovals: _mockApprovals.filter(a => a.status === 'PENDING').length,
+        candidatesScreened: _mockCandidates.length,
+        pendingApprovals: pendingCount,
         inboxUnread: _mockInbox.filter(m => m.needs_human).length,
         interviewsScheduled: _mockSlots.length,
-        securityThreatsIntercepted: _mockCandidates.filter(c => c.security_status === 'SUSPICIOUS_FLAGGED').length + 8,
+        securityThreatsIntercepted: flaggedCount,
+        averageMatchScore: Number(avgScore.toFixed(1)),
       };
     }
     try {
@@ -153,14 +159,23 @@ export const api = {
         this.getAuditTrail(),
       ]);
       const pendingCount = approvals.filter(a => a.status === 'PENDING').length;
+      const candidateBatches = await Promise.all(jobs.map(j => this.getRankedCandidates(j.id).catch(() => [])));
+      const allLiveCandidates = candidateBatches.flat();
+      const screenedCount = allLiveCandidates.length > 0 ? allLiveCandidates.length : 20;
+      const threatCount = allLiveCandidates.filter(c => c.security_status === 'SUSPICIOUS_FLAGGED').length ||
+        audit.logs.filter(l => l.action.includes('INJECTION') || l.action.includes('SECURITY')).length;
+      const avgScore = allLiveCandidates.length > 0
+        ? allLiveCandidates.reduce((acc, c) => acc + c.overall_score, 0) / allLiveCandidates.length
+        : 82.5;
+
       return {
-        candidatesScreened: 24,
+        candidatesScreened: screenedCount,
         pendingApprovals: pendingCount,
         inboxUnread: _mockInbox.filter(m => m.needs_human).length,
         interviewsScheduled: _mockSlots.length,
-        securityThreatsIntercepted: audit.logs.filter(l => l.action.includes('INJECTION') || l.action.includes('SECURITY')).length,
+        securityThreatsIntercepted: threatCount,
         hashChainIntegrity: audit.integrity_verified,
-        averageMatchScore: 82.5,
+        averageMatchScore: Number(avgScore.toFixed(1)),
       };
     } catch {
       return MOCK_HOME_STATS;
@@ -219,7 +234,9 @@ export const api = {
 
   async getRankedCandidates(jobId: string): Promise<Candidate[]> {
     if (_mockMode) {
-      return _mockCandidates.map(c => ({
+      const filtered = _mockCandidates.filter(c => c.job_id === jobId);
+      const listToReturn = filtered.length > 0 ? filtered : _mockCandidates;
+      return listToReturn.map(c => ({
         id: c.id,
         name: c.name,
         email: c.email,
@@ -229,8 +246,8 @@ export const api = {
         security_status: c.security_status,
         security_findings: c.security_findings,
         status: c.status,
-        evaluations_count: c.evaluations_count,
-        pending_actions: c.pending_actions,
+        evaluations_count: c.evaluations_count || c.evaluations?.length || 4,
+        pending_actions: c.pending_actions || [],
         created_at: c.created_at,
       }));
     }
@@ -239,7 +256,9 @@ export const api = {
       if (!res.ok) throw new Error('Failed to fetch candidates from live API');
       return await res.json();
     } catch {
-      return _mockCandidates.map(c => ({
+      const filtered = _mockCandidates.filter(c => c.job_id === jobId);
+      const listToReturn = filtered.length > 0 ? filtered : _mockCandidates;
+      return listToReturn.map(c => ({
         id: c.id,
         name: c.name,
         email: c.email,
@@ -249,8 +268,8 @@ export const api = {
         security_status: c.security_status,
         security_findings: c.security_findings,
         status: c.status,
-        evaluations_count: c.evaluations_count,
-        pending_actions: c.pending_actions,
+        evaluations_count: c.evaluations_count || c.evaluations?.length || 4,
+        pending_actions: c.pending_actions || [],
         created_at: c.created_at,
       }));
     }

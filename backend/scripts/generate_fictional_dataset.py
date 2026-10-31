@@ -810,19 +810,34 @@ def generate_pdf_resume(cand: dict) -> str:
 
 async def seed_database(jobs, candidates):
     """Optionally seeds SQLite database directly via SQLAlchemy."""
-    from backend.app.db.session import engine, Base, async_session_factory
+    from backend.app.db.session import engine, Base, AsyncSessionLocal
     from backend.app.db.models import JobOffer, Candidate, CriterionEvaluation, PendingAction, AuditLog
+    from sqlalchemy import select, delete
+    from datetime import datetime, timezone, timedelta
     import hashlib
+    import json
 
     print("Seeding SQLite database trusthr.db...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    async with async_session_factory() as session:
-        # Insert Benchmark Jobs
+    async with AsyncSessionLocal() as session:
+        # Check if benchmark jobs already exist; if so, clear to prevent duplicate constraints
+        existing_jobs = (await session.execute(select(JobOffer))).scalars().all()
+        if existing_jobs:
+            print("Existing database records detected. Refreshing benchmark dataset...")
+            await session.execute(delete(AuditLog))
+            await session.execute(delete(PendingAction))
+            await session.execute(delete(CriterionEvaluation))
+            await session.execute(delete(Candidate))
+            await session.execute(delete(JobOffer))
+            await session.flush()
+
+        # Insert Benchmark Jobs with deterministic primary keys
         job_map = {}
         for j in jobs:
             db_job = JobOffer(
+                id=j["id"],
                 title=j["title"],
                 department=j["department"],
                 description=j["description"],
@@ -833,9 +848,12 @@ async def seed_database(jobs, candidates):
             job_map[j["id"]] = db_job.id
             print(f"  + Job created: {db_job.title} ({db_job.id})")
 
-        # Insert Candidates
+        # Insert Candidates with progressive timestamps
+        base_time = datetime.now(timezone.utc) - timedelta(hours=3)
         prev_hash = "0" * 64
-        for cand in candidates:
+
+        for idx, cand in enumerate(candidates):
+            cand_time = base_time + timedelta(minutes=idx * 6)
             target_job_id = job_map.get(cand["job_id"], list(job_map.values())[0])
             raw_text = "\n".join(cand["content_lines"])
             file_hash = hashlib.sha256(raw_text.encode("utf-8")).hexdigest()
@@ -862,19 +880,34 @@ async def seed_database(jobs, candidates):
                 overall_score=cand["expected_score"],
                 evaluation_summary=cand["summary"],
                 status="SCREENED",
+                created_at=cand_time,
             )
             session.add(db_cand)
             await session.flush()
 
+            # Find matching job criteria for this candidate's specific position
+            target_job_def = next((j for j in jobs if j["id"] == cand["job_id"]), jobs[0])
+            cand_criteria = target_job_def["criteria"]
+
             # Evaluations
-            for idx, crit in enumerate(BENCHMARK_JOBS[0]["criteria"]):
+            for c_idx, crit in enumerate(cand_criteria):
                 score_val = cand["expected_score"] if not cand["is_attack"] else 20.0
+                quote_text = ""
+                if not cand["is_attack"]:
+                    # Find a relevant line from content_lines if available
+                    for line in cand["content_lines"]:
+                        if any(w.lower() in line.lower() for w in crit["name"].split()):
+                            quote_text = line
+                            break
+                    if not quote_text:
+                        quote_text = f"Verified statement for {crit['name']} from {cand['name']}'s resume."
+
                 eval_item = CriterionEvaluation(
                     candidate_id=db_cand.id,
                     criterion_name=crit["name"],
                     criterion_weight=crit["weight"],
                     score=score_val,
-                    evidence_quote=f"Verified statement for {crit['name']} from {cand['name']}'s resume." if not cand["is_attack"] else "",
+                    evidence_quote=quote_text,
                     evidence_verified=not cand["is_attack"],
                     reasoning=f"Candidate demonstrates required experience for {crit['name']}." if not cand["is_attack"] else "Evidence rejected due to prompt injection flags.",
                 )
@@ -892,19 +925,28 @@ async def seed_database(jobs, candidates):
                         "proposed_slots": ["2026-11-04 10:00 UTC", "2026-11-05 14:00 UTC"],
                     },
                     status="PENDING",
+                    created_at=cand_time + timedelta(minutes=1),
                 )
                 session.add(action)
 
-            # Audit record
-            block_data = f"{prev_hash}|SYSTEM|CANDIDATE_SCREENED|{db_cand.id}"
-            curr_hash = hashlib.sha256(block_data.encode()).hexdigest()
+            # Audit record linked with strict monotonic timestamp
+            audit_time = cand_time + timedelta(minutes=2)
+            audit_details = {
+                "candidate_name": cand["name"],
+                "score": cand["expected_score"],
+                "security": sec_status,
+                "file_name": cand["file_name"],
+            }
+            raw_payload = f"{audit_time.isoformat()}|SYSTEM|CANDIDATE_SCREENED|{db_cand.id}|{json.dumps(audit_details, sort_keys=True)}|{prev_hash}"
+            curr_hash = hashlib.sha256(raw_payload.encode("utf-8")).hexdigest()
             audit_entry = AuditLog(
                 actor="SYSTEM",
                 action="CANDIDATE_SCREENED",
                 target_id=db_cand.id,
-                details={"candidate_name": cand["name"], "score": cand["expected_score"], "security": sec_status},
+                details=audit_details,
                 prev_hash=prev_hash,
                 hash=curr_hash,
+                timestamp=audit_time,
             )
             session.add(audit_entry)
             prev_hash = curr_hash
