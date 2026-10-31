@@ -274,13 +274,31 @@ export const HomeOverview: React.FC<HomeOverviewProps> = ({ userRole }) => {
 
           <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-4 flex justify-between items-center text-xs">
             <span className="text-slate-500 font-mono text-[11px]">Audit Hash Chaining</span>
-            <Link
-              to="/audit"
-              className="text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1 hover:underline"
-            >
-              <span>Inspect Cryptographic Trail</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            {userRole.includes('admin') ? (
+              <Link
+                to="/audit"
+                className="text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1 hover:underline"
+              >
+                <span>Inspect Cryptographic Trail</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            ) : userRole.includes('employee') ? (
+              <Link
+                to="/careers"
+                className="text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1 hover:underline"
+              >
+                <span>Browse Internal Job Board</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            ) : (
+              <Link
+                to="/screening"
+                className="text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1 hover:underline"
+              >
+                <span>Go to ATS Pipeline</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            )}
           </div>
         </div>
       </div>

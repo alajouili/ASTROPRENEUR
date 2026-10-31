@@ -18,6 +18,8 @@ import {
   Zap,
 } from 'lucide-react';
 
+import { TrustHRLogo } from './TrustHRLogo';
+
 interface NavbarProps {
   pendingCount: number;
   securityAlertCount: number;
@@ -43,25 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex justify-between h-16 items-center">
           {/* Logo & Brand */}
           <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
-            <div className="relative">
-              <div className="bg-gradient-to-tr from-sky-600 via-indigo-600 to-sky-400 text-white p-2.5 rounded-xl shadow-[0_0_20px_-3px_rgba(14,165,233,0.5)] group-hover:scale-105 transition-all">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-950 animate-pulse"></span>
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-lg text-white tracking-tight group-hover:text-sky-300 transition-colors">
-                  TrustHR<span className="text-sky-400">.ai</span>
-                </span>
-                <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold bg-sky-500/20 text-sky-300 rounded border border-sky-500/30">
-                  DEFENSE
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400 font-medium hidden sm:block">
-                Human-Controlled Hiring Gateway
-              </p>
-            </div>
+            <TrustHRLogo size="md" textClassName="text-white" />
           </Link>
 
           {/* Desktop Navigation Links */}
