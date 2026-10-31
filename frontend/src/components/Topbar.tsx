@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { Menu, Sun, Moon, Presentation } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { TrustHRLogo } from './TrustHRLogo';
 
 interface TopbarProps {
   onToggleSidebar: () => void;
@@ -12,10 +13,11 @@ interface TopbarProps {
 
 const PAGES: Record<string, { title: string; subtitle: string }> = {
   '/': { title: 'Overview', subtitle: 'Screening activity, pending decisions and security at a glance' },
-  '/screening': { title: 'Resume screening', subtitle: 'Evidence-based ranking against the job criteria' },
+  '/screening': { title: 'Pipeline & screening', subtitle: 'Evidence-based ranking against the job criteria' },
   '/approvals': { title: 'Approval queue', subtitle: 'Every action waits for a human decision' },
   '/inbox': { title: 'Inbox triage', subtitle: 'Candidate emails and reply drafts' },
-  '/scheduling': { title: 'Interview scheduling', subtitle: 'Interview slot proposals' },
+  '/scheduling': { title: 'Interview scheduling', subtitle: 'Interview slot proposals and interview copilot' },
+  '/careers': { title: 'Internal job board', subtitle: 'Open positions inside the company' },
   '/assistant': { title: 'Policy assistant', subtitle: 'Answers from company policy documents, with sources' },
   '/audit': { title: 'Audit trail', subtitle: 'Tamper-evident record of every action' },
   '/lab': { title: 'Adversarial & bias lab', subtitle: 'Attack and fairness checks on the screening pipeline' },
@@ -32,6 +34,9 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar, isMockMode, onT
         <button onClick={onToggleSidebar} className="lg:hidden btn-ghost p-2 -ml-2" aria-label="Open navigation">
           <Menu className="w-5 h-5" />
         </button>
+        <div className="lg:hidden shrink-0">
+          <TrustHRLogo size="sm" showText={false} />
+        </div>
         <div className="min-w-0">
           <h1 className="text-[15px] font-semibold text-slate-900 dark:text-white truncate">{page.title}</h1>
           {page.subtitle && (

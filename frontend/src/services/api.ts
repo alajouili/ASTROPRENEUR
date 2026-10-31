@@ -11,6 +11,7 @@ import {
   MockSchedulingSlot,
   MockPolicyAnswer,
 } from './mockData';
+import type { RiskFlagLike } from '../lib/format';
 
 export interface User {
   id: string;
@@ -114,7 +115,7 @@ export interface RankedCandidate {
   justification: string;
   criteria_results: Record<string, any>;
   risk_level: 'clean' | 'low' | 'medium' | 'high';
-  risk_flags: string[];
+  risk_flags: RiskFlagLike[];
   rejected_evidence: string[];
   engine: string;
 }
@@ -125,7 +126,7 @@ export interface NotRankedCandidate {
   source_filename: string;
   status: string;
   risk_level: string;
-  risk_flags: string[];
+  risk_flags: RiskFlagLike[];
 }
 
 export interface RankingResponse {
@@ -140,7 +141,7 @@ export interface Proposal {
   job_id: string | null;
   payload: any;
   evidence: any;
-  risk_flags: string[];
+  risk_flags: RiskFlagLike[];
   status: 'pending' | 'approved' | 'rejected' | 'failed' | 'executed';
   created_by: string;
   created_at: string;
@@ -176,7 +177,7 @@ export interface CandidateDetailWithResume {
   source_filename: string;
   status: string;
   risk_level: string;
-  risk_flags: string[];
+  risk_flags: RiskFlagLike[];
   file_kind: string;
   resume_text: string;
   screening: {

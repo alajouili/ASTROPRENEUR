@@ -16,6 +16,7 @@ import {
   MessageSquareText,
   AlertCircle,
   RefreshCw,
+  Briefcase,
 } from 'lucide-react';
 
 interface HomeOverviewProps {
@@ -96,6 +97,16 @@ export const HomeOverview: React.FC<HomeOverviewProps> = () => {
           <div className="flex-1">
             <div className="section-title">Policy assistant</div>
             <p className="text-sm text-slate-500 dark:text-slate-400">Answers come only from company policy documents, with the source of each answer.</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-slate-400" />
+        </Link>
+        <Link to="/careers" className="surface-card p-6 flex items-center gap-4 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+          <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0">
+            <Briefcase className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <div className="section-title">Internal job board</div>
+            <p className="text-sm text-slate-500 dark:text-slate-400">See open positions inside the company.</p>
           </div>
           <ArrowRight className="w-4 h-4 text-slate-400" />
         </Link>

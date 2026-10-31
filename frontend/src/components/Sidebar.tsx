@@ -9,7 +9,7 @@ import {
   MessageSquareText,
   Mail,
   CalendarDays,
-  ShieldCheck,
+  Briefcase,
   Sun,
   Moon,
   LogOut,
@@ -19,6 +19,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { initials, roleLabel } from '../lib/format';
+import { TrustHRLogo } from './TrustHRLogo';
 
 interface SidebarProps {
   pendingCount: number;
@@ -51,7 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ pendingCount, securityAlertCou
       title: 'Recruitment',
       items: [
         { to: '/', label: 'Overview', icon: LayoutDashboard, roles: ['recruiter', 'hr_admin', 'employee'], end: true },
-        { to: '/screening', label: 'Resume screening', icon: Users, roles: HR, count: securityAlertCount, countTone: 'rose' },
+        { to: '/screening', label: 'Pipeline & screening', icon: Users, roles: HR, count: securityAlertCount, countTone: 'rose' },
         { to: '/approvals', label: 'Approval queue', icon: CheckCircle2, roles: HR, count: pendingCount, countTone: 'amber' },
       ],
     },
@@ -64,7 +65,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ pendingCount, securityAlertCou
     },
     {
       title: 'Employees',
-      items: [{ to: '/assistant', label: 'Policy assistant', icon: MessageSquareText, roles: ['recruiter', 'hr_admin', 'employee'] }],
+      items: [
+        { to: '/assistant', label: 'Policy assistant', icon: MessageSquareText, roles: ['recruiter', 'hr_admin', 'employee'] },
+        { to: '/careers', label: 'Internal job board', icon: Briefcase, roles: ['recruiter', 'hr_admin', 'employee'] },
+      ],
     },
     {
       title: 'Preview',
@@ -94,9 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ pendingCount, securityAlertCou
         {/* Brand */}
         <div className="h-16 px-5 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
           <Link to="/" onClick={onClose} className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
-              <ShieldCheck className="w-[18px] h-[18px]" />
-            </div>
+            <TrustHRLogo size="md" showText={false} />
             <div className="leading-tight">
               <div className="text-[15px] font-semibold tracking-tight text-slate-900 dark:text-white">TrustHR</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">Recruitment workspace</div>

@@ -75,6 +75,9 @@ _SYNONYMS = {
     "annee": ["year"], "salaire": ["salary", "compensation"], "formation": ["training"], "maladie": ["sick"],
     "malade": ["sick"], "mutuelle": ["health", "insurance"], "sante": ["health"], "donnee": ["data"],
     "personnelle": ["personal"], "frai": ["expense"], "remboursement": ["expense", "reimburs"],
+    # Tunisian Derja (romanised), for dictated questions
+    "3otla": ["leave", "annual"], "conji": ["leave"], "mard": ["sick"], "mridh": ["sick"], "khedma": ["work"],
+    "dar": ["remote", "home"], "flous": ["salary", "expense"], "takwin": ["training"], "tbib": ["medical"],
     "materiel": ["equipment"], "paternite": ["partner", "parental", "leave"], "maternite": ["parental", "leave"],
     "droit": ["right"], "medecin": ["medical"], "psychologue": ["psychologist"],
 }

@@ -15,16 +15,11 @@ export const LoginPage: React.FC = () => {
 
   const from = (location.state as any)?.from?.pathname || '/';
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim() || !password) {
-      setErrorMessage('Please enter both email and password.');
-      return;
-    }
+  const signIn = async (emailValue: string, passwordValue: string) => {
     setIsSubmitting(true);
     setErrorMessage(null);
     try {
-      const user = await login(email.trim(), password);
+      const user = await login(emailValue.trim(), passwordValue);
       if (user.role === 'employee') {
         navigate('/assistant', { replace: true });
       } else {
@@ -37,9 +32,25 @@ export const LoginPage: React.FC = () => {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !password) {
+      setErrorMessage('Please enter both email and password.');
+      return;
+    }
+    await signIn(email, password);
+  };
+
+  // One-click demo sign-in (Member 3's presets). Only when a demo password is supplied at build
+  // time (VITE_DEMO_PASSWORD); otherwise the buttons only fill the email, and no password ships.
+  const demoPassword: string = (import.meta as any).env?.VITE_DEMO_PASSWORD || '';
   const handleQuickFill = (demoEmail: string) => {
     setEmail(demoEmail);
     setErrorMessage(null);
+    if (demoPassword) {
+      setPassword(demoPassword);
+      signIn(demoEmail, demoPassword);
+    }
   };
 
   const demoAccounts = [
@@ -149,7 +160,7 @@ export const LoginPage: React.FC = () => {
           </form>
 
           <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
-            <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">Demo accounts (fills the email)</div>
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">{demoPassword ? 'Demo accounts (one-click sign-in)' : 'Demo accounts (fills the email)'}</div>
             <div className="grid grid-cols-3 gap-2">
               {demoAccounts.map((account) => (
                 <button
