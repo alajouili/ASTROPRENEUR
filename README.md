@@ -223,7 +223,7 @@ The codebase enforces strict test verification across all layers:
 # Backend pytest suite (Security Guard, forensics, injection, output guard, gateway, audit,
 # dashboard API contract), from the repository root, on a throwaway PostgreSQL:
 docker compose --profile test run --rm tests
-# 108 passed
+# 124 passed
 
 # Frontend production build (TypeScript check + Vite bundle)
 cd frontend && npm run build

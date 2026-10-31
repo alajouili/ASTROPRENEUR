@@ -64,7 +64,9 @@ def create_proposal(
     )
     db.add(proposal)
     db.flush()
-    audit(db, actor_type="agent", actor_id=created_by, action="proposal.created", entity_type="proposal",
+    # A recruiter's own draft ("user:<id>") is a user action; anything else comes from an agent.
+    actor_type = "user" if created_by.startswith("user:") else "agent"
+    audit(db, actor_type=actor_type, actor_id=created_by, action="proposal.created", entity_type="proposal",
           entity_id=proposal.id, details={"type": type, "payload": clean, "payload_hash": h, "risk_flags": len(risk_flags)})
     return proposal
 
