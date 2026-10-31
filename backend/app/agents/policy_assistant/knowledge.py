@@ -63,7 +63,7 @@ _SYNONYMS = {
     "vacation": ["annual", "leave"], "holiday": ["annual", "leave"], "pto": ["annual", "leave"],
     "paternity": ["partner", "parental", "leave"], "maternity": ["parental", "leave"],
     "notice": ["notify", "advance"], "wfh": ["remote"], "telework": ["remote"], "homeoffice": ["remote", "equipment"],
-    "salary": ["compensation", "band"], "pay": ["salary", "compensation"], "raise": ["review", "increase"],
+    "salary": ["compensation", "band"], "pay": ["salary", "compensation"], "raise": ["review", "increase", "salary"],
     "ill": ["sick"], "illness": ["sick"], "doctor": ["medical", "sick"], "course": ["training"],
     "certification": ["training"], "conference": ["training"], "gdpr": ["data", "personal"],
     "privacy": ["data", "personal"], "insurance": ["health"], "therapy": ["mental", "psychologist"],
@@ -75,7 +75,15 @@ _SYNONYMS = {
     "annee": ["year"], "salaire": ["salary", "compensation"], "formation": ["training"], "maladie": ["sick"],
     "malade": ["sick"], "mutuelle": ["health", "insurance"], "sante": ["health"], "donnee": ["data"],
     "personnelle": ["personal"], "frai": ["expense"], "remboursement": ["expense", "reimburs"],
+    # Contracts, pay, resignation, conflicts (FR terms from Member 3's assistant)
+    "contrat": ["contract"], "essai": ["probation"], "periode": ["probation"], "probation": ["probation", "trial"],
+    "trial": ["probation"], "demission": ["resign", "resignation"], "demissionner": ["resign"], "quit": ["resign"],
+    "preavi": ["notice"], "augmentation": ["increase", "salary"],
+    "fiche": ["payslip"], "paie": ["payslip", "pay"], "bulletin": ["payslip"],
+    "conflit": ["conflict"], "dispute": ["conflict"], "harcelement": ["harassment"], "harass": ["harassment"], "bully": ["harassment"], "burnout": ["burnout", "stress"],
+    "chef": ["manager"], "brut": ["gross"], "net": ["net"],
     # Tunisian Derja (romanised), for dictated questions
+    "mochkla": ["conflict"], "nzid": ["increase"], "khlas": ["pay", "salary"],
     "3otla": ["leave", "annual"], "conji": ["leave"], "mard": ["sick"], "mridh": ["sick"], "khedma": ["work"],
     "dar": ["remote", "home"], "flous": ["salary", "expense"], "takwin": ["training"], "tbib": ["medical"],
     "materiel": ["equipment"], "paternite": ["partner", "parental", "leave"], "maternite": ["parental", "leave"],
@@ -146,6 +154,21 @@ class PolicyIndex:
         n = len(passages)
         self.idf = {t: math.log(1 + (n - d + 0.5) / (d + 0.5)) for t, d in df.items()}
         self.tf = [Counter(p.tokens) for p in passages]
+
+    def coverage(self, passage: Passage, question: str) -> float:
+        """Share of the question's distinctive words (weighted by rarity) found in the passage,
+        directly or through a synonym. Words the documents never use do not count either way."""
+        present = set(passage.tokens)
+        total = covered = 0.0
+        for token in set(tokenize(question)):
+            forms = {token, *(_stem(s) for s in _SYNONYMS.get(token, []))}
+            weight = max((self.idf.get(f, 0.0) for f in forms), default=0.0)
+            if weight == 0.0:
+                continue
+            total += weight
+            if forms & present:
+                covered += weight
+        return covered / total if total else 0.0
 
     def documents(self, audiences: set[str]) -> list[str]:
         return sorted({p.document for p in self.passages if p.audience in audiences})

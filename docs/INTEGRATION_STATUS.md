@@ -65,7 +65,7 @@ Member 2's branch is a separate prototype at the repository root (`app/`, `guard
 
 | Suite | Result |
 |---|---|
-| Backend (`docker compose --profile test run --rm tests`) | **168 passed** |
+| Backend (`docker compose --profile test run --rm tests`) | **176 passed** |
 | Frontend `npm run build` (tsc + Vite) | Passes |
 | `npm audit --omit=dev` | 0 vulnerabilities |
 | API end-to-end (`e2e/dashboard-api.e2e.mjs`, real `api.ts`) | **18/18** |
