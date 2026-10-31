@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { api, AuditResponse } from '../services/api';
+import { api, AuditEntry, AuditVerifyResponse } from '../services/api';
 import { AuditLogView } from '../components/AuditLogView';
-import { ShieldCheck, Filter, KeyRound, RefreshCw, Database } from 'lucide-react';
+import { RefreshCw, AlertCircle, Filter } from 'lucide-react';
 
-interface AuditPageProps {
-  onDataChanged?: () => void;
-}
-
-export const AuditPage: React.FC<AuditPageProps> = () => {
-  const [auditData, setAuditData] = useState<AuditResponse | null>(null);
+export const AuditPage: React.FC = () => {
+  const [logs, setLogs] = useState<AuditEntry[]>([]);
+  const [verificationResult, setVerificationResult] = useState<AuditVerifyResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [actorFilter, setActorFilter] = useState<string>('ALL');
+  const [isVerifying, setIsVerifying] = useState<boolean>(false);
+  const [actionFilter, setActionFilter] = useState<string>('ALL');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadAudit();
@@ -18,49 +17,72 @@ export const AuditPage: React.FC<AuditPageProps> = () => {
 
   const loadAudit = async () => {
     setIsLoading(true);
+    setErrorMessage(null);
     try {
-      const data = await api.getAuditTrail();
-      setAuditData(data);
-    } catch (e) {
-      console.error('Failed to load audit trail', e);
+      const data = await api.getAuditTrail(200);
+      setLogs(data);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to retrieve audit trail.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const filteredLogs = auditData?.logs.filter((log) => {
-    if (actorFilter === 'ALL') return true;
-    return log.actor === actorFilter;
-  });
+  const handleVerifyChain = async () => {
+    setIsVerifying(true);
+    setErrorMessage(null);
+    try {
+      const res = await api.verifyAuditChain();
+      setVerificationResult(res);
+    } catch (err: any) {
+      setErrorMessage(
+        err.status === 403
+          ? 'Cryptographic verification requires HR Admin permissions (403 Forbidden).'
+          : err.message || 'Audit chain verification failed.'
+      );
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
-  const filteredAuditData = auditData
-    ? {
-        ...auditData,
-        logs: filteredLogs || [],
-      }
-    : null;
+  const filteredLogs = logs.filter((log) => {
+    if (actionFilter === 'ALL') return true;
+    if (actionFilter === 'SECURITY') {
+      return (
+        log.action.includes('quarantine') ||
+        log.action.includes('locked') ||
+        log.action.includes('injection') ||
+        log.action.includes('flag')
+      );
+    }
+    if (actionFilter === 'PROPOSALS') {
+      return log.action.includes('proposal') || log.action.includes('approved') || log.action.includes('rejected');
+    }
+    if (actionFilter === 'JOBS') {
+      return log.action.includes('job') || log.action.includes('screening') || log.action.includes('candidate');
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-4">
-      {/* Actor Filter Bar */}
+      {/* Action Filter Bar */}
       <div className="surface-card p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div className="flex items-center gap-1.5 flex-wrap text-xs">
-          <span className="text-slate-500 font-mono uppercase text-[11px] mr-1">Filter Actor:</span>
-          {(['ALL', 'SECURITY_GUARD', 'HR_AUTHORIZED_USER', 'ORCHESTRATOR', 'SYSTEM'] as const).map(
-            (actor) => (
-              <button
-                key={actor}
-                onClick={() => setActorFilter(actor)}
-                className={`px-3 py-1.5 rounded-lg font-mono text-xs font-medium transition-colors ${
-                  actorFilter === actor
-                    ? 'bg-indigo-600 text-white font-semibold'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                {actor.replace('_', ' ')}
-              </button>
-            )
-          )}
+          <span className="text-slate-500 font-mono uppercase text-[11px] mr-1">Filter Activity:</span>
+          {(['ALL', 'SECURITY', 'PROPOSALS', 'JOBS'] as const).map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setActionFilter(filter)}
+              className={`px-3 py-1.5 rounded-lg font-mono text-xs font-medium transition-colors ${
+                actionFilter === filter
+                  ? 'bg-indigo-600 text-white font-semibold'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
         </div>
 
         <button
@@ -68,14 +90,23 @@ export const AuditPage: React.FC<AuditPageProps> = () => {
           className="btn-secondary text-xs py-1.5 px-3"
         >
           <RefreshCw className="w-3.5 h-3.5" />
-          <span>Verify Integrity Chain</span>
+          <span>Refresh Trail</span>
         </button>
       </div>
 
+      {errorMessage && (
+        <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
       {/* Main Audit Log Stream */}
       <AuditLogView
-        auditData={filteredAuditData}
-        onRefresh={loadAudit}
+        logs={filteredLogs}
+        verificationResult={verificationResult}
+        onVerify={handleVerifyChain}
+        isVerifying={isVerifying}
         isLoading={isLoading}
       />
     </div>

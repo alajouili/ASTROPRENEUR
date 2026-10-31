@@ -92,6 +92,14 @@ export const AssistantPage: React.FC = () => {
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
+      {/* Roadmap Notice */}
+      <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs flex items-center justify-between font-mono">
+        <div className="flex items-center gap-2">
+          <span className="badge-warning text-[10px]">Preview (simulated)</span>
+          <span>Policy Assistant milestone M3. Running on local simulated corporate policy knowledge base.</span>
+        </div>
+      </div>
+
       {/* Header Banner */}
       <div className="surface-card p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>

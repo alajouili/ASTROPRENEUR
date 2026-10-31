@@ -1,80 +1,71 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
   ShieldCheck,
   Lock,
-  UserCheck,
-  ArrowRight,
-  Sparkles,
+  Mail,
   KeyRound,
+  AlertCircle,
+  ArrowRight,
   ShieldAlert,
-  User,
-  CheckCircle,
 } from 'lucide-react';
 
-interface LoginPageProps {
-  currentRole: string;
-  onRoleChange: (newRole: string) => void;
-}
-
-export const LoginPage: React.FC<LoginPageProps> = ({ currentRole, onRoleChange }) => {
+export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const [selectedRole, setSelectedRole] = useState<string>(currentRole);
-  const [username, setUsername] = useState<string>('sarah.recruiter@trusthr.ai');
-  const [password, setPassword] = useState<string>('••••••••••••');
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const location = useLocation();
+  const { login } = useAuth();
 
-  const handleRolePreset = (role: 'Recruiter' | 'HR Admin' | 'Employee') => {
-    setSelectedRole(role);
-    if (role === 'Recruiter') {
-      setUsername('sarah.recruiter@trusthr.ai');
-    } else if (role === 'HR Admin') {
-      setUsername('claire.compliance@trusthr.ai');
-    } else {
-      setUsername('mehdi.employee@trusthr.ai');
+  const [email, setEmail] = useState<string>('recruiter@trusthr.demo');
+  const [password, setPassword] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const from = (location.state as any)?.from?.pathname || '/';
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !password) {
+      setErrorMessage('Please enter both email and password.');
+      return;
+    }
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    try {
+      const user = await login(email.trim(), password);
+      if (user.role === 'employee') {
+        navigate('/assistant', { replace: true });
+      } else {
+        navigate(from === '/login' ? '/' : from, { replace: true });
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Authentication failed. Please verify your credentials.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onRoleChange(selectedRole);
-    setFeedback(`Authenticated as ${selectedRole}! Redirecting...`);
-    setTimeout(() => {
-      if (selectedRole === 'Employee') {
-        navigate('/assistant');
-      } else {
-        navigate('/');
-      }
-    }, 600);
-  };
-
-  const handleQuickSwitch = (role: 'Recruiter' | 'HR Admin' | 'Employee') => {
-    setSelectedRole(role);
-    onRoleChange(role);
-    setFeedback(`Switched active role to ${role}!`);
-    setTimeout(() => {
-      if (role === 'Employee') {
-        navigate('/assistant');
-      } else {
-        navigate('/');
-      }
-    }, 500);
+  const handleQuickFill = (demoEmail: string) => {
+    setEmail(demoEmail);
+    setErrorMessage(null);
   };
 
   return (
-    <div className="min-h-[75vh] flex items-center justify-center p-4 animate-fade-in">
-      <div className="w-full max-w-lg surface-card overflow-hidden shadow-lg">
-        {/* Top Header Card */}
-        <div className="p-6 sm:p-7 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850">
+    <div className="min-h-[75vh] flex items-center justify-center p-4">
+      <div className="w-full max-w-md surface-card overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800">
+        {/* Header */}
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">TrustHR<span className="text-indigo-600">.ai</span></span>
-                <span className="badge-info font-mono text-[10px]">
-                  Enterprise SSO
+                <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">
+                  TrustHR<span className="text-indigo-600">.ai</span>
+                </span>
+                <span className="badge-clean text-[10px] font-mono">
+                  Argon2id + CSRF
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -82,157 +73,107 @@ export const LoginPage: React.FC<LoginPageProps> = ({ currentRole, onRoleChange 
               </p>
             </div>
           </div>
-
-          <div className="flex items-center gap-3 mt-4 text-xs text-slate-500 dark:text-slate-400">
-            <span className="flex items-center gap-1 font-mono text-[11px]">
-              <Lock className="w-3.5 h-3.5 text-emerald-600" />
-              Argon2id Hashes
-            </span>
-            <span>&bull;</span>
-            <span className="flex items-center gap-1 font-mono text-[11px]">
-              <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-              CSRF Protected
-            </span>
-            <span>&bull;</span>
-            <span className="flex items-center gap-1 font-mono text-[11px]">
-              <UserCheck className="w-3.5 h-3.5 text-amber-600" />
-              RBAC Guard
-            </span>
-          </div>
         </div>
 
-        {feedback && (
-          <div className="mx-6 mt-4 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-800 dark:text-emerald-200 flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-            <span>{feedback}</span>
-          </div>
-        )}
-
-        <div className="p-6 sm:p-7 space-y-5">
-          {/* 1-Click Role Switcher Presets */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 font-mono">
-              1-Click Role Switcher (Instant Demo Presets)
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {/* Recruiter */}
-              <button
-                type="button"
-                onClick={() => handleQuickSwitch('Recruiter')}
-                className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
-                  selectedRole === 'Recruiter'
-                    ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50'
-                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-slate-900 dark:text-white">Recruiter</span>
-                  {selectedRole === 'Recruiter' && (
-                    <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
-                  )}
-                </div>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-tight">
-                  Candidate ranking, inline draft edits, Action Gateway.
-                </p>
-              </button>
-
-              {/* HR Admin */}
-              <button
-                type="button"
-                onClick={() => handleQuickSwitch('HR Admin')}
-                className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
-                  selectedRole === 'HR Admin'
-                    ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50'
-                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-slate-900 dark:text-white">HR Admin</span>
-                  {selectedRole === 'HR Admin' && (
-                    <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
-                  )}
-                </div>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-tight">
-                  Cryptographic SHA-256 audit inspection & governance.
-                </p>
-              </button>
-
-              {/* Employee */}
-              <button
-                type="button"
-                onClick={() => handleQuickSwitch('Employee')}
-                className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
-                  selectedRole === 'Employee'
-                    ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50'
-                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-slate-900 dark:text-white">Employee</span>
-                  {selectedRole === 'Employee' && (
-                    <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
-                  )}
-                </div>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-tight">
-                  Policy Q&A chatbot with handbook citations.
-                </p>
-              </button>
+        {/* Login Form */}
+        <div className="p-6">
+          {errorMessage && (
+            <div className="mb-4 p-3 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 text-xs flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
+              <span>{errorMessage}</span>
             </div>
-          </div>
+          )}
 
-          <div className="relative flex py-1 items-center">
-            <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-            <span className="flex-shrink mx-3 text-[10px] text-slate-400 font-mono uppercase">
-              Or Sign In With Enterprise SSO
-            </span>
-            <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleLoginSubmit} className="space-y-3.5 text-xs">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">Corporate Email / SSO:</label>
-              <input
-                type="email"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="input-base font-mono"
-              />
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                <input
+                  type="email"
+                  required
+                  autoFocus
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@trusthr.demo"
+                  className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
             </div>
 
             <div>
-              <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">Passkey / Password:</label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input-base font-mono"
-              />
-            </div>
-
-            <div>
-              <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">Authorized Profile Role:</label>
-              <select
-                value={selectedRole}
-                onChange={(e) => handleRolePreset(e.target.value as any)}
-                className="input-base font-semibold"
-              >
-                <option value="Recruiter">Recruiter (Screening & Approvals)</option>
-                <option value="HR Admin">HR Admin (Audit & Compliance)</option>
-                <option value="Employee">Employee (Policy Assistant)</option>
-              </select>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Password
+                </label>
+                <span className="text-[11px] text-slate-400 font-mono">Strict Auth</span>
+              </div>
+              <div className="relative">
+                <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
             </div>
 
             <button
               type="submit"
-              className="btn-primary w-full py-2.5"
+              disabled={isSubmitting}
+              className="w-full btn-primary py-2.5 text-xs flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
             >
-              <span>Sign In as {selectedRole}</span>
-              <ArrowRight className="w-4 h-4" />
+              {isSubmitting ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Authenticating against Gateway...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In to Console</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              )}
             </button>
           </form>
+
+          {/* Dev-only Demo Fill (no hardcoded passwords) */}
+          <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">
+              Dev / Demo Accounts (Pre-configured in seed):
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => handleQuickFill('recruiter@trusthr.demo')}
+                className="p-1.5 rounded border border-slate-200 dark:border-slate-750 bg-slate-50 dark:bg-slate-800 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:border-indigo-500 text-center transition-colors"
+              >
+                Recruiter
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickFill('admin@trusthr.demo')}
+                className="p-1.5 rounded border border-slate-200 dark:border-slate-750 bg-slate-50 dark:bg-slate-800 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:border-indigo-500 text-center transition-colors"
+              >
+                HR Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickFill('employee@trusthr.demo')}
+                className="p-1.5 rounded border border-slate-200 dark:border-slate-750 bg-slate-50 dark:bg-slate-800 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:border-indigo-500 text-center transition-colors"
+              >
+                Employee
+              </button>
+            </div>
+            <p className="text-[10px] text-slate-400 mt-2">
+              Passwords are configured via <code className="font-mono">SEED_*_PASSWORD</code> during initialization.
+            </p>
+          </div>
         </div>
       </div>
     </div>

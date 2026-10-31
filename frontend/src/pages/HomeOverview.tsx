@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../services/api';
+import { api, HomeStats } from '../services/api';
 import { EUAIActRadar } from '../components/EUAIActRadar';
 import {
   ShieldCheck,
@@ -16,9 +16,8 @@ import {
   Layers,
   Fingerprint,
   Cpu,
-  Terminal,
-  ExternalLink,
   ChevronRight,
+  Sparkles,
 } from 'lucide-react';
 
 interface HomeOverviewProps {
@@ -26,25 +25,17 @@ interface HomeOverviewProps {
 }
 
 export const HomeOverview: React.FC<HomeOverviewProps> = ({ userRole }) => {
-  const [stats, setStats] = useState<any>({
-    candidatesScreened: 128,
-    pendingApprovals: 4,
-    inboxUnread: 7,
-    interviewsScheduled: 9,
-    securityThreatsIntercepted: 12,
+  const [stats, setStats] = useState<HomeStats>({
+    candidatesScreened: 0,
+    pendingApprovals: 0,
+    inboxUnread: 0,
+    interviewsScheduled: 0,
+    securityThreatsIntercepted: 0,
     hashChainIntegrity: true,
-    averageMatchScore: 84.2,
+    averageMatchScore: 0,
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  // Live Defense Security SOC Feed Simulation
-  const liveEvents = [
-    { time: '19:30:12', tag: 'FORENSICS', type: 'danger', message: 'Intercepted 1.2pt white-text injection in resume #109 (Candidate "Maxime V.")' },
-    { time: '19:29:45', tag: 'DETERMINISTIC', type: 'success', message: '100% verified evidence quotes verified for Candidate Leila Ben Salem (94.0%)' },
-    { time: '19:28:30', tag: 'GATEWAY', type: 'warning', message: 'Proposed interview invitation held for Recruiter authorization (Air-Gap enforced)' },
-    { time: '19:26:15', tag: 'AUDIT', type: 'info', message: 'Signed block #482 into SHA-256 chain: hash b9f4a1e8... verified' },
-    { time: '19:24:02', tag: 'INBOX', type: 'neutral', message: 'Triaged 3 candidate emails with automated draft recommendations' },
-  ];
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadStats();
@@ -52,15 +43,18 @@ export const HomeOverview: React.FC<HomeOverviewProps> = ({ userRole }) => {
 
   const loadStats = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const data = await api.getHomeStats();
       setStats(data);
-    } catch (e) {
-      console.error('Failed to load stats', e);
+    } catch (err: any) {
+      setError(err.message || 'Failed to aggregate statistics from gateway.');
     } finally {
       setIsLoading(false);
     }
   };
+
+  const isMock = api.isMockMode();
 
   return (
     <div className="space-y-6">
@@ -71,12 +65,12 @@ export const HomeOverview: React.FC<HomeOverviewProps> = ({ userRole }) => {
             <div className="flex flex-wrap items-center gap-2">
               <span className="badge-clean">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Autonomous Defense Active
+                {isMock ? 'Demo Simulation Dataset' : 'Gateway Defense Active'}
               </span>
-              <span className="badge-neutral font-mono">
-                Operator Role: <strong className="text-slate-900 dark:text-white ml-1">{userRole}</strong>
+              <span className="badge-neutral font-mono text-xs">
+                Role: <strong className="text-slate-900 dark:text-white ml-1">{userRole}</strong>
               </span>
-              <span className="badge-info font-mono">
+              <span className="badge-info font-mono text-xs">
                 EU AI Act Annex III.4
               </span>
             </div>
@@ -86,7 +80,7 @@ export const HomeOverview: React.FC<HomeOverviewProps> = ({ userRole }) => {
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
-              High-Risk Human-in-the-Loop multi-agent hiring infrastructure. Resumes are sanitized against microscopic prompt-injections, scored mathematically against verified verbatim quotes, and outbound emails or calendar slots require authenticated human approval.
+              High-Risk Human-in-the-Loop multi-agent recruitment infrastructure. Resumes are sanitized against microscopic prompt-injections, scored mathematically against verified verbatim quotes, and state changes require explicit recruiter authorization.
             </p>
 
             <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pt-1">
@@ -96,358 +90,197 @@ export const HomeOverview: React.FC<HomeOverviewProps> = ({ userRole }) => {
               </span>
               <span className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-medium">
                 <Lock className="w-3.5 h-3.5" />
-                Air-Gapped Gateway
+                Action Gateway Air-Gap
               </span>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2.5 w-full lg:w-auto flex-shrink-0">
-            <Link to="/screening" className="btn-primary">
+          <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 w-full lg:w-auto">
+            <Link
+              to="/screening"
+              className="btn-primary flex items-center justify-center gap-2 text-xs py-2.5 px-4"
+            >
               <Users className="w-4 h-4" />
-              <span>Screen Candidates</span>
+              <span>Resume Screening Console</span>
+              <ChevronRight className="w-4 h-4" />
             </Link>
-            <Link to="/approvals" className="btn-secondary">
-              <CheckCircle2 className="w-4 h-4 text-amber-500" />
-              <span>Review Approvals ({stats.pendingApprovals})</span>
+            <Link
+              to="/approvals"
+              className="btn-secondary flex items-center justify-center gap-2 text-xs py-2.5 px-4"
+            >
+              <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <span>Approval Queue ({stats.pendingApprovals})</span>
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Requisition Defense Pipeline Funnel */}
-      <div className="surface-card p-5">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-              End-to-End Recruitment Defense Funnel
-            </h3>
-          </div>
-          <span className="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded">
-            Air-Gap Gateway Enforced
-          </span>
+      {error && (
+        <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300">
+          <strong>Notice:</strong> {error}
         </div>
+      )}
 
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-center">
-          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60">
-            <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">1. Inbound CVs</span>
-            <div className="text-lg font-bold text-slate-900 dark:text-white mt-1">{stats.candidatesScreened}</div>
-            <span className="text-[10px] text-slate-500">Multi-Format Ingest</span>
-          </div>
-
-          <div className="p-3 rounded-lg bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40">
-            <span className="text-[10px] uppercase font-bold text-rose-700 dark:text-rose-400">2. Forensics</span>
-            <div className="text-lg font-bold text-rose-700 dark:text-rose-400 mt-1">{stats.securityThreatsIntercepted} Defanged</div>
-            <span className="text-[10px] text-rose-600 dark:text-rose-400/80">&lt;2pt Fonts & White-text</span>
-          </div>
-
-          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60">
-            <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">3. Quote Proofs</span>
-            <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-1">100% Valid</div>
-            <span className="text-[10px] text-emerald-700 dark:text-emerald-400/80">Verbatim Source Exact</span>
-          </div>
-
-          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60">
-            <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">4. Shortlist</span>
-            <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400 mt-1">12 Ranked</div>
-            <span className="text-[10px] text-indigo-600 dark:text-indigo-400/80">Avg {stats.averageMatchScore}%</span>
-          </div>
-
-          <div className="p-3 rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40">
-            <span className="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-400">5. Human Gate</span>
-            <div className="text-lg font-bold text-amber-700 dark:text-amber-400 mt-1">{stats.pendingApprovals} Proposals</div>
-            <span className="text-[10px] text-amber-600 dark:text-amber-400/80">Requires Sign-off</span>
-          </div>
-
-          <div className="p-3 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40">
-            <span className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-400">6. Dispatched</span>
-            <div className="text-lg font-bold text-emerald-700 dark:text-emerald-400 mt-1">{stats.interviewsScheduled} Locked</div>
-            <span className="text-[10px] text-emerald-600 dark:text-emerald-400/80">Mailpit & Calendar</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Top 4 KPI Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* KPI 1: Screening */}
-        <div className="surface-card p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Deterministic Match
-            </span>
+      {/* Primary KPI Grid (Derived dynamically from backend) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Candidates Screened */}
+        <div className="surface-card p-4 sm:p-5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-semibold uppercase tracking-wider font-mono">Screened</span>
             <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
               <Users className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3 flex items-baseline justify-between">
-            <div>
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.averageMatchScore}%</div>
-              <p className="text-xs text-slate-500 mt-0.5">{stats.candidatesScreened} Resumes Scored</p>
+          <div className="mt-4">
+            <div className="text-2xl font-bold font-mono text-slate-900 dark:text-white">
+              {isLoading ? '...' : stats.candidatesScreened}
             </div>
-            <span className="badge-clean">100% Grounded</span>
-          </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 flex justify-between">
-            <span>Verified Quote Basis</span>
-            <span className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">Strict</span>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              Parsed & scored CVs
+            </p>
           </div>
         </div>
 
-        {/* KPI 2: Approvals */}
-        <div className="surface-card p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Pending Approvals
-            </span>
+        {/* Pending Approvals */}
+        <div className="surface-card p-4 sm:p-5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-semibold uppercase tracking-wider font-mono">Pending Gate</span>
             <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3 flex items-baseline justify-between">
-            <div>
-              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pendingApprovals}</div>
-              <p className="text-xs text-slate-500 mt-0.5">Proposals in Air-Gap Queue</p>
+          <div className="mt-4">
+            <div className="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">
+              {isLoading ? '...' : stats.pendingApprovals}
             </div>
-            <span className="badge-warning">HITL Sign-off</span>
-          </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 flex justify-between">
-            <span>Zero Outbound Without Human</span>
-            <span className="font-mono text-amber-600 dark:text-amber-400 font-semibold">Enforced</span>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              Awaiting human authorization
+            </p>
           </div>
         </div>
 
-        {/* KPI 3: Quarantined Threats */}
-        <div className="surface-card p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Threats Quarantined
-            </span>
+        {/* Quarantined Threats */}
+        <div className="surface-card p-4 sm:p-5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-semibold uppercase tracking-wider font-mono">Quarantined</span>
             <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
               <ShieldAlert className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3 flex items-baseline justify-between">
-            <div>
-              <div className="text-2xl font-bold text-rose-600 dark:text-rose-400">{stats.securityThreatsIntercepted}</div>
-              <p className="text-xs text-slate-500 mt-0.5">Adversarial Attacks Defanged</p>
+          <div className="mt-4">
+            <div className="text-2xl font-bold font-mono text-rose-600 dark:text-rose-400">
+              {isLoading ? '...' : stats.securityThreatsIntercepted}
             </div>
-            <span className="badge-danger">0% Bypassed</span>
-          </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 flex justify-between">
-            <span>White-text & Prompt Guard</span>
-            <span className="font-mono text-rose-600 dark:text-rose-400 font-semibold">Neutralized</span>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              Injections & active threats
+            </p>
           </div>
         </div>
 
-        {/* KPI 4: Audit Ledger */}
-        <div className="surface-card p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              SHA-256 Ledger
-            </span>
+        {/* Average Match Score */}
+        <div className="surface-card p-4 sm:p-5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-semibold uppercase tracking-wider font-mono">Avg Match</span>
             <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
-              <Lock className="w-4 h-4" />
+              <Activity className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3 flex items-baseline justify-between">
-            <div>
-              <div className="text-base font-bold text-emerald-600 dark:text-emerald-400 font-mono">CHAIN VALID</div>
-              <p className="text-xs text-slate-500 mt-0.5">Cryptographic Immutable Trail</p>
+          <div className="mt-4">
+            <div className="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
+              {isLoading ? '...' : stats.averageMatchScore > 0 ? `${stats.averageMatchScore}%` : '—'}
             </div>
-            <Fingerprint className="w-6 h-6 text-emerald-500/40" />
-          </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 flex justify-between">
-            <span>EU AI Act Art. 12 Compliant</span>
-            <span className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">100% Intact</span>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              Deterministic verified average
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Real-Time Defense Operations Stream */}
-      <div className="surface-card p-5">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <Terminal className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-              Live Defense Operations Stream (Real-Time Telemetry)
+      {/* Two Column Layout: Compliance Radar & Golden Rule Flow */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* EU AI Act Radar Component */}
+        <div className="surface-card p-5 border border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+              <Fingerprint className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <span>EU AI Act Compliance & Audit Assurance</span>
             </h3>
+            <span className="badge-clean text-[10px] font-mono">
+              Article 14 Active
+            </span>
           </div>
-          <span className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-600 dark:text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-            ACTIVE MONITORING
-          </span>
+          <div className="pt-4">
+            <EUAIActRadar />
+          </div>
         </div>
 
-        <div className="mt-3 divide-y divide-slate-100 dark:divide-slate-800 font-mono text-xs">
-          {liveEvents.map((evt, idx) => {
-            const badgeClass =
-              evt.type === 'danger'
-                ? 'badge-danger'
-                : evt.type === 'success'
-                ? 'badge-clean'
-                : evt.type === 'warning'
-                ? 'badge-warning'
-                : evt.type === 'info'
-                ? 'badge-info'
-                : 'badge-neutral';
+        {/* Golden Rule Architecture Walkthrough */}
+        <div className="surface-card p-5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                <Lock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span>Action Gateway Security Model</span>
+              </h3>
+              <span className="badge-neutral text-[10px] font-mono">
+                No LLM Side-Effects
+              </span>
+            </div>
 
-            return (
-              <div key={idx} className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 px-2 rounded transition-colors">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-slate-400 text-[11px]">{evt.time}</span>
-                  <span className={badgeClass}>{evt.tag}</span>
-                  <span className="text-slate-700 dark:text-slate-300 text-xs font-sans">{evt.message}</span>
+            <div className="pt-4 space-y-3.5 text-xs text-slate-600 dark:text-slate-400">
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+                <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                  1
                 </div>
-                <span className="text-[10px] text-slate-400 hidden sm:inline">Signed SHA-256</span>
+                <div>
+                  <h4 className="font-semibold text-slate-800 dark:text-slate-200">
+                    Autonomous Intelligence Proposes
+                  </h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    FastAPI + LangGraph screening agents extract quotes and propose shortlists. Agents have <strong>zero write access</strong> to databases, SMTP, or calendar backends.
+                  </p>
+                </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
 
-      {/* EU AI Act High-Risk Compliance Engine Component */}
-      <EUAIActRadar />
-
-      {/* Operational Modules Navigation Grid */}
-      <div>
-        <div className="flex items-center justify-between mb-3.5">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-            <span>Workspace Operations Modules</span>
-          </h2>
-          <span className="text-xs text-slate-400 font-mono">Member 3 Complete Suite</span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          <Link to="/screening" className="surface-card p-4 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all group">
-            <div className="flex items-center justify-between">
-              <div className="p-2.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                <Users className="w-4 h-4" />
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+                <div className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                  2
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-800 dark:text-slate-200">
+                    Human Authorization & Review
+                  </h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Recruiters inspect evidence quotes, review quarantined risk flags, edit shortlisted candidate IDs, and record review notes.
+                  </p>
+                </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-transform" />
-            </div>
-            <h3 className="font-semibold text-slate-900 dark:text-white mt-3 text-sm">Candidate Screening</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-              Deterministic ranking table, score breakdowns per criterion, and verbatim quote verification inspector.
-            </p>
-          </Link>
 
-          <Link to="/approvals" className="surface-card p-4 hover:border-amber-300 dark:hover:border-amber-600 transition-all group">
-            <div className="flex items-center justify-between">
-              <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 group-hover:bg-amber-600 group-hover:text-white transition-colors">
-                <CheckCircle2 className="w-4 h-4" />
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
+                <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                  3
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-800 dark:text-slate-200">
+                    Action Gateway Executes & Signs
+                  </h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Only <code className="font-mono text-indigo-600 dark:text-indigo-400">executor.py</code> changes database state, locks shortlists, and appends a SHA-256 block into the append-only ledger.
+                  </p>
+                </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-amber-600 group-hover:translate-x-0.5 transition-transform" />
             </div>
-            <h3 className="font-semibold text-slate-900 dark:text-white mt-3 text-sm">Human Approval Queue</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-              Air-gapped Action Gateway. Inspect pending email and calendar proposals, edit inline, and authorize execution.
-            </p>
-          </Link>
-
-          <Link to="/inbox" className="surface-card p-4 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all group">
-            <div className="flex items-center justify-between">
-              <div className="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                <Mail className="w-4 h-4" />
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-transform" />
-            </div>
-            <h3 className="font-semibold text-slate-900 dark:text-white mt-3 text-sm">Inbox Triage & Digest</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-              Automated classification into availability, status inquiries, or adversarial messages with pre-composed responses.
-            </p>
-          </Link>
-
-          <Link to="/scheduling" className="surface-card p-4 hover:border-emerald-300 dark:hover:border-emerald-600 transition-all group">
-            <div className="flex items-center justify-between">
-              <div className="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                <Calendar className="w-4 h-4" />
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-transform" />
-            </div>
-            <h3 className="font-semibold text-slate-900 dark:text-white mt-3 text-sm">Interview Scheduling</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-              Interactive calendar view with recruiter free slots, candidate invitations, and one-click hold management.
-            </p>
-          </Link>
-
-          <Link to="/assistant" className="surface-card p-4 hover:border-purple-300 dark:hover:border-purple-600 transition-all group">
-            <div className="flex items-center justify-between">
-              <div className="p-2.5 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                <Bot className="w-4 h-4" />
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-purple-600 group-hover:translate-x-0.5 transition-transform" />
-            </div>
-            <h3 className="font-semibold text-slate-900 dark:text-white mt-3 text-sm">Policy Assistant</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-              Conversational RAG assistant answering employee policy queries with exact handbook citations and confidence scores.
-            </p>
-          </Link>
-
-          <Link to="/audit" className="surface-card p-4 hover:border-slate-300 dark:hover:border-slate-600 transition-all group">
-            <div className="flex items-center justify-between">
-              <div className="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 group-hover:bg-slate-800 dark:group-hover:bg-slate-700 group-hover:text-white transition-colors">
-                <Lock className="w-4 h-4" />
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white group-hover:translate-x-0.5 transition-transform" />
-            </div>
-            <h3 className="font-semibold text-slate-900 dark:text-white mt-3 text-sm">Security & Audit Trail</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-              Cryptographically chained SHA-256 logs recording every screening, prompt injection detection, and recruiter approval.
-            </p>
-          </Link>
-        </div>
-      </div>
-
-      {/* Backend Provider Telemetry */}
-      <div className="surface-card p-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3 pb-2.5 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <Cpu className="w-4 h-4 text-slate-500" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-              Provider Telemetry & Health Matrix
-            </h3>
-          </div>
-          <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            ALL DEFENSE LAYERS HEALTHY
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60">
-            <div className="flex justify-between items-center text-slate-500 mb-1">
-              <span>Primary LLM</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">ONLINE</span>
-            </div>
-            <div className="font-semibold text-slate-800 dark:text-slate-200">Gemini 2.5 Flash-Lite</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Structured JSON validation</div>
           </div>
 
-          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60">
-            <div className="flex justify-between items-center text-slate-500 mb-1">
-              <span>Fallback LLM</span>
-              <span className="text-indigo-600 dark:text-indigo-400 font-bold font-mono">STANDBY</span>
-            </div>
-            <div className="font-semibold text-slate-800 dark:text-slate-200">Groq Llama-3.3 70B</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Quota failover ready</div>
-          </div>
-
-          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60">
-            <div className="flex justify-between items-center text-slate-500 mb-1">
-              <span>Mailpit Sandbox</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">CONNECTED</span>
-            </div>
-            <div className="font-semibold text-slate-800 dark:text-slate-200">SMTP 1025 / UI 8025</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Isolated outbound mock</div>
-          </div>
-
-          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60">
-            <div className="flex justify-between items-center text-slate-500 mb-1">
-              <span>Action Gateway</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">AIR-GAPPED</span>
-            </div>
-            <div className="font-semibold text-slate-800 dark:text-slate-200">Human Token Required</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Zero unapproved leakage</div>
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-4 flex justify-between items-center text-xs">
+            <span className="text-slate-500 font-mono text-[11px]">Audit Hash Chaining</span>
+            <Link
+              to="/audit"
+              className="text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1 hover:underline"
+            >
+              <span>Inspect Cryptographic Trail</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         </div>
       </div>

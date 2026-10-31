@@ -79,6 +79,14 @@ export const InboxPage: React.FC = () => {
 
   return (
     <div className="space-y-4">
+      {/* Roadmap Notice */}
+      <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs flex items-center justify-between font-mono">
+        <div className="flex items-center gap-2">
+          <span className="badge-warning text-[10px]">Preview (simulated)</span>
+          <span>Inbound mailbox triage milestone M2. Running on local simulated email dataset.</span>
+        </div>
+      </div>
+
       {/* Header Banner */}
       <div className="surface-card p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
         <div>

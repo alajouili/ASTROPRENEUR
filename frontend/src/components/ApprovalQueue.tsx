@@ -1,74 +1,94 @@
 import React, { useState } from 'react';
-import { PendingApproval, api } from '../services/api';
-import { CheckCircle2, XCircle, Send, Edit3, ShieldAlert, Mail, Calendar, Clock, AlertTriangle, Lock } from 'lucide-react';
+import { Proposal, api } from '../services/api';
+import {
+  CheckCircle2,
+  XCircle,
+  ShieldAlert,
+  AlertTriangle,
+  Lock,
+  Edit3,
+  FileCheck,
+  Check,
+  ArrowRight,
+  HelpCircle,
+  Send,
+} from 'lucide-react';
 
 interface ApprovalQueueProps {
-  approvals: PendingApproval[];
+  approvals: Proposal[];
   onRefresh: () => void;
 }
 
 export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefresh }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editedBody, setEditedBody] = useState<string>('');
-  const [editedSubject, setEditedSubject] = useState<string>('');
-  const [reviewNotes, setReviewNotes] = useState<string>('');
+  const [editedCandidateIds, setEditedCandidateIds] = useState<string[]>([]);
+  const [reviewNote, setReviewNote] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string; details?: any } | null>(null);
 
-  const startEditing = (approval: PendingApproval) => {
-    setEditingId(approval.id);
-    setEditedSubject(approval.payload.subject || '');
-    setEditedBody(approval.payload.body || '');
-    setReviewNotes('');
+  const startReview = (proposal: Proposal) => {
+    setEditingId(proposal.id);
+    const initialCandidates = proposal.payload?.candidate_ids || [];
+    setEditedCandidateIds([...initialCandidates]);
+    setReviewNote('');
+    setFeedback(null);
   };
 
-  const handleApprove = async (approval: PendingApproval) => {
+  const handleToggleCandidate = (candidateId: string) => {
+    setEditedCandidateIds((prev) =>
+      prev.includes(candidateId) ? prev.filter((id) => id !== candidateId) : [...prev, candidateId]
+    );
+  };
+
+  const handleApprove = async (proposal: Proposal) => {
     setIsSubmitting(true);
     setFeedback(null);
     try {
-      const isCustomized = editingId === approval.id;
-      const payloadToSend = isCustomized
-        ? {
-            ...approval.payload,
-            subject: editedSubject,
-            body: editedBody,
-          }
-        : approval.payload;
+      const isShortlist = proposal.type === 'shortlist';
+      const body: { candidate_ids?: string[]; note?: string } = {
+        note: reviewNote || 'Approved by recruiter authorization',
+      };
+      if (isShortlist) {
+        body.candidate_ids = editedCandidateIds;
+      }
 
-      // 1. Submit human approval
-      await api.reviewApproval(
-        approval.id,
-        'APPROVED',
-        reviewNotes || 'Approved by Lead Recruiter',
-        payloadToSend
-      );
-
-      // 2. Dispatch approved action deterministically via Action Gateway
-      const dispatchResult = await api.dispatchAction(approval.id);
-
-      setFeedback(`Action successfully executed via Action Gateway! (${dispatchResult.result.status})`);
+      const res = await api.approveProposal(proposal.id, body);
+      setFeedback({
+        type: 'success',
+        message: `Proposal #${proposal.id.substring(0, 8)} approved and executed by Action Gateway.`,
+        details: res.execution_result,
+      });
       setEditingId(null);
       onRefresh();
     } catch (err: any) {
-      setFeedback(`Error: ${err.message}`);
+      setFeedback({
+        type: 'error',
+        message: err.message || 'Action Gateway rejected or failed proposal execution.',
+        details: err.details,
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleReject = async (approvalId: string) => {
+  const handleReject = async (proposalId: string) => {
     setIsSubmitting(true);
+    setFeedback(null);
     try {
-      await api.reviewApproval(
-        approvalId,
-        'REJECTED',
-        reviewNotes || 'Action rejected by recruiter review'
-      );
-      setFeedback('Proposal was rejected. No external action will be taken.');
+      await api.rejectProposal(proposalId, {
+        note: reviewNote || 'Rejected during human review',
+      });
+      setFeedback({
+        type: 'success',
+        message: `Proposal #${proposalId.substring(0, 8)} rejected. State was preserved; no action dispatched.`,
+      });
       setEditingId(null);
       onRefresh();
     } catch (err: any) {
-      setFeedback(`Error: ${err.message}`);
+      setFeedback({
+        type: 'error',
+        message: err.message || 'Failed to reject proposal.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -84,211 +104,284 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefre
               Human Approval & Governance Queue
             </h2>
             <span className="badge-clean">
-              Golden Rule Active
+              Golden Rule Enforced
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            <strong className="text-slate-800 dark:text-slate-200">"The agent proposes, the human decides."</strong> No candidate email or calendar slot is ever dispatched without explicit recruiter authorization.
+            <strong className="text-slate-800 dark:text-slate-200">"The agent proposes, the human decides."</strong> Only the Action Gateway (<code className="font-mono text-indigo-600 dark:text-indigo-400">backend/app/gateway/executor.py</code>) can alter recruitment state.
           </p>
         </div>
 
         <div className="badge-neutral font-mono text-xs">
           <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span>Air-Gapped Gateway</span>
+          <span>Action Gateway Air-Gap</span>
         </div>
       </div>
 
       {feedback && (
-        <div className="p-3.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 text-xs font-medium text-emerald-900 dark:text-emerald-200 flex items-center justify-between">
-          <span>{feedback}</span>
-          <button onClick={() => setFeedback(null)} className="text-emerald-700 dark:text-emerald-400 hover:underline text-xs font-bold">
-            Dismiss
-          </button>
+        <div
+          className={`p-4 rounded-xl border text-xs animate-fade-in ${
+            feedback.type === 'success'
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200'
+              : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200'
+          }`}
+        >
+          <div className="flex items-start gap-2.5">
+            {feedback.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            ) : (
+              <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+            )}
+            <div className="space-y-1">
+              <span className="font-semibold">{feedback.message}</span>
+              {feedback.details && (
+                <pre className="text-[11px] font-mono bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800 overflow-x-auto mt-1">
+                  {JSON.stringify(feedback.details, null, 2)}
+                </pre>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
       {/* Approvals List */}
       {approvals.length === 0 ? (
-        <div className="surface-card p-16 text-center">
-          <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">All proposals reviewed</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            There are currently no pending agent actions requiring recruiter approval.
+        <div className="surface-card p-12 text-center text-slate-500">
+          <FileCheck className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Approval queue is empty</h3>
+          <p className="text-xs text-slate-500 mt-1">
+            New proposals generated by AI agents will appear here for authenticated human sign-off.
           </p>
         </div>
       ) : (
-        <div className="space-y-3.5">
-          {approvals.map((act) => {
-            const isEditing = editingId === act.id;
-            const isPending = act.status === 'PENDING';
-            const isExecuted = act.status === 'EXECUTED';
-            const isSuspicious = act.candidate_security_status === 'SUSPICIOUS_FLAGGED';
+        <div className="space-y-4">
+          {approvals.map((proposal) => {
+            const isEditing = editingId === proposal.id;
+            const isPending = proposal.status === 'pending';
+            const evidence = proposal.evidence || {};
+            const rankingList = evidence.ranking || [];
+            const needsReviewList = evidence.needs_review || [];
+            const missingMustHavesList = evidence.missing_must_haves || [];
 
             return (
               <div
-                key={act.id}
-                className={`surface-card overflow-hidden transition-all ${
-                  isPending
-                    ? 'border-amber-300 dark:border-amber-800/80 ring-1 ring-amber-100 dark:ring-amber-950/50'
-                    : ''
-                }`}
+                key={proposal.id}
+                className="surface-card p-5 border border-slate-200 dark:border-slate-800 space-y-4"
               >
-                {/* Header */}
-                <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                  <div className="flex flex-wrap items-center gap-2.5">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-bold text-sm text-slate-900 dark:text-white font-mono">
+                      Proposal #{proposal.id.substring(0, 8)}
+                    </span>
+                    <span className="badge-neutral font-mono text-[10px] uppercase">
+                      Type: {proposal.type}
+                    </span>
                     <span
-                      className={
-                        isPending
-                          ? 'badge-warning font-mono'
-                          : isExecuted
-                          ? 'badge-clean font-mono'
-                          : act.status === 'APPROVED'
-                          ? 'badge-info font-mono'
-                          : 'badge-danger font-mono'
-                      }
+                      className={`badge font-mono text-[10px] uppercase ${
+                        proposal.status === 'pending'
+                          ? 'badge-warning'
+                          : proposal.status === 'approved' || proposal.status === 'executed'
+                          ? 'badge-clean'
+                          : 'badge-danger'
+                      }`}
                     >
-                      {act.status}
+                      {proposal.status}
                     </span>
-                    <span className="font-semibold text-slate-900 dark:text-white text-xs sm:text-sm">
-                      Target: {act.candidate_name} ({act.candidate_score.toFixed(1)}%)
-                    </span>
-                    {isSuspicious && (
-                      <span className="badge-danger font-mono text-[10px]">
-                        <ShieldAlert className="w-3 h-3 text-rose-500" />
-                        Quarantined Injection
-                      </span>
-                    )}
                   </div>
-                  <div className="text-xs text-slate-400 font-mono flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Created: {new Date(act.created_at).toLocaleTimeString()}</span>
+                  <div className="text-[11px] font-mono text-slate-400">
+                    Created: {new Date(proposal.created_at).toLocaleString()}
                   </div>
                 </div>
 
-                {/* Content Payload Preview & Editor */}
-                <div className="p-4 sm:p-5 space-y-3.5">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                {/* Risk Flags Banner if present */}
+                {proposal.risk_flags && proposal.risk_flags.length > 0 && (
+                  <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                     <div>
-                      <span className="text-slate-500 font-medium">Proposed Action Type:</span>
-                      <p className="font-mono text-slate-900 dark:text-white font-semibold mt-0.5">{act.action_type}</p>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 font-medium">Target Recipient:</span>
-                      <p className="font-mono text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">{act.payload.to_email}</p>
+                      <strong>Security Advisory:</strong>
+                      <ul className="list-disc pl-4 mt-1 font-mono text-[11px]">
+                        {proposal.risk_flags.map((rf, i) => (
+                          <li key={i}>{rf}</li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
+                )}
 
-                  {/* Email Draft Preview / Editor */}
-                  <div className="bg-slate-50 dark:bg-slate-950/60 rounded-lg border border-slate-200 dark:border-slate-800 p-4 space-y-2.5">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                        <Mail className="w-3.5 h-3.5 text-slate-400" />
-                        Candidate Communication Draft
-                      </span>
-                      {isPending && !isEditing && (
-                        <button
-                          onClick={() => startEditing(act)}
-                          className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:underline font-medium text-xs"
-                        >
-                          <Edit3 className="w-3 h-3" />
-                          <span>Edit Draft Before Approval</span>
-                        </button>
+                {/* Evidence Section */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">
+                    Agent Proposed Shortlist & Evidence:
+                  </h4>
+
+                  {/* Proposed Candidates List */}
+                  {rankingList.length > 0 && (
+                    <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+                      <table className="min-w-full text-xs text-left divide-y divide-slate-200 dark:divide-slate-800">
+                        <thead className="bg-slate-50 dark:bg-slate-850 font-mono text-slate-500 text-[10px] uppercase">
+                          <tr>
+                            {isEditing && <th className="p-2.5">Include</th>}
+                            <th className="p-2.5">Candidate ID</th>
+                            <th className="p-2.5">Score</th>
+                            <th className="p-2.5">Must-Have Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                          {rankingList.map((cand: any, idx: number) => {
+                            const cid = cand.candidate_id || cand.id;
+                            const isIncluded = editedCandidateIds.includes(cid);
+                            return (
+                              <tr
+                                key={idx}
+                                className={
+                                  isEditing && !isIncluded
+                                    ? 'opacity-40 bg-slate-50 dark:bg-slate-900/50'
+                                    : 'hover:bg-slate-50/50 dark:hover:bg-slate-850/50'
+                                }
+                              >
+                                {isEditing && (
+                                  <td className="p-2.5">
+                                    <input
+                                      type="checkbox"
+                                      checked={isIncluded}
+                                      onChange={() => handleToggleCandidate(cid)}
+                                      className="rounded text-indigo-600 focus:ring-indigo-500"
+                                    />
+                                  </td>
+                                )}
+                                <td className="p-2.5 font-mono font-medium text-slate-800 dark:text-slate-200">
+                                  {cand.display_name || cand.name || cid}
+                                </td>
+                                <td className="p-2.5 font-mono text-slate-600 dark:text-slate-400">
+                                  {cand.score !== undefined ? `${cand.score}%` : '—'}
+                                </td>
+                                <td className="p-2.5">
+                                  {cand.must_have_met !== undefined ? (
+                                    <span className="font-mono text-[11px] text-emerald-600 dark:text-emerald-400">
+                                      {cand.must_have_met}/{cand.must_have_total} met
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-400 font-mono text-[11px]">Verified</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {/* Needs Review / Missing Must-Haves warnings */}
+                  {(needsReviewList.length > 0 || missingMustHavesList.length > 0) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                      {needsReviewList.length > 0 && (
+                        <div className="p-2.5 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 text-[11px]">
+                          <span className="font-semibold text-amber-900 dark:text-amber-200 font-mono">
+                            Needs Human Review ({needsReviewList.length}):
+                          </span>
+                          <ul className="list-disc pl-4 text-amber-800 dark:text-amber-300 font-mono mt-1">
+                            {needsReviewList.map((id: string, i: number) => (
+                              <li key={i}>{id}</li>
+                            ))}
+                          </ul>
+                        </div>
                       )}
-                      {isPending && isEditing && (
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="text-slate-500 hover:text-slate-700 text-xs font-medium"
-                        >
-                          <span>Cancel Edit</span>
-                        </button>
+                      {missingMustHavesList.length > 0 && (
+                        <div className="p-2.5 rounded-lg bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/40 text-[11px]">
+                          <span className="font-semibold text-rose-900 dark:text-rose-200 font-mono">
+                            Missing Must-Haves ({missingMustHavesList.length}):
+                          </span>
+                          <ul className="list-disc pl-4 text-rose-800 dark:text-rose-300 font-mono mt-1">
+                            {missingMustHavesList.map((id: string, i: number) => (
+                              <li key={i}>{id}</li>
+                            ))}
+                          </ul>
+                        </div>
                       )}
                     </div>
+                  )}
+                </div>
 
-                    {isEditing ? (
-                      <div className="space-y-3 text-xs">
-                        <div>
-                          <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">Subject:</label>
-                          <input
-                            type="text"
-                            value={editedSubject}
-                            onChange={(e) => setEditedSubject(e.target.value)}
-                            className="input-base font-mono"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">Email Body:</label>
-                          <textarea
-                            rows={5}
-                            value={editedBody}
-                            onChange={(e) => setEditedBody(e.target.value)}
-                            className="input-base font-mono"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">Reviewer Note (Audit Trail):</label>
-                          <input
-                            type="text"
-                            placeholder="e.g. Adjusted interview schedule and approved language"
-                            value={reviewNotes}
-                            onChange={(e) => setReviewNotes(e.target.value)}
-                            className="input-base"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-2 text-xs">
-                        <div className="font-semibold text-slate-800 dark:text-slate-200">
-                          Subject: <span className="font-normal font-mono">{act.payload.subject}</span>
-                        </div>
-                        <div className="bg-white dark:bg-slate-900 p-3 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap text-[11px] leading-relaxed">
-                          {act.payload.body}
-                        </div>
-                        {act.payload.proposed_slots && act.payload.proposed_slots.length > 0 && (
-                          <div className="flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-400 mt-1">
-                            <Calendar className="w-3.5 h-3.5 text-indigo-500" />
-                            <span>
-                              Proposed Slots: <strong className="text-slate-800 dark:text-slate-200">{act.payload.proposed_slots.join(', ')}</strong>
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                {/* Execution Result Banner (After Approval) */}
+                {proposal.execution_result && (
+                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 text-xs">
+                    <div className="flex items-center gap-2 font-mono font-semibold text-indigo-600 dark:text-indigo-400 mb-1">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Action Gateway Execution Result:</span>
+                    </div>
+                    <pre className="text-[11px] font-mono text-slate-700 dark:text-slate-300 overflow-x-auto">
+                      {JSON.stringify(proposal.execution_result, null, 2)}
+                    </pre>
                   </div>
+                )}
 
-                  {/* Execution / Review Info */}
-                  {act.reviewed_by && (
-                    <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between bg-slate-50 dark:bg-slate-950/40 px-3 py-2 rounded border border-slate-200/60 dark:border-slate-800">
-                      <span>Reviewed by: <strong className="text-slate-700 dark:text-slate-300">{act.reviewed_by}</strong></span>
-                      {act.review_notes && <span>Note: {act.review_notes}</span>}
-                      {act.executed_at && (
-                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold font-mono">
-                          Executed: {new Date(act.executed_at).toLocaleTimeString()}
+                {/* Review Notes or Form */}
+                {isEditing ? (
+                  <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Review Note / Rationale (Logged into tamper-evident audit trail)
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={reviewNote}
+                        onChange={(e) => setReviewNote(e.target.value)}
+                        placeholder="Add decision context (e.g. Verified technical interview match for shortlisted candidates)..."
+                        className="w-full p-2.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setEditingId(null)}
+                        className="btn-secondary text-xs py-1.5 px-3"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isSubmitting}
+                        onClick={() => handleReject(proposal.id)}
+                        className="btn-danger text-xs py-1.5 px-3 flex items-center gap-1.5"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                        <span>Reject Proposal</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isSubmitting || (proposal.type === 'shortlist' && editedCandidateIds.length === 0)}
+                        onClick={() => handleApprove(proposal)}
+                        className="btn-primary text-xs py-1.5 px-3.5 flex items-center gap-1.5"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Authorize via Action Gateway ({editedCandidateIds.length})</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div className="text-xs text-slate-500 font-mono">
+                      {proposal.reviewed_by && (
+                        <span>
+                          Reviewed by: <strong>{proposal.reviewed_by}</strong> &bull; Note: &ldquo;{proposal.review_note}&rdquo;
                         </span>
                       )}
                     </div>
-                  )}
 
-                  {/* Approval Actions */}
-                  {isPending && (
-                    <div className="flex justify-end gap-2.5 pt-1">
-                      <button
-                        disabled={isSubmitting}
-                        onClick={() => handleReject(act.id)}
-                        className="btn-danger"
-                      >
-                        Reject Proposal
-                      </button>
-                      <button
-                        disabled={isSubmitting}
-                        onClick={() => handleApprove(act)}
-                        className="btn-primary"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                        <span>Approve & Dispatch via Action Gateway</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
+                    {isPending && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => startReview(proposal)}
+                          className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Review & Authorize</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
