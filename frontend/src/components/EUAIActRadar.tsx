@@ -9,7 +9,6 @@ export const EUAIActRadar: React.FC = () => {
       status: '100% COMPLIANT',
       description: 'Air-gapped Action Gateway strictly prevents autonomous candidate rejections or outbound emails without recruiter sign-off.',
       icon: UserCheck,
-      color: 'emerald',
     },
     {
       article: 'Article 12',
@@ -17,7 +16,6 @@ export const EUAIActRadar: React.FC = () => {
       status: '100% COMPLIANT',
       description: 'Continuous cryptographic logging. Every screening score, prompt injection scan, and approval is signed in a SHA-256 hash chain.',
       icon: Lock,
-      color: 'emerald',
     },
     {
       article: 'Article 10',
@@ -25,7 +23,6 @@ export const EUAIActRadar: React.FC = () => {
       status: '100% COMPLIANT',
       description: 'Identity-blind scoring. Demographic twins (Leila vs Karim) receive identical deterministic ranking scores to eliminate bias.',
       icon: Scale,
-      color: 'emerald',
     },
     {
       article: 'Article 15',
@@ -33,80 +30,76 @@ export const EUAIActRadar: React.FC = () => {
       status: '100% COMPLIANT',
       description: 'Binary-level forensic extraction quarantines invisible white-text, microscopic typography, and prompt-injection overrides.',
       icon: ShieldCheck,
-      color: 'emerald',
     },
   ];
 
   return (
-    <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-6 shadow-xl border border-indigo-900/40 relative overflow-hidden">
-      {/* Decorative background glow */}
-      <div className="absolute -top-24 -right-24 w-72 h-72 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
+    <div className="surface-card p-5 sm:p-6 border border-slate-200 dark:border-slate-800">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-indigo-800/40 pb-5">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-500/20 text-indigo-300 rounded-lg border border-indigo-500/30">
+            <div className="p-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-lg">
               <Scale className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-white tracking-tight">
-                  EU AI Act Compliance Engine (High-Risk Category Annex III.4)
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">
+                  EU AI Act Compliance Engine (Annex III.4 High-Risk Mandate)
                 </h3>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                  VERIFIED AUDIT READY
+                <span className="badge-clean">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                  AUDIT READY
                 </span>
               </div>
-              <p className="text-xs text-indigo-200/70 mt-0.5">
-                European Union Artificial Intelligence Regulation (High-Risk Employment & HR Systems Mandate)
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                European Union Artificial Intelligence Regulation for Employment & HR Systems
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 bg-black/30 px-3.5 py-2 rounded-xl border border-indigo-500/20 text-xs">
+        <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700 text-xs">
           <div>
-            <div className="text-[10px] uppercase tracking-wider text-slate-400">Potential Legal Fine Exposure</div>
-            <div className="text-emerald-400 font-bold font-mono text-sm">€0.00 (Zero Liability)</div>
+            <div className="text-[9px] uppercase font-bold text-slate-400 font-mono">Legal Fine Exposure</div>
+            <div className="text-emerald-600 dark:text-emerald-400 font-bold font-mono text-xs">€0.00 (Zero Liability)</div>
           </div>
-          <div className="h-6 w-px bg-slate-700"></div>
+          <div className="h-5 w-px bg-slate-200 dark:bg-slate-700"></div>
           <div>
-            <div className="text-[10px] uppercase tracking-wider text-slate-400">Non-Compliance Penalty Prevented</div>
-            <div className="text-amber-300 font-bold font-mono text-sm">Up to €35,000,000</div>
+            <div className="text-[9px] uppercase font-bold text-slate-400 font-mono">Max Penalty Prevented</div>
+            <div className="text-amber-600 dark:text-amber-400 font-bold font-mono text-xs">Up to €35,000,000</div>
           </div>
         </div>
       </div>
 
       {/* 4 Compliance Pillars Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 mt-4">
         {articles.map((item, idx) => {
           const Icon = item.icon;
           return (
             <div
               key={idx}
-              className="bg-white/5 backdrop-blur-sm p-4 rounded-xl border border-indigo-500/20 hover:border-indigo-400/40 transition-all flex flex-col justify-between space-y-3"
+              className="p-3.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 flex flex-col justify-between space-y-2.5"
             >
               <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-[10px] font-mono font-bold text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded border border-indigo-500/30">
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-[10px] font-mono font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950 px-1.5 py-0.2 rounded border border-indigo-200/60 dark:border-indigo-800/60">
                     {item.article}
                   </span>
-                  <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-mono">
                     <CheckCircle2 className="w-3 h-3" />
-                    {item.status}
+                    COMPLIANT
                   </span>
                 </div>
-                <div className="font-semibold text-xs text-white mb-1 flex items-center gap-1.5">
-                  <Icon className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                <div className="font-semibold text-xs text-slate-900 dark:text-white mb-1 flex items-center gap-1.5">
+                  <Icon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
                   <span>{item.title}</span>
                 </div>
-                <p className="text-[11px] text-indigo-200/70 leading-relaxed">{item.description}</p>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">{item.description}</p>
               </div>
 
-              <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                <div className="bg-emerald-500 h-1.5 rounded-full w-full"></div>
+              <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1 overflow-hidden">
+                <div className="bg-emerald-500 h-1 rounded-full w-full"></div>
               </div>
             </div>
           );

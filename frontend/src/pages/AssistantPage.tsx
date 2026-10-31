@@ -91,31 +91,32 @@ export const AssistantPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-4xl mx-auto text-slate-100">
+    <div className="space-y-4 max-w-4xl mx-auto">
       {/* Header Banner */}
-      <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-2xl border border-slate-800/80 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="surface-card p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Employee Policy Assistant</h1>
-            <span className="text-xs px-2.5 py-1 rounded-full font-mono font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30 flex items-center gap-1.5 shadow-[0_0_12px_rgba(168,85,247,0.25)]">
-              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+              Employee Policy Assistant
+            </h2>
+            <span className="badge-info font-mono">
               Verifiable RAG
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Grounded Q&A over internal company policies, benefits, leave, and GDPR rights with verifiable source citations.
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 text-xs text-emerald-300 bg-emerald-950/60 px-3 py-1.5 rounded-full border border-emerald-500/30 font-semibold font-mono">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+        <div className="badge-clean">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
           <span>Hallucination-Protected</span>
         </div>
       </div>
 
       {/* Suggested Quick Prompt Pills */}
       <div>
-        <span className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 font-mono">
+        <span className="block text-xs font-semibold uppercase tracking-wider text-slate-400 font-mono mb-2">
           Frequently Consulted Policies
         </span>
         <div className="flex flex-wrap gap-2">
@@ -123,74 +124,74 @@ export const AssistantPage: React.FC = () => {
             <button
               key={idx}
               onClick={() => handleSend(q)}
-              className="text-xs font-medium bg-slate-900/60 hover:bg-slate-800 text-slate-300 hover:text-white px-3.5 py-2 rounded-xl border border-slate-800 shadow-sm transition-all flex items-center gap-2 text-left"
+              className="text-xs font-medium bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
             >
               <span>{q}</span>
-              <ArrowRight className="w-3 h-3 text-slate-500 flex-shrink-0" />
+              <ArrowRight className="w-3 h-3 text-slate-400 flex-shrink-0" />
             </button>
           ))}
         </div>
       </div>
 
       {/* Chat Thread Area */}
-      <div className="bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-slate-800/80 shadow-xl flex flex-col h-[520px] overflow-hidden">
+      <div className="surface-card flex flex-col h-[500px] overflow-hidden">
         {/* Messages Stream */}
-        <div className="flex-1 p-6 overflow-y-auto space-y-5">
+        <div className="flex-1 p-5 sm:p-6 overflow-y-auto space-y-4">
           {messages.map((m) => {
             const isUser = m.sender === 'user';
 
             return (
               <div
                 key={m.id}
-                className={`flex gap-3 max-w-[85%] ${isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
+                className={`flex gap-2.5 max-w-[85%] ${isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
               >
                 {/* Avatar */}
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white ${
-                    isUser ? 'bg-sky-600 shadow-[0_0_10px_rgba(14,165,233,0.4)]' : 'bg-purple-600 shadow-[0_0_10px_rgba(168,85,247,0.4)]'
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white text-xs ${
+                    isUser ? 'bg-indigo-600' : 'bg-slate-700'
                   }`}
                 >
-                  {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                  {isUser ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
                 </div>
 
                 {/* Bubble & Metadata */}
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div
-                    className={`p-4 rounded-2xl text-xs leading-relaxed ${
+                    className={`p-3.5 rounded-xl text-xs leading-relaxed ${
                       isUser
-                        ? 'bg-sky-600 text-white rounded-tr-none shadow-md'
-                        : 'bg-slate-950/80 border border-slate-800 text-slate-200 rounded-tl-none space-y-3'
+                        ? 'bg-indigo-600 text-white rounded-tr-none'
+                        : 'bg-slate-50 dark:bg-slate-850 border border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none space-y-2.5'
                     }`}
                   >
                     <p>{m.text}</p>
 
                     {/* Verifiable Citation Card if Assistant */}
                     {m.citation && (
-                      <div className="pt-2 border-t border-slate-800 space-y-2">
+                      <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2">
                         <div className="flex items-center justify-between text-[11px]">
-                          <span className="font-semibold text-purple-300 flex items-center gap-1">
-                            <BookOpen className="w-3.5 h-3.5 text-purple-400" />
+                          <span className="font-semibold text-indigo-700 dark:text-indigo-400 flex items-center gap-1">
+                            <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
                             <span>Verifiable Source:</span>
                           </span>
-                          <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-purple-950/80 text-purple-300 border border-purple-500/30 font-bold">
-                            {(m.citation.confidence * 100).toFixed(0)}% Confidence Match
+                          <span className="badge-info text-[10px]">
+                            {(m.citation.confidence * 100).toFixed(0)}% Match
                           </span>
                         </div>
 
-                        <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 font-mono text-[11px] text-slate-300">
+                        <div className="p-2 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-mono text-[11px] text-slate-700 dark:text-slate-300">
                           {m.citation.source}
                         </div>
 
-                        <div className="flex justify-between items-center text-[10px] text-slate-500 font-mono">
+                        <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono">
                           <span>Section: {m.citation.section}</span>
                           <button
                             onClick={() => handleCopy(m.id, m.text)}
-                            className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors"
+                            className="flex items-center gap-1 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
                           >
                             {copiedId === m.id ? (
                               <>
-                                <Check className="w-3 h-3 text-emerald-400" />
-                                <span className="text-emerald-400 font-bold">Copied</span>
+                                <Check className="w-3 h-3 text-emerald-600" />
+                                <span className="text-emerald-600 font-bold">Copied</span>
                               </>
                             ) : (
                               <>
@@ -204,7 +205,7 @@ export const AssistantPage: React.FC = () => {
                     )}
                   </div>
 
-                  <span className={`block text-[10px] text-slate-500 font-mono ${isUser ? 'text-right' : 'text-left'}`}>
+                  <span className={`block text-[10px] text-slate-400 font-mono ${isUser ? 'text-right' : 'text-left'}`}>
                     {m.timestamp}
                   </span>
                 </div>
@@ -213,22 +214,22 @@ export const AssistantPage: React.FC = () => {
           })}
 
           {isTyping && (
-            <div className="flex gap-3 max-w-[85%] mr-auto items-center text-xs text-slate-400">
-              <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white">
-                <Bot className="w-4 h-4" />
+            <div className="flex gap-2.5 max-w-[85%] mr-auto items-center text-xs text-slate-400">
+              <div className="w-7 h-7 rounded-lg bg-slate-700 flex items-center justify-center text-white">
+                <Bot className="w-3.5 h-3.5" />
               </div>
-              <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce"></div>
-                <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce [animation-delay:0.2s]"></div>
-                <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce [animation-delay:0.4s]"></div>
-                <span className="text-[11px] text-slate-400 ml-1 font-mono">Searching employee handbook...</span>
+              <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce"></div>
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.2s]"></div>
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.4s]"></div>
+                <span className="text-[11px] text-slate-500 ml-1 font-mono">Searching employee handbook...</span>
               </div>
             </div>
           )}
         </div>
 
         {/* Input Bar */}
-        <div className="p-4 border-t border-slate-800/80 bg-slate-950/70">
+        <div className="p-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -241,15 +242,15 @@ export const AssistantPage: React.FC = () => {
               placeholder="Ask any policy, benefits, or compliance question..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              className="flex-1 p-3 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-white placeholder:text-slate-500 focus:ring-1 focus:ring-purple-500 focus:outline-none"
+              className="input-base"
             />
             <button
               type="submit"
               disabled={!inputText.trim() || isTyping}
-              className="flex items-center gap-1.5 px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-md transition-all"
+              className="btn-primary"
             >
-              <Send className="w-4 h-4" />
-              <span>Ask Policy Bot</span>
+              <Send className="w-3.5 h-3.5" />
+              <span>Ask</span>
             </button>
           </form>
         </div>

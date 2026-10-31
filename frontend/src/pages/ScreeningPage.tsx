@@ -3,7 +3,7 @@ import { api, JobOffer, Candidate, CandidateDetail } from '../services/api';
 import { CandidateRanking } from '../components/CandidateRanking';
 import { EvidenceModal } from '../components/EvidenceModal';
 import { UploadResumeModal } from '../components/UploadResumeModal';
-import { Briefcase, Filter, Sparkles, ShieldAlert, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Briefcase, Filter, Sparkles, ShieldAlert, CheckCircle2, RefreshCw, Search } from 'lucide-react';
 
 interface ScreeningPageProps {
   onDataChanged?: () => void;
@@ -80,13 +80,13 @@ export const ScreeningPage: React.FC<ScreeningPageProps> = ({ onDataChanged }) =
   });
 
   return (
-    <div className="space-y-6 animate-fade-in text-slate-100">
-      {/* Job Selection & Filters Bar */}
-      <div className="bg-slate-900/60 backdrop-blur-xl p-5 rounded-2xl border border-slate-800/80 shadow-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+    <div className="space-y-5">
+      {/* Position Selection & Filter Toolbar */}
+      <div className="surface-card p-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3.5">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full lg:w-auto">
-          <div className="flex items-center gap-2 text-slate-300 font-semibold text-xs uppercase tracking-wider">
-            <Briefcase className="w-4 h-4 text-sky-400" />
-            <span>Requisition:</span>
+          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-semibold text-xs uppercase tracking-wider">
+            <Briefcase className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <span>Position:</span>
           </div>
           <select
             value={selectedJob?.id || ''}
@@ -97,7 +97,7 @@ export const ScreeningPage: React.FC<ScreeningPageProps> = ({ onDataChanged }) =
                 loadCandidates(j.id);
               }
             }}
-            className="p-2.5 border border-slate-700/80 rounded-xl text-sm font-semibold bg-slate-950/80 text-white focus:ring-2 focus:ring-sky-500 focus:outline-none transition-all"
+            className="px-3 py-1.5 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
           >
             {jobs.map((j) => (
               <option key={j.id} value={j.id}>
@@ -106,62 +106,65 @@ export const ScreeningPage: React.FC<ScreeningPageProps> = ({ onDataChanged }) =
             ))}
           </select>
 
-          {/* Quick Search Input */}
-          <input
-            type="text"
-            placeholder="Search candidate or skill..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="p-2 border border-slate-700/80 rounded-xl text-xs bg-slate-950/60 text-slate-200 placeholder:text-slate-500 focus:ring-1 focus:ring-sky-500 focus:outline-none"
-          />
+          {/* Search box */}
+          <div className="relative w-full sm:w-60">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+            <input
+              type="text"
+              placeholder="Search candidate or skill..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            />
+          </div>
         </div>
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-2 flex-wrap text-xs">
+        <div className="flex items-center gap-1.5 flex-wrap text-xs">
           <button
             onClick={() => setFilterMode('ALL')}
-            className={`px-3 py-1.5 rounded-xl font-semibold transition-all border ${
+            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
               filterMode === 'ALL'
-                ? 'bg-sky-500/20 text-sky-300 border-sky-500/40 shadow-[0_0_12px_rgba(56,189,248,0.25)]'
-                : 'bg-slate-950/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-slate-800/80'
+                ? 'bg-indigo-600 text-white font-semibold'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            All Candidates ({candidates.length})
+            All ({candidates.length})
           </button>
           <button
             onClick={() => setFilterMode('TOP')}
-            className={`px-3 py-1.5 rounded-xl font-semibold transition-all border ${
+            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
               filterMode === 'TOP'
-                ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 shadow-[0_0_12px_rgba(99,102,241,0.25)]'
-                : 'bg-slate-950/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-slate-800/80'
+                ? 'bg-indigo-600 text-white font-semibold'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             Score &ge; 75%
           </button>
           <button
             onClick={() => setFilterMode('CLEAN')}
-            className={`px-3 py-1.5 rounded-xl font-semibold transition-all border ${
+            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
               filterMode === 'CLEAN'
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
-                : 'bg-slate-950/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-slate-800/80'
+                ? 'bg-emerald-600 text-white font-semibold'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            Clean Only
+            Clean Pass
           </button>
           <button
             onClick={() => setFilterMode('FLAGGED')}
-            className={`px-3 py-1.5 rounded-xl font-semibold transition-all border ${
+            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
               filterMode === 'FLAGGED'
-                ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-[0_0_12px_rgba(244,63,94,0.25)]'
-                : 'bg-slate-950/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-slate-800/80'
+                ? 'bg-rose-600 text-white font-semibold'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            Quarantined Attacks
+            Quarantined
           </button>
           <button
             onClick={() => selectedJob && loadCandidates(selectedJob.id)}
             title="Refresh Candidate List"
-            className="p-2 rounded-xl text-slate-400 hover:text-white bg-slate-950/60 border border-slate-800/80 hover:bg-slate-800/80 transition-colors"
+            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <RefreshCw className="w-3.5 h-3.5" />
           </button>

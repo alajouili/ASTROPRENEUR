@@ -62,77 +62,77 @@ export const LoginPage: React.FC<LoginPageProps> = ({ currentRole, onRoleChange 
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center p-4 animate-fade-in text-slate-100">
-      <div className="w-full max-w-xl bg-slate-900/80 backdrop-blur-2xl rounded-3xl border border-slate-800/80 shadow-2xl overflow-hidden">
+    <div className="min-h-[75vh] flex items-center justify-center p-4 animate-fade-in">
+      <div className="w-full max-w-lg surface-card overflow-hidden shadow-lg">
         {/* Top Header Card */}
-        <div className="p-8 bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 text-white relative border-b border-slate-800/80">
+        <div className="p-6 sm:p-7 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-sky-600 to-indigo-600 text-white shadow-lg">
-              <ShieldCheck className="w-7 h-7" />
+            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+              <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-2xl tracking-tight">TrustHR<span className="text-sky-400">.ai</span></span>
-                <span className="px-2 py-0.5 text-xs font-mono font-bold bg-sky-500/20 text-sky-300 rounded-full border border-sky-400/30">
+                <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">TrustHR<span className="text-indigo-600">.ai</span></span>
+                <span className="badge-info font-mono text-[10px]">
                   Enterprise SSO
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Human-Controlled Evidence-Based Hiring & Compliance
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Human-Controlled Evidence-Based Hiring Gateway
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 mt-6 text-xs text-slate-400">
-            <span className="flex items-center gap-1 font-mono text-[11px] text-emerald-400">
-              <Lock className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-3 mt-4 text-xs text-slate-500 dark:text-slate-400">
+            <span className="flex items-center gap-1 font-mono text-[11px]">
+              <Lock className="w-3.5 h-3.5 text-emerald-600" />
               Argon2id Hashes
             </span>
             <span>&bull;</span>
-            <span className="flex items-center gap-1 font-mono text-[11px] text-sky-400">
-              <ShieldCheck className="w-3.5 h-3.5" />
+            <span className="flex items-center gap-1 font-mono text-[11px]">
+              <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
               CSRF Protected
             </span>
             <span>&bull;</span>
-            <span className="flex items-center gap-1 font-mono text-[11px] text-amber-400">
-              <UserCheck className="w-3.5 h-3.5" />
+            <span className="flex items-center gap-1 font-mono text-[11px]">
+              <UserCheck className="w-3.5 h-3.5 text-amber-600" />
               RBAC Guard
             </span>
           </div>
         </div>
 
         {feedback && (
-          <div className="mx-8 mt-6 p-3.5 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-xs font-semibold text-emerald-300 flex items-center gap-2 shadow-lg">
-            <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+          <div className="mx-6 mt-4 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-800 dark:text-emerald-200 flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
             <span>{feedback}</span>
           </div>
         )}
 
-        <div className="p-8 space-y-6">
+        <div className="p-6 sm:p-7 space-y-5">
           {/* 1-Click Role Switcher Presets */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5 font-mono">
-              1-Click Role Switcher (Instant Live Hackathon Demo)
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 font-mono">
+              1-Click Role Switcher (Instant Demo Presets)
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {/* Recruiter */}
               <button
                 type="button"
                 onClick={() => handleQuickSwitch('Recruiter')}
-                className={`p-3.5 rounded-2xl border text-left transition-all ${
+                className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
                   selectedRole === 'Recruiter'
-                    ? 'border-sky-500/50 bg-sky-950/40 shadow-[0_0_15px_rgba(56,189,248,0.2)]'
-                    : 'border-slate-800 hover:border-slate-700 bg-slate-950/50'
+                    ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50'
+                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-white">Recruiter</span>
+                  <span className="font-bold text-xs text-slate-900 dark:text-white">Recruiter</span>
                   {selectedRole === 'Recruiter' && (
-                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
+                    <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
                   )}
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1 leading-tight">
-                  Candidate ranking, inline draft edits, Action Gateway dispatch.
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-tight">
+                  Candidate ranking, inline draft edits, Action Gateway.
                 </p>
               </button>
 
@@ -140,20 +140,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ currentRole, onRoleChange 
               <button
                 type="button"
                 onClick={() => handleQuickSwitch('HR Admin')}
-                className={`p-3.5 rounded-2xl border text-left transition-all ${
+                className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
                   selectedRole === 'HR Admin'
-                    ? 'border-emerald-500/50 bg-emerald-950/40 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
-                    : 'border-slate-800 hover:border-slate-700 bg-slate-950/50'
+                    ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50'
+                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-white">HR Admin</span>
+                  <span className="font-bold text-xs text-slate-900 dark:text-white">HR Admin</span>
                   {selectedRole === 'HR Admin' && (
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
                   )}
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1 leading-tight">
-                  Cryptographic SHA-256 audit inspection & governance controls.
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-tight">
+                  Cryptographic SHA-256 audit inspection & governance.
                 </p>
               </button>
 
@@ -161,63 +161,63 @@ export const LoginPage: React.FC<LoginPageProps> = ({ currentRole, onRoleChange 
               <button
                 type="button"
                 onClick={() => handleQuickSwitch('Employee')}
-                className={`p-3.5 rounded-2xl border text-left transition-all ${
+                className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
                   selectedRole === 'Employee'
-                    ? 'border-purple-500/50 bg-purple-950/40 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
-                    : 'border-slate-800 hover:border-slate-700 bg-slate-950/50'
+                    ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50'
+                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-white">Employee</span>
+                  <span className="font-bold text-xs text-slate-900 dark:text-white">Employee</span>
                   {selectedRole === 'Employee' && (
-                    <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+                    <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
                   )}
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1 leading-tight">
-                  Policy Q&A chatbot with handbook source citations.
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-tight">
+                  Policy Q&A chatbot with handbook citations.
                 </p>
               </button>
             </div>
           </div>
 
           <div className="relative flex py-1 items-center">
-            <div className="flex-grow border-t border-slate-800"></div>
-            <span className="flex-shrink mx-3 text-[11px] text-slate-500 font-mono uppercase">
-              Or Sign In With Enterprise Credentials
+            <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+            <span className="flex-shrink mx-3 text-[10px] text-slate-400 font-mono uppercase">
+              Or Sign In With Enterprise SSO
             </span>
-            <div className="flex-grow border-t border-slate-800"></div>
+            <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
+          <form onSubmit={handleLoginSubmit} className="space-y-3.5 text-xs">
             <div>
-              <label className="block text-slate-400 font-medium mb-1">Corporate Email / SSO:</label>
+              <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">Corporate Email / SSO:</label>
               <input
                 type="email"
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full p-2.5 bg-slate-950 border border-slate-700/80 rounded-xl text-xs text-white font-mono focus:ring-1 focus:ring-sky-500 focus:outline-none"
+                className="input-base font-mono"
               />
             </div>
 
             <div>
-              <label className="block text-slate-400 font-medium mb-1">Passkey / Password:</label>
+              <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">Passkey / Password:</label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-2.5 bg-slate-950 border border-slate-700/80 rounded-xl text-xs text-white font-mono focus:ring-1 focus:ring-sky-500 focus:outline-none"
+                className="input-base font-mono"
               />
             </div>
 
             <div>
-              <label className="block text-slate-400 font-medium mb-1">Authorized Profile Role:</label>
+              <label className="block text-slate-600 dark:text-slate-400 font-medium mb-1">Authorized Profile Role:</label>
               <select
                 value={selectedRole}
                 onChange={(e) => handleRolePreset(e.target.value as any)}
-                className="w-full p-2.5 bg-slate-950 border border-slate-700/80 rounded-xl text-xs font-semibold text-white"
+                className="input-base font-semibold"
               >
                 <option value="Recruiter">Recruiter (Screening & Approvals)</option>
                 <option value="HR Admin">HR Admin (Audit & Compliance)</option>
@@ -227,7 +227,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ currentRole, onRoleChange 
 
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-[0_0_20px_-3px_rgba(14,165,233,0.4)] transition-all flex items-center justify-center gap-2 transform active:scale-98"
+              className="btn-primary w-full py-2.5"
             >
               <span>Sign In as {selectedRole}</span>
               <ArrowRight className="w-4 h-4" />
