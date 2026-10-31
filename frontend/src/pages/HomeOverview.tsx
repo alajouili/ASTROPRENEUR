@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
+import { EUAIActRadar } from '../components/EUAIActRadar';
 import {
   ShieldCheck,
   ShieldAlert,
@@ -157,6 +158,9 @@ export const HomeOverview: React.FC<HomeOverviewProps> = ({ userRole }) => {
           <p className="text-xs text-slate-400 mt-1">EU AI Act Article 12 compliance</p>
         </div>
       </div>
+
+      {/* EU AI Act High-Risk Compliance Engine Banner */}
+      <EUAIActRadar />
 
       {/* Quick Navigation Shortcuts */}
       <div>

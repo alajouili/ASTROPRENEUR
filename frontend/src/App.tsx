@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
+import { PitchDemoModal } from './components/PitchDemoModal';
 import { HomeOverview } from './pages/HomeOverview';
 import { ScreeningPage } from './pages/ScreeningPage';
 import { ApprovalPage } from './pages/ApprovalPage';
@@ -14,6 +15,7 @@ import { api } from './services/api';
 export const App: React.FC = () => {
   const [userRole, setUserRole] = useState<string>('Recruiter');
   const [isMockMode, setIsMockMode] = useState<boolean>(api.isMockMode());
+  const [isPitchDemoOpen, setIsPitchDemoOpen] = useState<boolean>(false);
   const [pendingCount, setPendingCount] = useState<number>(4);
   const [securityAlertCount, setSecurityAlertCount] = useState<number>(2);
   const [inboxCount, setInboxCount] = useState<number>(3);
@@ -64,6 +66,13 @@ export const App: React.FC = () => {
           userRole={userRole}
           isMockMode={isMockMode}
           onToggleMockMode={handleToggleMockMode}
+          onOpenPitchDemo={() => setIsPitchDemoOpen(true)}
+        />
+
+        {/* 5-Min Interactive Pitch Mode Controller */}
+        <PitchDemoModal
+          isOpen={isPitchDemoOpen}
+          onClose={() => setIsPitchDemoOpen(false)}
         />
 
         {/* Global Toast Alert */}
