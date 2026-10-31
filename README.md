@@ -1,14 +1,33 @@
 # TrustHR AI — Defense-Grade Human-in-the-Loop HR Recruitment Platform
-hi
+
 [![Compliance: EU AI Act Annex III.4](https://img.shields.io/badge/Compliance-EU_AI_Act_Annex_III.4-10b981.svg?style=flat-square)](https://artificialintelligenceact.eu/)
 [![Security: OWASP LLM Top 10](https://img.shields.io/badge/Security-OWASP_LLM_Top_10_Defended-0284c7.svg?style=flat-square)](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
-[![Architecture: Air--Gapped Action Gateway](https://img.shields.io/badge/Architecture-Air--Gapped_Action_Gateway-6366f1.svg?style=flat-square)](#architecture)
+[![Architecture: Air--Gapped Action Gateway](https://img.shields.io/badge/Architecture-Deterministic_Action_Gateway-6366f1.svg?style=flat-square)](#architecture)
 [![Interface: Dual Theme Enterprise SaaS](https://img.shields.io/badge/UI-Ashby_%7C_Linear_Enterprise_Theme-f59e0b.svg?style=flat-square)](#enterprise-dashboard-suite)
-[![Tests: 100% Passing](https://img.shields.io/badge/Tests-Passing_67%2F67_Backend_%2B_Vite_TS-emerald.svg?style=flat-square)](#verification--test-suite)
+[![Tests: 100% Passing](https://img.shields.io/badge/Tests-Passing_79%2F79_Backend_%2B_Vite_TS-emerald.svg?style=flat-square)](#verification--test-suite)
 
 > **Golden Principle:** *"The agent proposes, the human decides."*
 > 
 > High-Risk recruitment AI systems mandate strict human oversight, demographic fairness, and verifiable auditability under the **European Union Artificial Intelligence Act (Annex III.4)**. TrustHR AI eliminates autonomous AI decision-making by enforcing a deterministic, air-gapped Action Gateway between AI reasoning and real-world employment outcomes.
+
+---
+
+## Live System Capabilities & Status Matrix
+
+| Module / Capability | Implementation & Architecture | Status |
+|---|---|:---:|
+| **Authentication & RBAC** | Argon2id password hashing, HTTP-only session cookies, double-submit `X-CSRF-Token`, in-memory JTI token revocation on logout. | **WORKING (Live API)** |
+| **Job Requisitions** | Structured criteria modeling (must-have vs nice-to-have, minimum years, weights) stored in PostgreSQL. | **WORKING (Live API)** |
+| **Batch CV Ingestion** | Multipart upload endpoint (`POST /api/jobs/{id}/resumes`) with strict MIME, magic-byte, and active-content validation. | **WORKING (Live API)** |
+| **Document Forensics Guard** | `PyMuPDF` binary extraction stripping microscopic (`<2pt`) and near-white (`#FEFEFE`) text; homoglyph normalization; multilingual (EN/FR/AR) injection regexes. | **WORKING (Live API)** |
+| **Screening Orchestration** | LangGraph screening graph + asynchronous PostgreSQL task worker (`run_until_empty`) with live polling (`GET /api/tasks/{id}`). | **WORKING (Live API)** |
+| **Deterministic Scoring Math** | 100% Python code calculation (`compute_score`); verbatim string-containment verification; negation filtering (`no experience`); unverified claims score 0%. | **WORKING (Live API)** |
+| **Human-in-the-Loop Gateway** | Proposals queue (`/api/proposals`); deterministic pre-flight check in `backend/app/gateway/executor.py`; zero state mutations without human HR approval. | **WORKING (Live API)** |
+| **Tamper-Evident Audit Trail** | SHA-256 backward hash chaining (`prev_hash` -> `current_hash`); PostgreSQL triggers blocking `UPDATE`/`DELETE`/`TRUNCATE`; on-demand tamper simulation (`/api/audit/verify?simulate_tamper_id=`). | **WORKING (Live API)** |
+| **Demographic Fairness Twin Lab** | Blind extraction anonymization; evaluated against demographic twin pairs from `data/samples/` (`twin_a_leila` vs `twin_b_karim`) proving **0.0% bias delta**. | **WORKING (Live API)** |
+| **Candidate Inbox Triage** | Multi-intent categorization and AI draft response generator for candidate communications. | **PREVIEW (Simulated)** |
+| **Recruiter Calendar & Scheduling** | Proposed interview slots and calendar hold dispatching. | **PREVIEW (Simulated)** |
+| **HR Policy Assistant** | Conversational HR policy Q&A assistant with document grounding. | **PREVIEW (Simulated)** |
 
 ---
 
@@ -132,7 +151,7 @@ cp backend/.env.example backend/.env
 docker compose up -d --build
 
 # 4. Seed demo users, job requisitions, and benchmark candidates
-docker compose run --rm api python -m scripts.seed
+docker compose run --rm api python -m scripts.demo_prep
 ```
 
 Access the interfaces:
@@ -203,7 +222,8 @@ The codebase enforces strict test verification across all layers:
 ```bash
 # Run backend pytest suite (Security Guard, Forensics, Injection, Gateways, Audit)
 cd backend
-python -m pytest -q
+docker compose --profile test run --rm tests
+# 79 passed in ~15.2s against throwaway PostgreSQL (pgvector:pg16)
 
 # Run frontend production build (TypeScript check + Vite bundle)
 cd frontend
