@@ -237,14 +237,22 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
                   <span>Forensic Guard: Security Findings & Injection Risk</span>
                 </div>
                 <ul className="space-y-1">
-                  {candidate.risk_flags.map((flag, idx) => (
-                    <li
-                      key={idx}
-                      className="text-xs text-rose-800 dark:text-rose-300 font-mono bg-rose-100/60 dark:bg-rose-900/30 p-2 rounded border border-rose-200 dark:border-rose-800/40"
-                    >
-                      {flag}
-                    </li>
-                  ))}
+                  {candidate.risk_flags.map((flag: any, idx: number) => {
+                    const text =
+                      typeof flag === 'string'
+                        ? flag
+                        : flag?.detail
+                        ? `${flag?.code ? `[${flag.code.toUpperCase()}] ` : ''}${flag.detail}${flag.excerpt ? ` ("${flag.excerpt}")` : ''}`
+                        : flag?.code || JSON.stringify(flag);
+                    return (
+                      <li
+                        key={idx}
+                        className="text-xs text-rose-800 dark:text-rose-300 font-mono bg-rose-100/60 dark:bg-rose-900/30 p-2 rounded border border-rose-200 dark:border-rose-800/40"
+                      >
+                        {text}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}

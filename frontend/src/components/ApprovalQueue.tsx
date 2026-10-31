@@ -203,9 +203,13 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefre
                     <div>
                       <strong>Security Advisory:</strong>
                       <ul className="list-disc pl-4 mt-1 font-mono text-[11px]">
-                        {proposal.risk_flags.map((rf, i) => (
-                          <li key={i}>{rf}</li>
-                        ))}
+                        {proposal.risk_flags.map((rf: any, i: number) => {
+                          const text =
+                            typeof rf === 'string'
+                              ? rf
+                              : rf?.detail || rf?.code || JSON.stringify(rf);
+                          return <li key={i}>{text}</li>;
+                        })}
                       </ul>
                     </div>
                   </div>

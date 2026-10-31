@@ -16,7 +16,9 @@ export const ForensicXRay: React.FC<ForensicXRayProps> = ({ candidate }) => {
     candidate.security_status === 'SUSPICIOUS_FLAGGED' ||
     (candidate.risk_flags && candidate.risk_flags.length > 0);
 
-  const riskFlags: string[] = candidate.risk_flags || [];
+  const riskFlags: string[] = (candidate.risk_flags || []).map((rf: any) =>
+    typeof rf === 'string' ? rf : rf?.detail || rf?.excerpt || rf?.code || JSON.stringify(rf)
+  );
 
   // Forensic layers breakdown
   const forensicLayers = [
