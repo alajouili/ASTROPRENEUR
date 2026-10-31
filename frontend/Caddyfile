@@ -1,0 +1,21 @@
+:80 {
+	# API responses carry their own, stricter headers (set by FastAPI).
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		header {
+			Content-Security-Policy "default-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+			X-Content-Type-Options nosniff
+			X-Frame-Options DENY
+			Referrer-Policy no-referrer
+			Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		}
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	header -Server
+}
