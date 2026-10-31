@@ -49,6 +49,22 @@ SUSPICIOUS_PATTERNS = [
         r"(?i)(do\s+not\s+screen|bypass\s+hr|auto-hire|approve\s+automatically|skip\s+review)",
         "MEDIUM",
         "Workflow Bypass: Attempt to short-circuit human approval"
+    ),
+    # Bilingual French Injection & Override Rules (from injection.py)
+    (
+        r"(?i)(ignorez|ne\s+tenez\s+pas\s+compte\s+de|oubliez|annulez)\s+(toutes\s+les\s+|les\s+)?(instructions|directives|r[èe]gles|consignes)",
+        "HIGH",
+        "Prompt Injection (FR): Tentative d'écrasement des instructions système"
+    ),
+    (
+        r"(?i)(donnez\s+(à\s+ce\s+candidat\s+)?|notez\s+(ce\s+candidat\s+)?|note\s*:\s*)(100%|20/20|maximale|parfaite|toujours\s+sélectionner)",
+        "HIGH",
+        "Score Manipulation (FR): Tentative d'altération de la note du candidat"
+    ),
+    (
+        r"(?i)(embauchez\s+imm[ée]diatement|recrutez\s+d'office|court-circuitez\s+les\s+rh|validez\s+sans\s+v[ée]rification)",
+        "HIGH",
+        "Decision Manipulation (FR): Ordre de contournement des validations humaines"
     )
 ]
 

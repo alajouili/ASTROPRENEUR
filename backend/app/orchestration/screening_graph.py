@@ -45,19 +45,31 @@ class ScreeningOrchestrator:
             state["status"] = "FILE_VALIDATION_FAILED"
             return state
 
-        # Step 2: Security Guard Scan (Prompt Injection & Malicious Content)
+        # Step 2: Security Guard Scan (Prompt Injection, Bilingual rules & Hidden Text)
         sec_res = scan_for_prompt_injections(state["raw_text"])
         state["sanitized_text"] = sec_res.sanitized_text
-        state["is_suspicious"] = sec_res.is_suspicious
-        state["security_status"] = "SUSPICIOUS_FLAGGED" if sec_res.is_suspicious else "CLEAN"
+        
+        # Merge hidden text findings if forensic extractor detected smuggling
+        findings = list(sec_res.findings)
+        for seg in file_result.hidden_segments:
+            findings.append({
+                "rule": f"HIDDEN_TEXT_{seg.reason.upper()}",
+                "severity": "HIGH",
+                "description": f"Security Alert: Hidden text smuggling detected ({seg.reason})",
+                "snippet": seg.text[:80]
+            })
+
+        is_suspicious = sec_res.is_suspicious or len(file_result.hidden_segments) > 0
+        state["is_suspicious"] = is_suspicious
+        state["security_status"] = "SUSPICIOUS_FLAGGED" if is_suspicious else "CLEAN"
         state["security_findings"] = [
-            {
+            f if isinstance(f, dict) else {
                 "rule": f.rule,
                 "severity": f.severity,
                 "description": f.description,
                 "snippet": f.matched_snippet
             }
-            for f in sec_res.findings
+            for f in findings
         ]
 
         # Step 3: Candidate Profile Extraction & Job-Criteria Evaluation (Agent)
