@@ -31,13 +31,35 @@ export const LoginPage: React.FC = () => {
 
   const from = (location.state as any)?.from?.pathname;
 
-  const handleSelectDemoRole = (role: 'recruiter' | 'hr_admin' | 'employee') => {
+  const handleQuickLogin = async (role: 'recruiter' | 'hr_admin' | 'employee') => {
     setSelectedRole(role);
     setErrorMessage(null);
-    setPassword('DemoPass123!');
-    if (role === 'recruiter') setEmail('recruiter@trusthr.demo');
-    else if (role === 'hr_admin') setEmail('admin@trusthr.demo');
-    else setEmail('employee@trusthr.demo');
+    const demoEmail =
+      role === 'recruiter'
+        ? 'recruiter@trusthr.demo'
+        : role === 'hr_admin'
+        ? 'admin@trusthr.demo'
+        : 'employee@trusthr.demo';
+    const demoPw = 'DemoPass123!';
+    setEmail(demoEmail);
+    setPassword(demoPw);
+    setIsSubmitting(true);
+    try {
+      const user = await login(demoEmail, demoPw);
+      if (from && from !== '/login' && from !== '/') {
+        navigate(from, { replace: true });
+      } else if (user.role === 'employee') {
+        navigate('/careers', { replace: true });
+      } else if (user.role === 'hr_admin') {
+        navigate('/approvals', { replace: true });
+      } else {
+        navigate('/screening', { replace: true });
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Authentication failed. Please verify your credentials.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,7 +73,7 @@ export const LoginPage: React.FC = () => {
     try {
       const user = await login(email.trim(), password);
 
-      if (from && from !== '/login') {
+      if (from && from !== '/login' && from !== '/') {
         navigate(from, { replace: true });
       } else if (user.role === 'employee') {
         navigate('/careers', { replace: true });
@@ -166,15 +188,16 @@ export const LoginPage: React.FC = () => {
             {/* 1-Click Role Switcher Presets */}
             <div className="mt-5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-2.5">
               <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 dark:text-slate-300 font-mono uppercase tracking-wider">
-                <span>Select Demo Account Preset:</span>
-                <span className="text-indigo-600 dark:text-indigo-400 text-[10px]">1-Click Auto-Fill</span>
+                <span>Quick Sign-In Presets:</span>
+                <span className="text-indigo-600 dark:text-indigo-400 text-[10px]">1-Click Instant Login</span>
               </div>
 
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
-                  onClick={() => handleSelectDemoRole('recruiter')}
-                  className={`p-2 rounded-xl border text-center transition-all ${
+                  disabled={isSubmitting}
+                  onClick={() => handleQuickLogin('recruiter')}
+                  className={`p-2.5 rounded-xl border text-center transition-all ${
                     selectedRole === 'recruiter'
                       ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm font-bold'
                       : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-indigo-400 font-medium'
@@ -188,8 +211,9 @@ export const LoginPage: React.FC = () => {
 
                 <button
                   type="button"
-                  onClick={() => handleSelectDemoRole('hr_admin')}
-                  className={`p-2 rounded-xl border text-center transition-all ${
+                  disabled={isSubmitting}
+                  onClick={() => handleQuickLogin('hr_admin')}
+                  className={`p-2.5 rounded-xl border text-center transition-all ${
                     selectedRole === 'hr_admin'
                       ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm font-bold'
                       : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-indigo-400 font-medium'
@@ -203,8 +227,9 @@ export const LoginPage: React.FC = () => {
 
                 <button
                   type="button"
-                  onClick={() => handleSelectDemoRole('employee')}
-                  className={`p-2 rounded-xl border text-center transition-all ${
+                  disabled={isSubmitting}
+                  onClick={() => handleQuickLogin('employee')}
+                  className={`p-2.5 rounded-xl border text-center transition-all ${
                     selectedRole === 'employee'
                       ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm font-bold'
                       : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-indigo-400 font-medium'
