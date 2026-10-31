@@ -48,6 +48,9 @@ _RULES: list[tuple[str, str, re.Pattern]] = [
         r"[^.\n]{0,20}\b(instructions?|prompts?|rules|guidelines|directives)\b", _I)),
     ("instruction_override", "high", re.compile(
         r"\b(ignore[rz]?|oublie[rz]?|néglige[rz]?|contourne[rz]?)\b[^.\n]{0,40}\b(instructions?|consignes?|règles|directives)\b", _I)),
+    # From Member 2's input guard (jerbi-security-final): "disregard (all) prior/previous ..."
+    # whatever the object ("guidance", "context", ...).
+    ("instruction_override", "high", re.compile(r"\bdisregard\s+(all\s+)?(prior|previous)\b", _I)),
     ("instruction_override", "high", re.compile(
         r"\b(special|developer|maintenance|debug)\s+(override|mode|directive|mandate)\b|"
         r"\b(do\s+not|never)\s+evaluate\s+this\s+(candidate|resume|cv)\b", _I)),
@@ -126,6 +129,9 @@ def _chunks(text: str, size: int = 1500, overlap: int = 200) -> list[str]:
     return [text[i:i + size] for i in range(0, len(text), step)]
 
 
+_MALICIOUS_LABELS = {"INJECTION", "JAILBREAK", "MALICIOUS", "LABEL_1"}
+
+
 class PromptGuardClassifier:
     """Optional Llama Prompt Guard 2 86M runner."""
 
@@ -134,12 +140,26 @@ class PromptGuardClassifier:
         self.threshold = settings.prompt_guard_threshold
         self.api_key = settings.groq_api_key
         self._local_pipe = None
+        self.model_id: str | None = None
         if self.mode == "local":
+            self._local_pipe, self.model_id = self._load_local(settings)
+
+    @staticmethod
+    def _load_local(settings: Settings, pipeline_factory=None):
+        """Load Llama Prompt Guard 2; fall back to the open ProtectAI DeBERTa model when the
+        gated Meta model is unavailable (Member 2's get_guard). Returns (pipe or error, model id)."""
+        if pipeline_factory is None:
             try:
-                from transformers import pipeline  # lazy import
-                self._local_pipe = pipeline("text-classification", model="meta-llama/Prompt-Guard-86M")
+                from transformers import pipeline as pipeline_factory  # lazy import, optional dependency
             except Exception as exc:
-                self._local_pipe = exc  # recorded so every scan flags the failure
+                return exc, None
+        errors = []
+        for model_id in (settings.prompt_guard_local_model, settings.prompt_guard_fallback_model):
+            try:
+                return pipeline_factory("text-classification", model=model_id, truncation=True, max_length=512), model_id
+            except Exception as exc:
+                errors.append(f"{model_id}: {exc}")
+        return RuntimeError("; ".join(errors)), None
 
     def scan(self, text: str, where: str = "") -> list[RiskFlag]:
         if self.mode == "off" or not text.strip():
@@ -153,13 +173,13 @@ class PromptGuardClassifier:
                 scores = []
                 for chunk in _chunks(text):
                     res = self._local_pipe(chunk)[0]
-                    # Prompt Guard outputs label "INJECTION" or "JAILBREAK"
-                    if res["label"].upper() in ("INJECTION", "JAILBREAK"):
+                    # Prompt Guard 2: LABEL_1 / MALICIOUS. ProtectAI: INJECTION. Prompt Guard 1: INJECTION, JAILBREAK.
+                    if res["label"].upper() in _MALICIOUS_LABELS:
                         scores.append(res["score"])
                 max_score = max(scores) if scores else 0.0
                 if max_score >= self.threshold:
                     return [RiskFlag("classifier_injection", "high",
-                                     f"{prefix}Llama Prompt Guard flagged prompt injection (score {max_score:.2f})")]
+                                     f"{prefix}{self.model_id} flagged prompt injection (score {max_score:.2f})")]
                 return []
             except Exception as exc:
                 return [RiskFlag("classifier_error", "medium", f"{prefix}Prompt Guard inference failed: {exc}")]

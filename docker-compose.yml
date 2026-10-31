@@ -31,6 +31,8 @@ x-backend: &backend
     MAILPIT_API_URL: http://mailpit:8025
   volumes:
     - uploads:/app/var/uploads
+    # Fictional sample emails read by the inbox (read-only).
+    - ./data/samples:/app/data/samples:ro
 
 services:
   db:
