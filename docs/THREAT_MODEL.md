@@ -51,4 +51,4 @@
 *   A subtly misleading summary can still reach a human, so evidence quotes must be shown for verification.
 *   Free-tier LLM providers may retain prompts, which is acceptable here only because the data is fictional.
 *   Mailpit’s SMTP is unauthenticated, so the “only the Gateway can send” rule relies on network and credential separation. 
-*   **[Note to team]**: We need to decide if we use Claude (as in Section 7) or Gemini/Groq (as in work plan). This changes our data-retention notes.
+*   **LLM Providers & Privacy**: Gemini/Groq data-retention guidelines must be strictly aligned with enterprise data-retention policies.
