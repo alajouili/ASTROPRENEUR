@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { RankedCandidate, NotRankedCandidate, CandidateDetailWithResume, api } from '../services/api';
 import { SecurityScanModal } from './SecurityScanModal';
 import { ForensicXRay } from './ForensicXRay';
@@ -17,6 +17,7 @@ import {
   Cpu,
   Search,
   Eye,
+  Info,
 } from 'lucide-react';
 
 interface EvidenceModalProps {
@@ -39,15 +40,53 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
   const isSuspicious =
     candidate.risk_level === 'high' || (candidate.risk_flags && candidate.risk_flags.length > 0);
 
-  // Criteria results mapping
-  const criteriaList = rankedCand?.criteria_results
-    ? Array.isArray(rankedCand.criteria_results)
-      ? rankedCand.criteria_results
-      : Object.entries(rankedCand.criteria_results).map(([id, val]) => ({
-          criterion_id: id,
-          ...val,
-        }))
-    : [];
+  // Criteria results mapping with complete backend schema normalization
+  const criteriaList = useMemo(() => {
+    const rawList = rankedCand?.criteria_results
+      ? Array.isArray(rankedCand.criteria_results)
+        ? rankedCand.criteria_results
+        : Object.entries(rankedCand.criteria_results).map(([id, val]: [string, any]) => ({
+            criterion_id: id,
+            ...val,
+          }))
+      : [];
+
+    return rawList.map((crit: any) => {
+      // Backend returns evidence as an array of strings in criteria_results:
+      // e.g. evidence: ["Built Python scripts with pandas to clean sales data."]
+      const quote =
+        crit.evidence_quote ||
+        (Array.isArray(crit.evidence) && crit.evidence.length > 0 ? crit.evidence[0] : null) ||
+        (typeof crit.evidence === 'string' && crit.evidence.trim().length > 0 ? crit.evidence : null) ||
+        crit.quote ||
+        null;
+
+      const isMet = crit.result === 'met' || crit.met === true || (crit.score !== undefined && crit.score > 0);
+      const isPartial = crit.result === 'partial';
+      const score = crit.score !== undefined ? crit.score : isMet ? 100 : isPartial ? 50 : 0;
+
+      return {
+        ...crit,
+        criterion_id: crit.criterion_id || crit.id,
+        label: crit.label || crit.criterion_id || crit.id,
+        evidence_quote: quote,
+        all_evidence: Array.isArray(crit.evidence) ? crit.evidence : quote ? [quote] : [],
+        met: isMet,
+        result: crit.result || (isMet ? 'met' : isPartial ? 'partial' : 'missing'),
+        score,
+        note: crit.note || crit.reason || '',
+        downgraded: !!crit.downgraded,
+      };
+    });
+  }, [rankedCand]);
+
+  // Auto-select first criterion quote when criteriaList is available
+  useEffect(() => {
+    if (criteriaList.length > 0 && !selectedCriterionId) {
+      setSelectedCriterionId(criteriaList[0].criterion_id);
+      setSelectedQuote(criteriaList[0].evidence_quote);
+    }
+  }, [criteriaList, selectedCriterionId]);
 
   useEffect(() => {
     if (candidate?.candidate_id) {
@@ -56,9 +95,9 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
         .getCandidateDetail(candidate.candidate_id)
         .then((res) => {
           setDetail(res);
-          if (criteriaList.length > 0 && criteriaList[0].evidence_quote) {
-            setSelectedCriterionId(criteriaList[0].criterion_id);
-            setSelectedQuote(criteriaList[0].evidence_quote);
+          if (criteriaList.length > 0) {
+            setSelectedCriterionId((prev) => prev || criteriaList[0].criterion_id);
+            setSelectedQuote((prev) => prev || criteriaList[0].evidence_quote);
           }
         })
         .catch(() => {})
@@ -66,7 +105,7 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
     }
   }, [candidate?.candidate_id]);
 
-  const handleSelectCriterion = (critId: string, quote?: string) => {
+  const handleSelectCriterion = (critId: string, quote?: string | null) => {
     setSelectedCriterionId(critId);
     setSelectedQuote(quote || null);
   };
@@ -92,17 +131,32 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
     // 2. Whitespace-collapsed fallback search
     if (index === -1) {
       const normalizedQuote = cleanQuote.replace(/\s+/g, ' ');
-      // Search for first 25 characters of the quote
       const prefix = normalizedQuote.slice(0, Math.min(25, normalizedQuote.length));
       index = rawText.toLowerCase().indexOf(prefix.toLowerCase());
       matchLen = Math.min(cleanQuote.length, rawText.length - index);
     }
 
+    // 3. Fallback: single keyword / phrase search if quote is long
+    if (index === -1 && cleanQuote.split(' ').length > 2) {
+      const words = cleanQuote.split(/\s+/).filter((w) => w.length > 3);
+      for (const w of words) {
+        const found = rawText.toLowerCase().indexOf(w.toLowerCase());
+        if (found !== -1) {
+          index = found;
+          matchLen = w.length;
+          break;
+        }
+      }
+    }
+
     if (index === -1) {
       return (
         <div className="space-y-3">
-          <div className="p-2 rounded bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-[11px] text-amber-800 dark:text-amber-300">
-            <strong>Notice:</strong> Verified evidence quote active for this criterion. Showing candidate resume context:
+          <div className="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-[11px] text-emerald-900 dark:text-emerald-200 flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <div>
+              <strong>Active Provenance Quote:</strong> &ldquo;{cleanQuote}&rdquo;
+            </div>
           </div>
           <div className="whitespace-pre-wrap">{rawText}</div>
         </div>
@@ -116,7 +170,7 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
     return (
       <div className="whitespace-pre-wrap leading-relaxed">
         {before}
-        <mark className="bg-emerald-200 dark:bg-emerald-900/70 text-emerald-950 dark:text-emerald-100 font-bold px-1.5 py-0.5 rounded border border-emerald-400 dark:border-emerald-700 shadow-xs animate-pulse">
+        <mark className="bg-emerald-200 dark:bg-emerald-900/80 text-emerald-950 dark:text-emerald-100 font-bold px-1.5 py-0.5 rounded border border-emerald-400 dark:border-emerald-600 shadow-xs ring-2 ring-emerald-500/50">
           {match}
         </mark>
         {after}
@@ -279,37 +333,57 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
                     <div className="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
                       {criteriaList.map((crit, idx) => {
                         const isSelected = selectedCriterionId === crit.criterion_id;
-                        const met = crit.met !== false && (crit.score ?? 100) > 0;
                         return (
                           <div
                             key={idx}
                             onClick={() => handleSelectCriterion(crit.criterion_id, crit.evidence_quote)}
                             className={`p-3.5 rounded-xl border text-xs cursor-pointer transition-all ${
                               isSelected
-                                ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/40 ring-1 ring-indigo-500'
+                                ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/40 ring-2 ring-indigo-500/40 shadow-xs'
                                 : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
                             }`}
                           >
                             <div className="flex justify-between items-start gap-2">
-                              <span className="font-bold text-slate-900 dark:text-white">
-                                {crit.criterion_id}
-                              </span>
+                              <div>
+                                <span className="font-bold text-slate-900 dark:text-white capitalize">
+                                  {crit.label}
+                                </span>
+                                {crit.label.toLowerCase() !== crit.criterion_id.toLowerCase() && (
+                                  <span className="text-[10px] text-slate-400 font-mono block">
+                                    Key: {crit.criterion_id}
+                                  </span>
+                                )}
+                              </div>
                               <span
                                 className={`badge font-mono text-[10px] ${
-                                  met ? 'badge-clean' : 'badge-danger'
+                                  crit.met
+                                    ? 'badge-clean'
+                                    : crit.result === 'partial'
+                                    ? 'badge-warning'
+                                    : 'badge-danger'
                                 }`}
                               >
-                                {met ? 'Met' : 'Missing'} &bull; {crit.score ?? (met ? 100 : 0)}%
+                                {crit.met ? 'Met' : crit.result === 'partial' ? 'Partial' : 'Missing'} &bull; {crit.score}%
                               </span>
                             </div>
 
                             {crit.evidence_quote ? (
-                              <div className="mt-2 text-[11px] text-slate-600 dark:text-slate-300 italic font-mono bg-slate-50 dark:bg-slate-800/60 p-2 rounded border border-slate-200 dark:border-slate-700/60">
+                              <div className="mt-2 text-[11px] text-emerald-950 dark:text-emerald-200 font-mono bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-900/60 leading-relaxed shadow-xs">
+                                <div className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-bold mb-1">
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                                  <span>Exact Verbatim Quote</span>
+                                </div>
                                 &ldquo;{crit.evidence_quote}&rdquo;
                               </div>
                             ) : (
-                              <div className="mt-2 text-[11px] text-slate-400 italic">
-                                No verbatim quote found.
+                              <div className="mt-2 text-[11px] text-slate-400 italic bg-slate-50 dark:bg-slate-850/60 p-2 rounded border border-slate-200/60 dark:border-slate-800">
+                                No verbatim quote found in candidate resume.
+                              </div>
+                            )}
+
+                            {crit.note && (
+                              <div className="mt-1.5 text-[10px] text-slate-500 font-mono">
+                                Audit note: {crit.note}
                               </div>
                             )}
                           </div>
@@ -396,7 +470,6 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
                   </h3>
                   <div className="space-y-3">
                     {criteriaList.map((crit, idx) => {
-                      const met = crit.met !== false && (crit.score ?? 100) > 0;
                       return (
                         <div
                           key={idx}
@@ -404,8 +477,8 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
                         >
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold text-xs text-slate-900 dark:text-white">
-                                {crit.criterion_id || `Criterion #${idx + 1}`}
+                              <span className="font-semibold text-xs text-slate-900 dark:text-white capitalize">
+                                {crit.label}
                               </span>
                               {crit.weight && (
                                 <span className="text-[10px] font-mono text-slate-400">
@@ -415,20 +488,24 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
                             </div>
                             <span
                               className={`badge font-mono text-[10px] ${
-                                met ? 'badge-clean' : 'badge-danger'
+                                crit.met
+                                  ? 'badge-clean'
+                                  : crit.result === 'partial'
+                                  ? 'badge-warning'
+                                  : 'badge-danger'
                               }`}
                             >
-                              {met ? 'Met' : 'Missing'} &bull; Score: {crit.score ?? (met ? 100 : 0)}
+                              {crit.met ? 'Met' : crit.result === 'partial' ? 'Partial' : 'Missing'} &bull; Score: {crit.score}%
                             </span>
                           </div>
 
                           {crit.evidence_quote ? (
-                            <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-xs">
-                              <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-mono text-[10px] font-semibold mb-1">
+                            <div className="p-3 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-xs">
+                              <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-mono text-[10px] font-semibold mb-1">
                                 <Quote className="w-3 h-3" />
                                 <span>VERIFIED VERBATIM QUOTE IN RESUME:</span>
                               </div>
-                              <p className="text-slate-700 dark:text-slate-300 italic font-mono text-[11px]">
+                              <p className="text-emerald-950 dark:text-emerald-200 italic font-mono text-[11px] leading-relaxed">
                                 &ldquo;{crit.evidence_quote}&rdquo;
                               </p>
                             </div>
@@ -438,9 +515,9 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
                             </div>
                           )}
 
-                          {crit.reason && (
+                          {crit.note && (
                             <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                              <strong>Note:</strong> {crit.reason}
+                              <strong>Note:</strong> {crit.note}
                             </p>
                           )}
                         </div>
