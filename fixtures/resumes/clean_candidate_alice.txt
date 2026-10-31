@@ -1,0 +1,29 @@
+Alice Mercer
+Email: alice.mercer@mockmail.internal
+Phone: +1-555-0142
+Location: San Francisco, CA
+
+PROFESSIONAL SUMMARY
+Senior Backend Engineer with over 6 years of experience building mission-critical services and distributed platforms in Python. Passionate about asynchronous architectures, clean schema design, and deterministic automated testing.
+
+CORE TECHNICAL SKILLS
+- Languages: Python, SQL, TypeScript
+- Frameworks & Libs: FastAPI, AsyncIO, SQLAlchemy, Pydantic, Pytest
+- Databases: PostgreSQL, Redis, SQLite
+- Infrastructure & Security: Docker, Kubernetes, OWASP API Security, OAuth2, JWT
+
+WORK EXPERIENCE
+
+Lead Backend Architect — Apex Data Cloud (2021 – Present)
+- Architected and delivered high-performance FastAPI microservices handling 25,000 requests per second with sub-50ms latency using Python AsyncIO.
+- Designed relational schemas and query optimizations in PostgreSQL, cutting complex reporting query latencies by 62%.
+- Enforced strict API security, input sanitization, and OAuth2 JWT authentication protocols across external endpoints.
+- Maintained a 94% test coverage bar across all repositories using pytest and automated continuous integration pipelines.
+
+Software Engineer — Nova Tech Solutions (2018 – 2021)
+- Developed asynchronous RESTful APIs using Python and modern relational database tooling.
+- Built automated database migration scripts and transactional integrity checks for customer-facing services.
+- Spearheaded integration test suites using pytest and testcontainers to guarantee reliability before deployment.
+
+EDUCATION
+B.S. in Computer Science — University of Washington (2014 – 2018)
