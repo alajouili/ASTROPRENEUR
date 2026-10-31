@@ -48,3 +48,8 @@ data/*
 !data/samples/
 !data/benchmark_dataset.json
 uploads/
+
+# Tests and tooling
+.pytest_cache/
+*.tsbuildinfo
+.DS_Store
