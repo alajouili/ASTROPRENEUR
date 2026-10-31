@@ -20,6 +20,7 @@ _EDUCATION = re.compile(r"\b(bachelor|master|msc|bsc|mba|phd|doctorat\w*|licence
 _LANGUAGES = re.compile(r"\b(english|french|arabic|german|spanish|italian|anglais|français|arabe|allemand|espagnol)\b", re.I)
 _CERT = re.compile(r"\b(certified|certification|certificate|certifié|certifiée)\b", re.I)
 _YEARS = re.compile(r"(\d{1,2}(?:[.,]\d)?)\s*\+?\s*(?:years?|yrs?|ans|années)\b", re.I)
+_ACTION_VERBS = re.compile(r"\b(built|developed|designed|implemented|maintained|engineered|configured|analyzed|managed|automated|deployed|wrote|refactored|conducted|performed|created|led|assisted|resolved|tested|oversaw|used|using|utilized|worked)\b", re.I)
 
 
 def _lines(text: str) -> list[str]:
@@ -47,11 +48,19 @@ class HeuristicEngine:
         skills: list[EvidencedItem] = []
         for term in vocabulary:
             pattern = _term_pattern(term)
+            best_candidate = None
             for line in lines:
                 m = pattern.search(line)
                 if m:
-                    skills.append(EvidencedItem(name=term, quote=_quote(line, m.start())))
-                    break
+                    # Prefer lines with operational action verbs over pure buzzword dumps
+                    if _ACTION_VERBS.search(line):
+                        best_candidate = EvidencedItem(name=term, quote=_quote(line, m.start()))
+                        break
+                    elif best_candidate is None:
+                        best_candidate = EvidencedItem(name=term, quote=_quote(line, m.start()))
+            if best_candidate:
+                skills.append(best_candidate)
+
         best_years: EvidencedYears | None = None
         for line in lines:
             for m in _YEARS.finditer(line):
@@ -82,8 +91,14 @@ class HeuristicEngine:
             patterns = [_term_pattern(k) for k in c.keywords]
             quotes = [item.quote for _, item in items if any(p.search(item.name) or p.search(item.quote) for p in patterns)]
             quotes = list(dict.fromkeys(quotes))[:3]
+            has_operational_evidence = any(_ACTION_VERBS.search(q) for q in quotes)
+            note = (
+                "verified in project/experience context"
+                if has_operational_evidence
+                else ("keyword found in CV" if quotes else "keyword not found")
+            )
             out.append(CriterionAssessment(
                 criterion_id=c.id, result="met" if quotes else "missing", evidence=quotes,
-                note="keyword found in CV" if quotes else "keyword not found",
+                note=note,
             ))
         return out
