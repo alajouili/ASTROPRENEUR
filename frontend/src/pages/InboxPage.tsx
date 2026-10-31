@@ -78,29 +78,29 @@ export const InboxPage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in text-slate-100">
       {/* Header Banner */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="bg-slate-900/60 backdrop-blur-xl p-6 rounded-2xl border border-slate-800/80 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-slate-900">Inbox Triage & Daily Digest</h1>
-            <span className="text-xs px-2.5 py-1 rounded-full font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200">
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Inbox Triage & Daily Digest</h1>
+            <span className="text-xs px-2.5 py-1 rounded-full font-mono font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
               Inbound Parser Active
             </span>
           </div>
-          <p className="text-sm text-slate-500 mt-1">
-            Automated email triage categorized by urgency and intent. Suspicious emails with prompt injections are quarantined before recruiter viewing.
+          <p className="text-xs text-slate-400 mt-1">
+            Automated email triage categorized by urgency and intent. Adversarial emails with prompt injections are quarantined before recruiter viewing.
           </p>
         </div>
 
         {/* Needs human toggle */}
-        <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-          <label className="text-xs font-semibold text-slate-700 cursor-pointer flex items-center gap-2">
+        <div className="flex items-center gap-3 bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+          <label className="text-xs font-semibold text-slate-300 cursor-pointer flex items-center gap-2">
             <input
               type="checkbox"
               checked={needsHumanOnly}
               onChange={(e) => setNeedsHumanOnly(e.target.checked)}
-              className="rounded text-sky-600 focus:ring-sky-500 w-4 h-4 cursor-pointer"
+              className="rounded text-sky-500 focus:ring-sky-500 w-4 h-4 cursor-pointer bg-slate-900 border-slate-700"
             />
             <span>Needs Human Review Only</span>
           </label>
@@ -108,43 +108,45 @@ export const InboxPage: React.FC = () => {
       </div>
 
       {feedback && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800 flex justify-between items-center">
+        <div className="p-3.5 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-xs font-semibold text-emerald-300 flex justify-between items-center shadow-lg">
           <span>{feedback}</span>
-          <button onClick={() => setFeedback(null)} className="text-emerald-700 hover:text-emerald-900 font-bold">
+          <button onClick={() => setFeedback(null)} className="text-emerald-400 hover:text-white font-bold px-2 py-0.5 rounded hover:bg-emerald-900/50">
             Dismiss
           </button>
         </div>
       )}
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-slate-900/60 backdrop-blur-xl p-4 rounded-2xl border border-slate-800/80 shadow-xl flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2 flex-wrap text-xs">
-          <span className="text-slate-400 font-medium">Urgency:</span>
+          <span className="text-slate-400 font-mono uppercase tracking-wider">Urgency:</span>
           {(['ALL', 'HIGH', 'MEDIUM', 'LOW'] as const).map((urg) => (
             <button
               key={urg}
               onClick={() => setUrgencyFilter(urg)}
-              className={`px-2.5 py-1 rounded-lg font-semibold transition-colors ${
-                urgencyFilter === urg ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              className={`px-3 py-1 rounded-xl font-mono text-xs font-semibold transition-all border ${
+                urgencyFilter === urg
+                  ? 'bg-sky-500/20 text-sky-300 border-sky-500/40 shadow-[0_0_12px_rgba(56,189,248,0.25)]'
+                  : 'bg-slate-950/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-slate-800/80'
               }`}
             >
               {urg}
             </button>
           ))}
 
-          <span className="text-slate-300 mx-1">|</span>
+          <span className="text-slate-700 mx-1">|</span>
 
-          <span className="text-slate-400 font-medium">Type:</span>
+          <span className="text-slate-400 font-mono uppercase tracking-wider">Type:</span>
           {(['ALL', 'AVAILABILITY', 'STATUS_INQUIRY', 'SUSPICIOUS'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTypeFilter(t)}
-              className={`px-2.5 py-1 rounded-lg font-semibold transition-colors ${
+              className={`px-3 py-1 rounded-xl font-mono text-xs font-semibold transition-all border ${
                 typeFilter === t
                   ? t === 'SUSPICIOUS'
-                    ? 'bg-rose-600 text-white'
-                    : 'bg-indigo-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-[0_0_12px_rgba(244,63,94,0.3)]'
+                    : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 shadow-[0_0_12px_rgba(99,102,241,0.25)]'
+                  : 'bg-slate-950/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-slate-800/80'
               }`}
             >
               {t.replace('_', ' ')}
@@ -160,7 +162,7 @@ export const InboxPage: React.FC = () => {
             placeholder="Search sender, subject..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-slate-50 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+            className="w-full pl-9 pr-3 py-1.5 border border-slate-700/80 rounded-xl text-xs bg-slate-950/80 text-white placeholder:text-slate-500 focus:ring-1 focus:ring-sky-500 focus:outline-none"
           />
         </div>
       </div>
@@ -168,10 +170,10 @@ export const InboxPage: React.FC = () => {
       {/* Split View Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Email List Column */}
-        <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-100 max-h-[700px] overflow-y-auto">
+        <div className="lg:col-span-5 bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-slate-800/80 shadow-xl overflow-hidden divide-y divide-slate-800/70 max-h-[700px] overflow-y-auto">
           {filteredItems.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">
-              <Mail className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+            <div className="p-12 text-center text-slate-400">
+              <Mail className="w-10 h-10 text-slate-600 mx-auto mb-2" />
               <p className="text-xs font-medium">No emails matching current filters</p>
             </div>
           ) : (
@@ -180,48 +182,50 @@ export const InboxPage: React.FC = () => {
               const isSuspicious = item.type === 'SUSPICIOUS';
               const urgencyColor =
                 item.urgency === 'HIGH'
-                  ? 'bg-rose-100 text-rose-800'
+                  ? 'bg-rose-950/80 text-rose-300 border border-rose-500/30'
                   : item.urgency === 'MEDIUM'
-                  ? 'bg-amber-100 text-amber-800'
-                  : 'bg-slate-100 text-slate-700';
+                  ? 'bg-amber-950/80 text-amber-300 border border-amber-500/30'
+                  : 'bg-slate-800 text-slate-300 border border-slate-700';
 
               return (
                 <div
                   key={item.id}
                   onClick={() => handleSelectItem(item)}
-                  className={`p-4 cursor-pointer transition-colors relative ${
-                    isSelected ? 'bg-sky-50/70 border-l-4 border-l-sky-600' : 'hover:bg-slate-50'
+                  className={`p-4 cursor-pointer transition-all relative ${
+                    isSelected
+                      ? 'bg-sky-950/40 border-l-4 border-l-sky-500 shadow-[inset_0_0_15px_rgba(14,165,233,0.15)]'
+                      : 'hover:bg-slate-800/30'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="font-semibold text-xs text-slate-900 truncate">{item.sender}</span>
-                    <span className="text-[10px] text-slate-400 font-mono">
+                    <span className="font-bold text-xs text-white truncate">{item.sender}</span>
+                    <span className="text-[10px] text-slate-500 font-mono">
                       {new Date(item.received_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
 
-                  <p className="text-xs font-medium text-slate-800 truncate mb-1.5">{item.subject}</p>
-                  <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed mb-2.5">
+                  <p className="text-xs font-semibold text-slate-200 truncate mb-1">{item.subject}</p>
+                  <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed mb-2.5">
                     {item.summary}
                   </p>
 
-                  <div className="flex items-center gap-1.5 flex-wrap text-[10px]">
-                    <span className={`px-2 py-0.5 rounded font-bold ${urgencyColor}`}>
+                  <div className="flex items-center gap-1.5 flex-wrap text-[10px] font-mono">
+                    <span className={`px-2 py-0.5 rounded ${urgencyColor}`}>
                       {item.urgency}
                     </span>
 
                     <span
                       className={`px-2 py-0.5 rounded font-semibold ${
                         isSuspicious
-                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                          : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                          ? 'bg-rose-950/80 text-rose-300 border border-rose-500/40'
+                          : 'bg-indigo-950/80 text-indigo-300 border border-indigo-500/30'
                       }`}
                     >
                       {item.type.replace('_', ' ')}
                     </span>
 
                     {item.needs_human && (
-                      <span className="px-2 py-0.5 rounded font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                      <span className="px-2 py-0.5 rounded font-bold bg-amber-950/80 text-amber-300 border border-amber-500/40">
                         Needs Human
                       </span>
                     )}
@@ -233,29 +237,29 @@ export const InboxPage: React.FC = () => {
         </div>
 
         {/* Email Reading & Action Column */}
-        <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-6">
+        <div className="lg:col-span-7 bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-slate-800/80 shadow-xl p-6 space-y-6">
           {selectedItem ? (
             <div className="space-y-6">
               {/* Message Header */}
-              <div className="border-b border-slate-100 pb-4">
+              <div className="border-b border-slate-800/80 pb-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-lg font-bold text-slate-900">{selectedItem.subject}</h2>
-                    <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
-                      <User className="w-3.5 h-3.5 text-slate-400" />
-                      <span className="font-medium text-slate-700">{selectedItem.sender}</span>
+                    <h2 className="text-lg font-extrabold text-white">{selectedItem.subject}</h2>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-slate-400 font-mono">
+                      <User className="w-3.5 h-3.5 text-sky-400" />
+                      <span className="text-slate-300">{selectedItem.sender}</span>
                       <span>&bull;</span>
                       <span>{new Date(selectedItem.received_at).toLocaleString()}</span>
                     </div>
                   </div>
 
                   <span
-                    className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                    className={`px-3 py-1 rounded-full text-xs font-mono font-bold border ${
                       selectedItem.urgency === 'HIGH'
-                        ? 'bg-rose-100 text-rose-800'
+                        ? 'bg-rose-950/80 text-rose-300 border-rose-500/40'
                         : selectedItem.urgency === 'MEDIUM'
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-slate-100 text-slate-700'
+                        ? 'bg-amber-950/80 text-amber-300 border-amber-500/40'
+                        : 'bg-slate-800 text-slate-300 border-slate-700'
                     }`}
                   >
                     {selectedItem.urgency} Priority
@@ -265,16 +269,16 @@ export const InboxPage: React.FC = () => {
 
               {/* Adversarial Alert Banner if Suspicious */}
               {selectedItem.type === 'SUSPICIOUS' && (
-                <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl space-y-2">
-                  <div className="flex items-center gap-2 font-bold text-xs text-rose-900">
-                    <ShieldAlert className="w-4 h-4 text-rose-600" />
+                <div className="p-4 bg-rose-950/50 border border-rose-500/40 rounded-xl space-y-2">
+                  <div className="flex items-center gap-2 font-bold text-xs text-rose-300">
+                    <ShieldAlert className="w-4 h-4 text-rose-400" />
                     <span>Adversarial Prompt Injection Intercepted</span>
                   </div>
-                  <p className="text-xs text-rose-700">
-                    This email contained adversarial system token instructions designed to trick automated recruitment responders into executing unauthorized actions.
+                  <p className="text-xs text-rose-200/80">
+                    This email contained adversarial instructions designed to trick automated recruitment responders into executing unauthorized actions.
                   </p>
                   {selectedItem.quarantined_snippet && (
-                    <div className="p-2.5 rounded bg-white border border-rose-200 font-mono text-[11px] text-slate-800">
+                    <div className="p-2.5 rounded-lg bg-slate-950 border border-rose-500/30 font-mono text-[11px] text-slate-300">
                       Quarantined Payload: "{selectedItem.quarantined_snippet}"
                     </div>
                   )}
@@ -282,23 +286,23 @@ export const InboxPage: React.FC = () => {
               )}
 
               {/* Message Body */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-800 font-mono whitespace-pre-wrap leading-relaxed">
+              <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 text-xs text-slate-300 font-mono whitespace-pre-wrap leading-relaxed">
                 {selectedItem.body}
               </div>
 
               {/* AI Draft Response & Approval Area */}
-              <div className="p-5 rounded-xl border border-slate-200 bg-white space-y-3">
+              <div className="p-5 rounded-xl border border-slate-800/80 bg-slate-950/60 space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
-                    <Sparkles className="w-4 h-4 text-sky-600" />
+                  <div className="flex items-center gap-2 text-xs font-bold text-white">
+                    <Sparkles className="w-4 h-4 text-sky-400" />
                     <span>AI Proposed Response Draft</span>
                     <span
-                      className={`text-[10px] px-2 py-0.5 rounded font-bold ${
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold border ${
                         selectedItem.draft_status === 'BLOCKED'
-                          ? 'bg-rose-100 text-rose-800'
+                          ? 'bg-rose-950 text-rose-300 border-rose-500/40'
                           : selectedItem.draft_status === 'DRAFT_READY'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-emerald-100 text-emerald-800'
+                          ? 'bg-amber-950 text-amber-300 border-amber-500/40'
+                          : 'bg-emerald-950 text-emerald-300 border-emerald-500/40'
                       }`}
                     >
                       {selectedItem.draft_status}
@@ -308,7 +312,7 @@ export const InboxPage: React.FC = () => {
                   {!isEditingDraft && selectedItem.draft_status !== 'BLOCKED' && (
                     <button
                       onClick={() => setIsEditingDraft(true)}
-                      className="text-xs font-semibold text-sky-600 hover:text-sky-800 flex items-center gap-1"
+                      className="text-xs font-semibold text-sky-400 hover:text-sky-300 flex items-center gap-1 transition-colors"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                       <span>Edit Draft</span>
@@ -322,18 +326,18 @@ export const InboxPage: React.FC = () => {
                       rows={5}
                       value={draftContent}
                       onChange={(e) => setDraftContent(e.target.value)}
-                      className="w-full p-3 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                      className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-white focus:ring-1 focus:ring-sky-500 focus:outline-none"
                     />
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => setIsEditingDraft(false)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100"
+                        className="px-3.5 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 transition-colors"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleApproveDraft}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-600 text-white hover:bg-sky-700"
+                        className="flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-md transition-colors"
                       >
                         <Check className="w-3.5 h-3.5" />
                         <span>Save & Authorize Draft</span>
@@ -342,7 +346,7 @@ export const InboxPage: React.FC = () => {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 font-mono whitespace-pre-wrap leading-relaxed">
+                    <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 font-mono whitespace-pre-wrap leading-relaxed">
                       {selectedItem.ai_response_draft || 'No automated response generated.'}
                     </div>
 
@@ -350,7 +354,7 @@ export const InboxPage: React.FC = () => {
                       <div className="flex justify-end gap-2 pt-2">
                         <button
                           onClick={handleApproveDraft}
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white shadow-sm transition-colors"
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-600 to-sky-600 hover:from-emerald-500 hover:to-sky-500 text-white shadow-[0_0_15px_-3px_rgba(16,185,129,0.4)] transition-all transform active:scale-95"
                         >
                           <Send className="w-3.5 h-3.5" />
                           <span>Approve & Schedule Dispatch</span>
@@ -362,8 +366,8 @@ export const InboxPage: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="p-12 text-center text-slate-400">
-              <Mail className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+            <div className="p-16 text-center text-slate-500">
+              <Mail className="w-12 h-12 text-slate-600 mx-auto mb-3" />
               <p className="text-sm">Select an email to view full conversation and response draft</p>
             </div>
           )}
