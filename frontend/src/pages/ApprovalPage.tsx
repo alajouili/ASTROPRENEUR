@@ -43,7 +43,8 @@ export const ApprovalPage: React.FC<ApprovalPageProps> = ({ onDataChanged }) => 
       <div className="surface-card p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div className="flex items-center gap-1.5 text-xs font-medium flex-wrap">
           <span className="text-slate-500 font-mono uppercase text-[11px] mr-1">Status:</span>
-          {(['all', 'pending', 'approved', 'rejected'] as const).map((st) => (
+          {/* Approval runs the Action Gateway at once: an approved proposal ends executed or failed. */}
+          {(['all', 'pending', 'executed', 'rejected', 'failed', 'superseded'] as const).map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}

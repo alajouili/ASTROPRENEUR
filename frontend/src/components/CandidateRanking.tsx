@@ -126,7 +126,7 @@ export const CandidateRanking: React.FC<CandidateRankingProps> = ({
             )}
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Requisition: <span className="font-semibold text-slate-800 dark:text-slate-200">{job?.title || 'No Job Selected'}</span> &bull; Scored mathematically from verified verbatim quotes. Hallucinations zero-weighted.
+            Requisition: <span className="font-semibold text-slate-800 dark:text-slate-200">{job?.title || 'No Job Selected'}</span> &bull; Scores are computed in code from quotes verified against each CV.
           </p>
         </div>
 
@@ -389,8 +389,11 @@ export const CandidateRanking: React.FC<CandidateRankingProps> = ({
                           <span className={`text-sm font-bold font-mono ${scoreColor}`}>
                             {cand.score.toFixed(1)}%
                           </span>
-                          <span className="badge-neutral font-mono text-[9px] uppercase px-1.5 py-0.5">
-                            {cand.engine || 'SIMULATED'}
+                          <span
+                            className={/SIMULATED|offline/i.test(cand.engine || 'SIMULATED') ? 'badge-warning' : 'badge-neutral'}
+                            title={cand.engine || 'SIMULATED'}
+                          >
+                            {/SIMULATED|offline/i.test(cand.engine || 'SIMULATED') ? 'Simulated' : (cand.engine || '').split(':').pop()}
                           </span>
                         </div>
                         {isCustomized && cand.originalScore !== undefined && (

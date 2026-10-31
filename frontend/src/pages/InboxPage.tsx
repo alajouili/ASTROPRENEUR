@@ -86,11 +86,11 @@ export const InboxPage: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {/* Live Gateway Notice */}
-      <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs flex items-center justify-between font-mono">
-        <div className="flex items-center gap-2">
-          <span className="badge-clean text-[10px]">Active & Guarded</span>
-          <span>Inbound mailbox triage with Prompt Guard scanning & Action Gateway email dispatch.</span>
+      {/* Preview notice: what is sample data and what is real */}
+      <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-900 dark:text-amber-200 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex items-start gap-2">
+          <span className="badge-warning shrink-0">Preview</span>
+          <span>Emails come from a sample file, not a live mailbox yet. Replies you authorize here are real: they go to the approval queue and are sent only after approval.</span>
         </div>
         <Link to="/approvals" className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1">
           <span>View Approvals</span>
@@ -301,7 +301,7 @@ export const InboxPage: React.FC = () => {
               )}
 
               {/* Message Body */}
-              <div className="bg-slate-50 dark:bg-slate-950/60 p-4 rounded-lg border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-slate-200 font-mono whitespace-pre-wrap leading-relaxed">
+              <div className="bg-slate-50 dark:bg-slate-950/60 p-4 rounded-lg border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
                 {selectedItem.body}
               </div>
 
@@ -355,7 +355,7 @@ export const InboxPage: React.FC = () => {
                   </div>
                 ) : (
                   <div className="space-y-2.5">
-                    <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap leading-relaxed">
+                    <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
                       {selectedItem.ai_response_draft || 'No automated response generated.'}
                     </div>
 

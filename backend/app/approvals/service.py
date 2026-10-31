@@ -10,12 +10,13 @@ from app.audit.log import append as audit
 from app.auth.security import HR_ROLES
 from app.models import Proposal, User, utcnow
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class EmailPayload(BaseModel):
-    to: str
-    subject: str = "TrustHR Notification"
-    body: str
+    # One plain address; the subject must be a single line (no header injection).
+    to: str = Field(max_length=254, pattern=r"^[^@\s<>,;]+@[^@\s<>,;]+\.[A-Za-z]{2,}$")
+    subject: str = Field(default="TrustHR Notification", min_length=1, max_length=200, pattern=r"^[^\r\n]*$")
+    body: str = Field(min_length=1, max_length=10_000)
 
 class SchedulePayload(BaseModel):
     candidate_id: str | None = None
@@ -63,7 +64,9 @@ def create_proposal(
     )
     db.add(proposal)
     db.flush()
-    audit(db, actor_type="agent", actor_id=created_by, action="proposal.created", entity_type="proposal",
+    # A recruiter's own draft ("user:<id>") is a user action; anything else comes from an agent.
+    actor_type = "user" if created_by.startswith("user:") else "agent"
+    audit(db, actor_type=actor_type, actor_id=created_by, action="proposal.created", entity_type="proposal",
           entity_id=proposal.id, details={"type": type, "payload": clean, "payload_hash": h, "risk_flags": len(risk_flags)})
     return proposal
 

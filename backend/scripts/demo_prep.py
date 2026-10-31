@@ -6,6 +6,7 @@ runs screening through the background orchestrator, and creates human approval p
 Run: python -m scripts.demo_prep
 """
 import os
+import secrets
 import sys
 from pathlib import Path
 
@@ -33,23 +34,32 @@ def prep() -> None:
         print("  TrustHR AI — Live Hackathon Demo Preparation")
         print("=" * 60)
 
+        # Passwords come from SEED_*_PASSWORD or are random, as in scripts/seed.py. Existing
+        # accounts keep their password unless --reset-passwords is given.
+        reset = "--reset-passwords" in sys.argv
         recruiter = None
-        passwords = {}
+        passwords: dict[str, str] = {}
         for email, name, role, env_var in DEMO_USERS:
-            pw = os.environ.get(env_var, "DemoPass123!")
-            passwords[role] = pw
             user = db.scalar(select(User).where(User.email == email))
+            if user is None or reset:
+                pw = os.environ.get(env_var) or secrets.token_urlsafe(12)
+                shown = "(from env)" if os.environ.get(env_var) else pw
+                passwords[email] = shown
             if user is None:
                 user = User(email=email, full_name=name, role=role, password_hash=hash_password(pw))
                 db.add(user)
                 db.flush()
-                print(f"[+] Created user: {role:10s} | {email} | {pw}")
-            else:
+                print(f"[+] Created user: {role:10s} | {email} | password: {shown}")
+            elif reset:
                 user.password_hash = hash_password(pw)
                 user.failed_logins = 0
                 user.locked_until = None
                 db.flush()
-                print(f"[*] Updated user: {role:10s} | {email} | {pw}")
+                audit(db, actor_type="system", actor_id="demo_prep", action="user.password_reset",
+                      entity_type="user", entity_id=user.id)
+                print(f"[*] Reset password: {role:10s} | {email} | password: {shown}")
+            else:
+                print(f"[*] Kept existing user: {role:10s} | {email} (password unchanged)")
             if role == "recruiter":
                 recruiter = user
 
@@ -141,8 +151,10 @@ def prep() -> None:
         print("  DEMO PREPARATION COMPLETE & VERIFIED")
         print("-" * 60)
         print("  Web Dashboard:  http://localhost:8080")
-        print("  Login:          recruiter@trusthr.demo  (Password: DemoPass123!)")
-        print("  HR Admin:       admin@trusthr.demo      (Password: DemoPass123!)")
+        for email, shown in passwords.items():
+            print(f"  {email:24s} password: {shown}")
+        if not passwords:
+            print("  Accounts unchanged. To set new passwords: --reset-passwords (uses SEED_*_PASSWORD or random)")
         print("  Mailpit UI:     http://localhost:8025")
         print("  API Docs:       http://localhost:8080/api/docs")
         print("=" * 60)

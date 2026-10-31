@@ -51,7 +51,8 @@ def create_app() -> FastAPI:
         return {"status": "ok", "screening_engine": build_engine(settings).label,
                 "prompt_guard": settings.prompt_guard_mode}
 
-    for router in (auth.router, jobs.router, proposals.router, audit.router, scan.router, inbox.router, scheduling.router, assistant.router):
+    for router in (auth.router, jobs.router, proposals.router, audit.router, scan.router, inbox.router, scheduling.router,
+                   assistant.router):
         app.include_router(router)
     return app
 

@@ -220,15 +220,25 @@ The system includes pre-loaded fixtures in `data/samples/` to demonstrate attack
 The codebase enforces strict test verification across all layers:
 
 ```bash
-# Run backend pytest suite (Security Guard, Forensics, Injection, Gateways, Audit)
-cd backend
+# Backend pytest suite (Security Guard, forensics, injection, output guard, gateway, audit,
+# dashboard API contract), from the repository root, on a throwaway PostgreSQL:
 docker compose --profile test run --rm tests
-# 79 passed in ~15.2s against throwaway PostgreSQL (pgvector:pg16)
+# 176 passed
 
-# Run frontend production build (TypeScript check + Vite bundle)
-cd frontend
-npm run build
+# Frontend production build (TypeScript check + Vite bundle)
+cd frontend && npm run build
+
+# End-to-end: the real frontend/src/services/api.ts against a running, seeded stack,
+# including an approved email checked in Mailpit (see the header of the file)
+E2E_BASE_URL=http://localhost:8080 E2E_MAILPIT_URL=http://localhost:8025 \
+E2E_RECRUITER_PASSWORD=... E2E_ADMIN_PASSWORD=... E2E_EMPLOYEE_PASSWORD=... \
+  node --test e2e/dashboard-api.e2e.mjs
+# 18 passed
 ```
+
+Optional local Prompt Guard classifier: `pip install -r backend/requirements-ml.txt`, then
+`PROMPT_GUARD_MODE=local` (and `HF_TOKEN` for the gated Meta model; without access the open
+ProtectAI model is used). Integration status and open issues: [docs/INTEGRATION_STATUS.md](docs/INTEGRATION_STATUS.md).
 
 ---
 

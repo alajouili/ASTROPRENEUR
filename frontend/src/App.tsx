@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -17,10 +17,11 @@ import { AuditPage } from './pages/AuditPage';
 import { AdversarialLabPage } from './pages/AdversarialLabPage';
 import { LoginPage } from './pages/LoginPage';
 import { api } from './services/api';
-import { AlertTriangle } from 'lucide-react';
+import { Info, X } from 'lucide-react';
 
 const AppShell: React.FC = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [isMockMode, setIsMockMode] = useState<boolean>(api.isMockMode());
   const [isPitchDemoOpen, setIsPitchDemoOpen] = useState<boolean>(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
@@ -51,8 +52,8 @@ const AppShell: React.FC = () => {
     setIsMockMode(nextMode);
     setToastMessage(
       nextMode
-        ? 'Switched to Demo Simulation Dataset.'
-        : 'Switched to Live FastAPI Backend Gateway.'
+        ? 'Showing local sample data. Nothing is read from or sent to the backend.'
+        : 'Showing live data from the backend.'
     );
     setTimeout(() => setToastMessage(null), 4000);
     loadGlobalCounts();
@@ -60,13 +61,22 @@ const AppShell: React.FC = () => {
 
   const currentRole = user?.role ? user.role.replace('_', ' ') : 'Guest';
 
+  // The sign-in page stands alone: no navigation to pages a signed-out visitor cannot open.
+  if (location.pathname === '/login') {
+    return (
+      <div className="min-h-screen bg-[var(--bg-app)] text-slate-900 dark:text-slate-100">
+        <LoginPage />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0a0f1d] text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors">
       {/* Persistent Top Mock Banner when Mock Mode is active */}
       {isMockMode && (
-        <div className="bg-amber-400 dark:bg-amber-500 text-slate-950 px-4 py-2 text-center text-xs font-bold font-mono tracking-wider flex items-center justify-center gap-2 shadow-sm border-b border-amber-600 sticky top-0 z-50">
-          <AlertTriangle className="w-4 h-4 shrink-0 text-slate-950" />
-          <span>MOCK DATA — not from the backend (Demo Simulation Mode Active)</span>
+        <div className="bg-amber-50 dark:bg-amber-500/10 text-amber-900 dark:text-amber-200 px-4 py-2 text-center text-xs font-medium flex items-center justify-center gap-2 border-b border-amber-200 dark:border-amber-500/20 lg:pl-64">
+          <Info className="w-4 h-4 shrink-0" />
+          <span>Sample data mode: nothing on screen comes from the backend. Switch to "Live data" in the top bar.</span>
         </div>
       )}
 
@@ -92,16 +102,10 @@ const AppShell: React.FC = () => {
         {/* Global Toast Alert */}
         {toastMessage && (
           <div className="max-w-7xl mx-auto w-full px-4 pt-4">
-            <div className="p-3 rounded-lg bg-slate-900 text-white dark:bg-slate-800 text-xs font-medium shadow-md flex justify-between items-center border border-slate-700 animate-fade-in">
-              <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping"></span>
-                <span>{toastMessage}</span>
-              </div>
-              <button
-                onClick={() => setToastMessage(null)}
-                className="text-slate-400 hover:text-white font-bold text-xs px-2 py-0.5 rounded"
-              >
-                Dismiss
+            <div role="status" className="px-4 py-3 rounded-lg bg-slate-900 text-white dark:bg-slate-800 text-sm shadow-lg flex justify-between items-center gap-3 animate-fade-in">
+              <span>{toastMessage}</span>
+              <button onClick={() => setToastMessage(null)} className="text-slate-400 hover:text-white p-1 rounded" aria-label="Dismiss">
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -187,19 +191,10 @@ const AppShell: React.FC = () => {
           </Routes>
         </main>
 
-        {/* Enterprise Compliance Footer */}
-        <footer className="border-t border-slate-200 dark:border-slate-800 py-5 bg-white dark:bg-slate-900 mt-auto transition-colors">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <div className="flex items-center gap-2 font-medium">
-              <span className="font-semibold text-slate-800 dark:text-slate-200">TrustHR AI</span>
-              <span>&bull;</span>
-              <span>Human-Controlled Recruitment Gateway</span>
-              <span>&bull;</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-mono text-[11px]">EU AI Act Art. 14 HITL</span>
-            </div>
-            <div>
-              Principle: <em>"The agent proposes, the human decides."</em>
-            </div>
+        <footer className="border-t border-slate-200 dark:border-slate-800 mt-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-1 text-xs text-slate-500 dark:text-slate-400">
+            <span>TrustHR · fictional data only</span>
+            <span>The agent proposes, a person decides.</span>
           </div>
         </footer>
       </div>

@@ -21,6 +21,7 @@ import {
 export const InternalCareersPage: React.FC = () => {
   const { user } = useAuth();
   const [jobs, setJobs] = useState<JobOffer[]>([]);
+  const [isSample, setIsSample] = useState<boolean>(false);
   const [selectedJob, setSelectedJob] = useState<JobOffer | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,8 +46,10 @@ export const InternalCareersPage: React.FC = () => {
       // In mock mode or when jobs list is retrieved
       const data = await api.getJobs();
       setJobs(data);
+      setIsSample(false);
     } catch {
-      // Fallback sample requisitions if employee has role isolation
+      // The live job list is HR-only: show sample positions, clearly labelled as such.
+      setIsSample(true);
       setJobs([
         {
           id: 'job-internal-01',
@@ -92,7 +95,7 @@ export const InternalCareersPage: React.FC = () => {
   const handleSubmitReferral = (e: React.FormEvent) => {
     e.preventDefault();
     setReferralSuccess(
-      `Internal referral for ${refereeName} on "${referralJob?.title}" was successfully submitted! A notification has been routed to the talent team.`
+      `Preview only: your referral for ${refereeName} on "${referralJob?.title}" was NOT saved or sent. Referrals are not connected to the backend yet; please contact the talent team directly.`
     );
     setTimeout(() => {
       setIsReferralOpen(false);
@@ -117,6 +120,13 @@ export const InternalCareersPage: React.FC = () => {
 
   return (
     <div className="space-y-5">
+      {isSample && (
+        <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-900 dark:text-amber-200 text-sm flex items-start gap-2">
+          <span className="badge-warning shrink-0">Preview</span>
+          <span>These are sample positions: the live job list is not available to your role yet, and referrals are not saved.</span>
+        </div>
+      )}
+
       {/* Employee Mobility Hero Banner */}
       <div className="surface-card p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1.5 max-w-2xl">

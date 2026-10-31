@@ -31,6 +31,8 @@ x-backend: &backend
     MAILPIT_API_URL: http://mailpit:8025
   volumes:
     - uploads:/app/var/uploads
+    # Fictional dataset: inbox emails and company policies (read-only).
+    - ./data:/app/data:ro
 
 services:
   db:
@@ -121,6 +123,7 @@ services:
       - ./backend/app:/app/app:ro
       - ./backend/scripts:/app/scripts:ro
       - ./backend/tests:/app/tests:ro
+      - ./data:/app/data:ro
     command: ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "tests"]
     depends_on:
       db-test:

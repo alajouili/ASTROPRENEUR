@@ -9,6 +9,7 @@ node_modules
 EOFcookies.txt
 *.db
 *.txt
+!**/requirements*.txt
 # Python
 __pycache__/
 *.py[cod]
@@ -57,6 +58,7 @@ dist-ssr/
 *.db
 data/*
 !data/samples/
+!data/policies/
 !data/benchmark_dataset.json
 uploads/
 

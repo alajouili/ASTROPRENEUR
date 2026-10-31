@@ -11,6 +11,7 @@ import {
   MockSchedulingSlot,
   MockPolicyAnswer,
 } from './mockData';
+import type { RiskFlagLike } from '../lib/format';
 
 export interface User {
   id: string;
@@ -114,7 +115,7 @@ export interface RankedCandidate {
   justification: string;
   criteria_results: Record<string, any>;
   risk_level: 'clean' | 'low' | 'medium' | 'high';
-  risk_flags: string[];
+  risk_flags: RiskFlagLike[];
   rejected_evidence: string[];
   engine: string;
 }
@@ -125,7 +126,7 @@ export interface NotRankedCandidate {
   source_filename: string;
   status: string;
   risk_level: string;
-  risk_flags: string[];
+  risk_flags: RiskFlagLike[];
 }
 
 export interface RankingResponse {
@@ -140,7 +141,7 @@ export interface Proposal {
   job_id: string | null;
   payload: any;
   evidence: any;
-  risk_flags: string[];
+  risk_flags: RiskFlagLike[];
   status: 'pending' | 'approved' | 'rejected' | 'failed' | 'executed';
   created_by: string;
   created_at: string;
@@ -176,7 +177,7 @@ export interface CandidateDetailWithResume {
   source_filename: string;
   status: string;
   risk_level: string;
-  risk_flags: string[];
+  risk_flags: RiskFlagLike[];
   file_kind: string;
   resume_text: string;
   screening: {
@@ -215,11 +216,39 @@ export interface HomeStats {
   inboxUnread: number;
   interviewsScheduled: number;
   securityThreatsIntercepted: number;
-  hashChainIntegrity: boolean;
+  hashChainIntegrity: boolean | null; // null: not checked (only the HR admin may verify)
   averageMatchScore: number;
 }
 
 export type { MockInboxItem as InboxItem, MockSchedulingSlot as SchedulingSlot, MockPolicyAnswer as PolicyAnswer };
+
+// ---- Policy assistant (POST /api/assistant/ask) ----
+export interface AssistantTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface AssistantSource {
+  id: string;
+  document: string;
+  section: string;
+  excerpt: string;
+}
+
+export interface AssistantAnswer {
+  answer: string;
+  found: boolean;
+  mode: string; // e.g. "groq:openai/gpt-oss-120b" or "offline-retrieval (SIMULATED, no LLM)"
+  notice: string | null;
+  flagged: boolean;
+  sources: AssistantSource[];
+}
+
+export interface AssistantStatus {
+  mode: string;
+  llm_configured: boolean;
+  documents: string[];
+}
 
 export class ApiError extends Error {
   constructor(public status: number, message: string, public details?: any) {
@@ -511,7 +540,11 @@ export const api = {
         not_ranked: [],
       };
     }
-    return request<RankingResponse>(`/api/jobs/${jobId}/ranking`);
+    const ranking = await request<RankingResponse>(`/api/jobs/${jobId}/ranking`);
+    // The backend reports a clean CV as risk_level "none"; the screens use "clean".
+    const normalize = <T extends { risk_level: string }>(row: T): T =>
+      (row.risk_level === 'none' ? { ...row, risk_level: 'clean' } : row);
+    return { ...ranking, ranked: ranking.ranked.map(normalize), not_ranked: ranking.not_ranked.map(normalize) };
   },
 
   // ---- Proposals & Governance Gateway ----
@@ -664,6 +697,15 @@ export const api = {
     }
 
     try {
+      // Employees may not read candidates or proposals: do not call routes they are refused
+      // (each refusal is written to the audit log).
+      const me = await this.getMe();
+      if (me.role === 'employee') {
+        return {
+          candidatesScreened: 0, pendingApprovals: 0, inboxUnread: 0, interviewsScheduled: 0,
+          securityThreatsIntercepted: 0, hashChainIntegrity: null, averageMatchScore: 0,
+        };
+      }
       const [jobs, proposals] = await Promise.all([
         this.getJobs().catch(() => []),
         this.getProposals('pending').catch(() => []),
@@ -695,13 +737,11 @@ export const api = {
         }
       }
 
-      // Check audit chain if admin, or default true
-      let integrity = true;
-      try {
-        const verifyRes = await this.verifyAuditChain();
-        integrity = verifyRes.ok;
-      } catch {
-        // Recruiter might get 403 on /audit/verify
+      // Only the HR admin may verify the audit chain. For other roles the result is
+      // "not checked" (null), never assumed valid, and no forbidden call is made.
+      let integrity: boolean | null = null;
+      if (me.role === 'hr_admin') {
+        integrity = (await this.verifyAuditChain()).ok;
       }
 
       const [inboxItems, allProposals] = await Promise.all([
@@ -901,31 +941,36 @@ export const api = {
   },
 
   async askPolicy(question: string) {
-    const found = MOCK_POLICY_KB.find(
-      (k) =>
-        k.question.toLowerCase().includes(question.toLowerCase()) ||
-        question.toLowerCase().includes(k.question.toLowerCase())
-    );
-    return found || MOCK_POLICY_KB[0];
+    // Sample data only: an exact match from the sample list, never an unrelated answer.
+    const q = question.toLowerCase();
+    return MOCK_POLICY_KB.find((k) => k.question.toLowerCase().includes(q) || q.includes(k.question.toLowerCase())) || null;
+  },
+
+  async getAssistantStatus(): Promise<AssistantStatus> {
+    if (_mockMode) {
+      return { mode: 'sample data (no backend)', llm_configured: false, documents: [] };
+    }
+    return request<AssistantStatus>('/api/assistant/status');
+  },
+
+  /** Ask the policy assistant. The conversation so far gives context to follow-up questions. */
+  async askAssistant(question: string, history: AssistantTurn[] = []): Promise<AssistantAnswer> {
+    if (_mockMode) {
+      const hit = await this.askPolicy(question);
+      return hit
+        ? { answer: hit.answer, found: true, mode: 'sample data (no backend)', notice: 'Sample data mode: this is a pre-written example, not an answer from the policy documents.', flagged: false,
+            sources: [{ id: hit.id, document: hit.source, section: hit.section, excerpt: '' }] }
+        : { answer: 'Sample data mode only knows a few pre-written questions. Switch to live data to ask the real policy assistant.', found: false,
+            mode: 'sample data (no backend)', notice: null, flagged: false, sources: [] };
+    }
+    return request<AssistantAnswer>('/api/assistant/ask', {
+      method: 'POST',
+      body: JSON.stringify({ question, history: history.slice(-8) }),
+    });
   },
 
   async askPolicyAssistant(question: string) {
-    return this.askPolicy(question);
+    return this.askAssistant(question);
   },
 
-  async askAssistant(
-    query: string,
-    language: 'auto' | 'derja' | 'fr' | 'en' = 'auto'
-  ): Promise<{
-    text: string;
-    source: string;
-    section: string;
-    confidence: number;
-    detected_language: string;
-  }> {
-    return request('/api/assistant/chat', {
-      method: 'POST',
-      body: JSON.stringify({ query, language }),
-    });
-  },
 };

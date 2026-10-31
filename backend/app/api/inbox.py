@@ -4,11 +4,12 @@ Connects to candidate communications, scans inbound emails for prompt injection,
 and generates human-approval proposals for email replies and status updates.
 """
 import json
+import re
 from pathlib import Path
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.orm import Session
 
 from app.api.proposals import proposal_out
@@ -18,6 +19,7 @@ from app.config import get_settings
 from app.db import get_db
 from app.models import User
 from app.security.injection import scan_rules
+from app.security.output_guard import check_output
 
 router = APIRouter(prefix="/api/inbox", tags=["inbox"])
 hr_only = require_roles("recruiter", "hr_admin")
@@ -63,10 +65,29 @@ def _load_emails() -> list[dict]:
     return list(DEFAULT_SAMPLE_EMAILS)
 
 
+def _normalize(email: dict) -> dict:
+    """Give every email the fields the dashboard reads. The dataset file uses Mailpit-style
+    keys ("from": "Name <address>", "date", "ai_draft"); the original keys are kept."""
+    out = dict(email)
+    sender = str(email.get("from") or "")
+    match = re.match(r"^\s*(.*?)\s*<([^<>\s]+@[^<>\s]+)>\s*$", sender)
+    if match:
+        out.setdefault("sender", match.group(1) or match.group(2))
+        out.setdefault("sender_email", match.group(2))
+    elif "@" in sender:
+        out.setdefault("sender", sender.strip())
+        out.setdefault("sender_email", sender.strip())
+    out.setdefault("received_at", email.get("date"))
+    # The dataset's ai_draft is an object ({action, to, subject, body, ...}); the screen shows text.
+    draft = email.get("ai_draft")
+    out.setdefault("ai_response_draft", (draft.get("body") or "") if isinstance(draft, dict) else (draft or ""))
+    return out
+
+
 @router.get("")
 def list_inbox(user: User = Depends(hr_only)) -> list[dict]:
     """Returns candidate inbox email threads with security scanning flags."""
-    emails = _load_emails()
+    emails = [_normalize(e) for e in _load_emails()]
     # Scan email bodies for prompt injection
     for email in emails:
         flags = scan_rules(email.get("body", ""))
@@ -93,16 +114,21 @@ def propose_email_reply(
     recipient = body.to or body.to_email
     if not recipient:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Recipient email ('to' or 'to_email') required")
-    proposal = create_proposal(
-        db,
-        type="send_email",
-        job_id=None,
-        payload={"to": recipient, "subject": body.subject, "body": body.body},
-        evidence={"in_reply_to": email_id},
-        risk_flags=[],
-        created_by=f"user:{user.id}",
-    )
+    # Output Guard before the draft is saved (Member 2's design); the gateway checks again.
+    violations = [v for part in (body.subject, body.body) for v in check_output(part)[1]]
+    if violations:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Draft blocked by the Output Guard: {'; '.join(violations)}")
+    try:
+        proposal = create_proposal(
+            db,
+            type="send_email",
+            job_id=None,
+            payload={"to": recipient, "subject": body.subject, "body": body.body},
+            evidence={"in_reply_to": email_id},
+            risk_flags=[],
+            created_by=f"user:{user.id}",
+        )
+    except ValidationError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Invalid draft: {exc.errors()[0]['msg']}")
     db.commit()
     return proposal_out(proposal)
-    db.commit()
-    return {"message": "Email draft proposal created for human approval queue", "proposal_id": proposal.id}

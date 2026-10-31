@@ -40,8 +40,21 @@ class Settings(BaseSettings):
     # Optional ML prompt-injection classifier (Llama Prompt Guard 2 86M)
     prompt_guard_mode: Literal["off", "groq", "local"] = "off"
     prompt_guard_threshold: float = 0.5
+    # Local mode (needs transformers + torch, see requirements-ml.txt). The Meta model is
+    # gated on Hugging Face; if it cannot be loaded, the open ProtectAI model is used instead.
+    prompt_guard_local_model: str = "meta-llama/Llama-Prompt-Guard-2-86M"
+    prompt_guard_fallback_model: str = "protectai/deberta-v3-base-prompt-injection-v2"
+
+    # Fictional mailbox (Mailpit). The Action Gateway sends approved emails here only.
+    mailpit_smtp_host: str = "localhost"
+    mailpit_smtp_port: int = 1025
+    mailpit_api_url: str = "http://localhost:8025"
 
     shortlist_size: int = 5
+
+    # Policy Assistant: company policy documents (Markdown), read-only.
+    policy_dir: Path = Path("data/policies")
+    assistant_questions_per_minute: int = 20
     embedded_worker: bool = False  # dev convenience: run the worker inside the API process
 
     @model_validator(mode="after")

@@ -1,306 +1,211 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, HomeStats } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { EUAIActRadar } from '../components/EUAIActRadar';
+import { roleLabel } from '../lib/format';
 import {
-  ShieldCheck,
-  ShieldAlert,
   Users,
   CheckCircle2,
-  Mail,
-  Calendar,
-  Lock,
+  ShieldAlert,
+  Gauge,
   ArrowRight,
-  Bot,
-  Activity,
-  Layers,
-  Fingerprint,
-  Cpu,
-  ChevronRight,
-  Sparkles,
+  FileSearch,
+  UserCheck,
+  Lock,
+  MessageSquareText,
+  AlertCircle,
+  RefreshCw,
+  Briefcase,
 } from 'lucide-react';
 
 interface HomeOverviewProps {
   userRole: string;
 }
 
-export const HomeOverview: React.FC<HomeOverviewProps> = ({ userRole }) => {
-  const [stats, setStats] = useState<HomeStats>({
-    candidatesScreened: 0,
-    pendingApprovals: 0,
-    inboxUnread: 0,
-    interviewsScheduled: 0,
-    securityThreatsIntercepted: 0,
-    hashChainIntegrity: true,
-    averageMatchScore: 0,
-  });
+const EMPTY: HomeStats = {
+  candidatesScreened: 0,
+  pendingApprovals: 0,
+  inboxUnread: 0,
+  interviewsScheduled: 0,
+  securityThreatsIntercepted: 0,
+  hashChainIntegrity: null,
+  averageMatchScore: 0,
+};
+
+const StatCard: React.FC<{
+  label: string;
+  value: React.ReactNode;
+  hint: string;
+  icon: React.ElementType;
+  tone: string;
+  loading: boolean;
+  to?: string;
+}> = ({ label, value, hint, icon: Icon, tone, loading, to }) => {
+  const body = (
+    <div className="surface-card p-5 h-full transition-colors hover:border-slate-300 dark:hover:border-slate-700">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</span>
+        <span className={`w-8 h-8 rounded-lg flex items-center justify-center ${tone}`}>
+          <Icon className="w-4 h-4" />
+        </span>
+      </div>
+      <div className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white tabular-nums">
+        {loading ? <span className="skeleton inline-block h-8 w-16 align-middle" /> : value}
+      </div>
+      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{hint}</p>
+    </div>
+  );
+  return to ? <Link to={to} className="block rounded-xl">{body}</Link> : body;
+};
+
+export const HomeOverview: React.FC<HomeOverviewProps> = () => {
+  const { user } = useAuth();
+  const [stats, setStats] = useState<HomeStats>(EMPTY);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadStats();
-  }, []);
 
   const loadStats = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await api.getHomeStats();
-      setStats(data);
+      setStats(await api.getHomeStats());
     } catch (err: any) {
-      setError(err.message || 'Failed to aggregate statistics from gateway.');
+      setError(err.message || 'Could not load the dashboard figures.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const isMock = api.isMockMode();
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const firstName = user?.full_name?.split(' ')[0];
+
+  if (user?.role === 'employee') {
+    return (
+      <div className="space-y-6 max-w-3xl">
+        <div>
+          <h2 className="page-title">Welcome{firstName ? `, ${firstName}` : ''}</h2>
+          <p className="page-subtitle">Questions about leave, remote work, benefits or your personal data? Ask the policy assistant.</p>
+        </div>
+        <Link to="/assistant" className="surface-card p-6 flex items-center gap-4 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+          <div className="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+            <MessageSquareText className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <div className="section-title">Policy assistant</div>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Answers come only from company policy documents, with the source of each answer.</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-slate-400" />
+        </Link>
+        <Link to="/careers" className="surface-card p-6 flex items-center gap-4 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+          <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0">
+            <Briefcase className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <div className="section-title">Internal job board</div>
+            <p className="text-sm text-slate-500 dark:text-slate-400">See open positions inside the company.</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-slate-400" />
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Enterprise Executive Banner */}
-      <div className="surface-card p-6 sm:p-7 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl shadow-xs">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-          <div className="space-y-2.5 max-w-2xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="badge-clean">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                {isMock ? 'Demo Simulation Dataset' : 'Gateway Defense Active'}
-              </span>
-              <span className="badge-neutral font-mono text-xs">
-                Role: <strong className="text-slate-900 dark:text-white ml-1">{userRole}</strong>
-              </span>
-              <span className="badge-info font-mono text-xs">
-                EU AI Act Annex III.4
-              </span>
-            </div>
-
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              TrustHR AI Recruitment Gateway
-            </h1>
-
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
-              High-Risk Human-in-the-Loop multi-agent recruitment infrastructure. Resumes are sanitized against microscopic prompt-injections, scored mathematically against verified verbatim quotes, and state changes require explicit recruiter authorization.
-            </p>
-
-            <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pt-1">
-              <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Zero Hallucinations (Quotes Verified)
-              </span>
-              <span className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-medium">
-                <Lock className="w-3.5 h-3.5" />
-                Action Gateway Air-Gap
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 w-full lg:w-auto">
-            <Link
-              to="/screening"
-              className="btn-primary flex items-center justify-center gap-2 text-xs py-2.5 px-4"
-            >
-              <Users className="w-4 h-4" />
-              <span>Resume Screening Console</span>
-              <ChevronRight className="w-4 h-4" />
-            </Link>
-            <Link
-              to="/approvals"
-              className="btn-secondary flex items-center justify-center gap-2 text-xs py-2.5 px-4"
-            >
-              <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>Approval Queue ({stats.pendingApprovals})</span>
-            </Link>
-          </div>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div>
+          <h2 className="page-title">Welcome back{firstName ? `, ${firstName}` : ''}</h2>
+          <p className="page-subtitle">
+            {roleLabel(user?.role)} · AI prepares the recruiting work, you make every decision about people.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Link to="/screening" className="btn-secondary">
+            <Users className="w-4 h-4" />
+            Screen CVs
+          </Link>
+          <Link to="/approvals" className="btn-primary">
+            <CheckCircle2 className="w-4 h-4" />
+            Review approvals
+            {stats.pendingApprovals > 0 && (
+              <span className="ml-0.5 px-1.5 rounded-full bg-white/20 text-xs tabular-nums">{stats.pendingApprovals}</span>
+            )}
+          </Link>
         </div>
       </div>
 
       {error && (
-        <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-700 dark:text-rose-300">
-          <strong>Notice:</strong> {error}
+        <div role="alert" className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-sm text-rose-700 dark:text-rose-300 flex items-center gap-3">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span className="flex-1">{error}</span>
+          <button onClick={loadStats} className="btn-secondary py-1 px-2.5 text-xs">
+            <RefreshCw className="w-3.5 h-3.5" /> Retry
+          </button>
         </div>
       )}
 
-      {/* Primary KPI Grid (Derived dynamically from backend) */}
+      {/* Key figures */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Candidates Screened */}
-        <div className="surface-card p-4 sm:p-5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-xs font-semibold uppercase tracking-wider font-mono">Screened</span>
-            <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
-              <Users className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="text-2xl font-bold font-mono text-slate-900 dark:text-white">
-              {isLoading ? '...' : stats.candidatesScreened}
-            </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-              Parsed & scored CVs
-            </p>
-          </div>
-        </div>
-
-        {/* Pending Approvals */}
-        <div className="surface-card p-4 sm:p-5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-xs font-semibold uppercase tracking-wider font-mono">Pending Gate</span>
-            <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">
-              {isLoading ? '...' : stats.pendingApprovals}
-            </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-              Awaiting human authorization
-            </p>
-          </div>
-        </div>
-
-        {/* Quarantined Threats */}
-        <div className="surface-card p-4 sm:p-5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-xs font-semibold uppercase tracking-wider font-mono">Quarantined</span>
-            <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400">
-              <ShieldAlert className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="text-2xl font-bold font-mono text-rose-600 dark:text-rose-400">
-              {isLoading ? '...' : stats.securityThreatsIntercepted}
-            </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-              Injections & active threats
-            </p>
-          </div>
-        </div>
-
-        {/* Average Match Score */}
-        <div className="surface-card p-4 sm:p-5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-xs font-semibold uppercase tracking-wider font-mono">Avg Match</span>
-            <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
-              <Activity className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <div className="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
-              {isLoading ? '...' : stats.averageMatchScore > 0 ? `${stats.averageMatchScore}%` : '—'}
-            </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-              Deterministic verified average
-            </p>
-          </div>
-        </div>
+        <StatCard label="CVs screened" value={stats.candidatesScreened} hint="Across all open positions" icon={Users}
+          tone="bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400" loading={isLoading} to="/screening" />
+        <StatCard label="Awaiting approval" value={stats.pendingApprovals} hint="Actions waiting for a person" icon={CheckCircle2}
+          tone="bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400" loading={isLoading} to="/approvals" />
+        <StatCard label="Flagged CVs" value={stats.securityThreatsIntercepted} hint="Hidden text or injection attempts" icon={ShieldAlert}
+          tone="bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400" loading={isLoading} to="/screening" />
+        <StatCard label="Average match" value={stats.averageMatchScore > 0 ? `${stats.averageMatchScore}%` : '—'}
+          hint="Score computed in code from verified evidence" icon={Gauge}
+          tone="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400" loading={isLoading} />
       </div>
 
-      {/* Two Column Layout: Compliance Radar & Golden Rule Flow */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* EU AI Act Radar Component */}
-        <div className="surface-card p-5 border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-            <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-              <Fingerprint className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>EU AI Act Compliance & Audit Assurance</span>
-            </h3>
-            <span className="badge-clean text-[10px] font-mono">
-              Article 14 Active
-            </span>
-          </div>
-          <div className="pt-4">
-            <EUAIActRadar />
-          </div>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* How a decision is made */}
+        <section className="surface-card p-6 lg:col-span-2">
+          <h3 className="section-title">How a decision is made</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">The agent proposes, a person decides.</p>
+          <ol className="mt-5 space-y-5">
+            {[
+              { icon: FileSearch, title: 'The agent analyses', text: 'Each CV is cleaned, then scored against the job criteria. Every claim needs a quote found in the CV.' },
+              { icon: UserCheck, title: 'A person reviews', text: 'The recruiter checks the evidence and risk flags, edits the shortlist if needed, then approves or rejects.' },
+              { icon: Lock, title: 'The gateway acts', text: 'Only the Action Gateway changes records or sends email, after approval, and it logs every step.' },
+            ].map(({ icon: Icon, title, text }, i) => (
+              <li key={title} className="flex gap-4">
+                <div className="relative flex flex-col items-center">
+                  <span className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0">
+                    <Icon className="w-4 h-4" />
+                  </span>
+                  {i < 2 && <span className="w-px flex-1 bg-slate-200 dark:bg-slate-800 mt-2" />}
+                </div>
+                <div className="pb-1">
+                  <div className="text-sm font-medium text-slate-900 dark:text-white">{title}</div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          {user?.role === 'hr_admin' && (
+            <Link to="/audit" className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+              Open the audit trail <ArrowRight className="w-4 h-4" />
+            </Link>
+          )}
+        </section>
 
-        {/* Golden Rule Architecture Walkthrough */}
-        <div className="surface-card p-5 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                <Lock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span>Action Gateway Security Model</span>
-              </h3>
-              <span className="badge-neutral text-[10px] font-mono">
-                No LLM Side-Effects
-              </span>
-            </div>
-
-            <div className="pt-4 space-y-3.5 text-xs text-slate-600 dark:text-slate-400">
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
-                <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
-                  1
-                </div>
-                <div>
-                  <h4 className="font-semibold text-slate-800 dark:text-slate-200">
-                    Autonomous Intelligence Proposes
-                  </h4>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    FastAPI + LangGraph screening agents extract quotes and propose shortlists. Agents have <strong>zero write access</strong> to databases, SMTP, or calendar backends.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
-                <div className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
-                  2
-                </div>
-                <div>
-                  <h4 className="font-semibold text-slate-800 dark:text-slate-200">
-                    Human Authorization & Review
-                  </h4>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Recruiters inspect evidence quotes, review quarantined risk flags, edit shortlisted candidate IDs, and record review notes.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800">
-                <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
-                  3
-                </div>
-                <div>
-                  <h4 className="font-semibold text-slate-800 dark:text-slate-200">
-                    Action Gateway Executes & Signs
-                  </h4>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Only <code className="font-mono text-indigo-600 dark:text-indigo-400">executor.py</code> changes database state, locks shortlists, and appends a SHA-256 block into the append-only ledger.
-                  </p>
-                </div>
-              </div>
+        {/* Controls */}
+        <section className="surface-card p-6 lg:col-span-3">
+          <div className="flex items-start justify-between gap-3 mb-5">
+            <div>
+              <h3 className="section-title">Safeguards for high-risk AI</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Recruitment is a high-risk use under the EU AI Act. How TrustHR addresses the main requirements:
+              </p>
             </div>
           </div>
-
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 mt-4 flex justify-between items-center text-xs">
-            <span className="text-slate-500 font-mono text-[11px]">Audit Hash Chaining</span>
-            {userRole.includes('admin') ? (
-              <Link
-                to="/audit"
-                className="text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1 hover:underline"
-              >
-                <span>Inspect Cryptographic Trail</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            ) : userRole.includes('employee') ? (
-              <Link
-                to="/careers"
-                className="text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1 hover:underline"
-              >
-                <span>Browse Internal Job Board</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            ) : (
-              <Link
-                to="/screening"
-                className="text-indigo-600 dark:text-indigo-400 font-semibold flex items-center gap-1 hover:underline"
-              >
-                <span>Go to ATS Pipeline</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            )}
-          </div>
-        </div>
+          <EUAIActRadar />
+        </section>
       </div>
     </div>
   );
