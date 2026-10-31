@@ -8,12 +8,14 @@ import {
 import { CandidateRanking } from '../components/CandidateRanking';
 import { EvidenceModal } from '../components/EvidenceModal';
 import { UploadResumeModal } from '../components/UploadResumeModal';
+import { SecurityScanModal } from '../components/SecurityScanModal';
 import {
   Briefcase,
   Search,
   RefreshCw,
   AlertCircle,
   Plus,
+  Cpu,
 } from 'lucide-react';
 
 interface ScreeningPageProps {
@@ -29,6 +31,7 @@ export const ScreeningPage: React.FC<ScreeningPageProps> = ({ onDataChanged }) =
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCandidate, setSelectedCandidate] = useState<RankedCandidate | NotRankedCandidate | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState<boolean>(false);
+  const [isScanOpen, setIsScanOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -212,6 +215,13 @@ export const ScreeningPage: React.FC<ScreeningPageProps> = ({ onDataChanged }) =
             Quarantined Risks
           </button>
           <button
+            onClick={() => setIsScanOpen(true)}
+            className="px-3 py-1.5 rounded-lg font-medium text-xs bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center gap-1.5 transition-colors"
+          >
+            <Cpu className="w-3.5 h-3.5" />
+            <span>Forensic Scan</span>
+          </button>
+          <button
             onClick={() => selectedJob && loadRanking(selectedJob.id)}
             title="Refresh Ranking"
             className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -255,6 +265,14 @@ export const ScreeningPage: React.FC<ScreeningPageProps> = ({ onDataChanged }) =
           jobId={selectedJob.id}
           onClose={() => setIsUploadOpen(false)}
           onSuccess={handleResumeUploaded}
+        />
+      )}
+
+      {/* Security Scan Modal */}
+      {isScanOpen && (
+        <SecurityScanModal
+          isOpen={isScanOpen}
+          onClose={() => setIsScanOpen(false)}
         />
       )}
     </div>

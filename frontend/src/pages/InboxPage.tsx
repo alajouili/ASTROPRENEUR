@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { api, InboxItem } from '../services/api';
 import {
   Mail,
@@ -14,6 +15,7 @@ import {
   Check,
   X,
   Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 
 export const InboxPage: React.FC = () => {
@@ -53,12 +55,17 @@ export const InboxPage: React.FC = () => {
   const handleApproveDraft = async () => {
     if (!selectedItem) return;
     try {
-      await api.updateInboxDraft(selectedItem.id, draftContent, true);
-      setFeedback(`Draft response for "${selectedItem.sender}" approved and queued!`);
+      const recipient = (selectedItem as any).sender_email || selectedItem.sender;
+      const res = await api.proposeInboxReply(selectedItem.id, {
+        to_email: recipient,
+        subject: `Re: ${selectedItem.subject}`,
+        body: draftContent,
+      });
+      setFeedback(`Email reply proposal #${res.id.substring(0, 8)} created! Queued in Human Approval Queue. Action Gateway dispatches email upon HR authorization.`);
       setIsEditingDraft(false);
       loadInbox();
     } catch (e: any) {
-      setFeedback(`Error approving draft: ${e.message}`);
+      setFeedback(`Error submitting reply proposal: ${e.message}`);
     }
   };
 
@@ -79,12 +86,16 @@ export const InboxPage: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {/* Roadmap Notice */}
-      <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs flex items-center justify-between font-mono">
+      {/* Live Gateway Notice */}
+      <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs flex items-center justify-between font-mono">
         <div className="flex items-center gap-2">
-          <span className="badge-warning text-[10px]">Preview (simulated)</span>
-          <span>Inbound mailbox triage milestone M2. Running on local simulated email dataset.</span>
+          <span className="badge-clean text-[10px]">Active & Guarded</span>
+          <span>Inbound mailbox triage with Prompt Guard scanning & Action Gateway email dispatch.</span>
         </div>
+        <Link to="/approvals" className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1">
+          <span>View Approvals</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
 
       {/* Header Banner */}

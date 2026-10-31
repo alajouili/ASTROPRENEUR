@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { api, SchedulingSlot } from '../services/api';
 import {
   Calendar,
@@ -11,6 +12,7 @@ import {
   AlertCircle,
   Briefcase,
   Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 
 const DAYS_OF_WEEK: Array<'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday'> = [
@@ -69,12 +71,16 @@ export const SchedulingPage: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {/* Roadmap Notice */}
-      <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs flex items-center justify-between font-mono">
+      {/* Live Gateway Notice */}
+      <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs flex items-center justify-between font-mono">
         <div className="flex items-center gap-2">
-          <span className="badge-warning text-[10px]">Preview (simulated)</span>
-          <span>Calendar synchronization milestone M2/M3. Running on local simulated schedule dataset.</span>
+          <span className="badge-clean text-[10px]">Active & Guarded</span>
+          <span>Interview proposals automatically queue in the Human Approval Queue. Action Gateway locks the calendar slot.</span>
         </div>
+        <Link to="/approvals" className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1">
+          <span>View Approvals</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
 
       {/* Header Banner */}

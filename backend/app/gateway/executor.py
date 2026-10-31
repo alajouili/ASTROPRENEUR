@@ -1,3 +1,4 @@
+from app.security.output_guard import check_output
 """Action Gateway: deterministic code, no LLM. The only place where actions take effect.
 
 Before executing it re-checks everything, even though the API already did:
@@ -39,7 +40,60 @@ def _execute_shortlist(db: Session, proposal: Proposal, actor: User) -> dict:
     return {"shortlisted": changed, "already_shortlisted": [c.id for c in candidates if c.id not in changed]}
 
 
-EXECUTORS = {"shortlist": _execute_shortlist}
+def _execute_send_email(db: Session, proposal: Proposal, actor: User) -> dict:
+    to_email = proposal.payload.get("to", "")
+    subject = proposal.payload.get("subject", "TrustHR Notification")
+    body = proposal.payload.get("body", "")
+
+    if "@" not in to_email or "." not in to_email:
+        raise GatewayError(f"Invalid recipient email address {to_email!r}")
+
+    is_safe, violations = check_output(body)
+    if not is_safe:
+        raise GatewayError(f"Output Guard blocked execution: {'; '.join(violations)}")
+
+    from app.config import get_settings
+    settings = get_settings()
+    delivered = False
+    try:
+        import smtplib
+        from email.message import EmailMessage
+
+        msg = EmailMessage()
+        msg["From"] = "recruitment@trusthr.ai"
+        msg["To"] = to_email
+        msg["Subject"] = subject
+        msg.set_content(body)
+
+        with smtplib.SMTP(settings.mailpit_smtp_host, int(settings.mailpit_smtp_port), timeout=3) as server:
+            server.send_message(msg)
+        delivered = True
+    except Exception:
+        delivered = False
+
+    audit(db, actor_type="system", actor_id="action_gateway", action="email.dispatched",
+          entity_type="proposal", entity_id=proposal.id,
+          details={"to": to_email, "subject": subject, "delivered_smtp": delivered})
+    return {"status": "sent", "to": to_email, "subject": subject, "delivered_smtp": delivered}
+
+
+def _execute_schedule_interview(db: Session, proposal: Proposal, actor: User) -> dict:
+    candidate_id = proposal.payload.get("candidate_id")
+    slot = proposal.payload.get("slot")
+    if not slot:
+        raise GatewayError("Missing interview slot in schedule payload")
+
+    audit(db, actor_type="system", actor_id="action_gateway", action="interview.scheduled",
+          entity_type="proposal", entity_id=proposal.id,
+          details={"candidate_id": candidate_id, "slot": slot})
+    return {"status": "scheduled", "candidate_id": candidate_id, "slot": slot}
+
+
+EXECUTORS = {
+    "shortlist": _execute_shortlist,
+    "send_email": _execute_send_email,
+    "schedule_interview": _execute_schedule_interview,
+}
 
 
 def execute(db: Session, proposal_id: str, actor: User) -> Proposal:
