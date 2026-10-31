@@ -1,4 +1,3 @@
-from app.security.output_guard import check_output
 """Action Gateway: deterministic code, no LLM. The only place where actions take effect.
 
 Before executing it re-checks everything, even though the API already did:
@@ -6,14 +5,20 @@ the proposal is approved by a human, the reviewer still has an HR role, the
 payload has not changed since approval, and every target is valid.
 All checks run before any change, so a failed action changes nothing.
 """
+import smtplib
+from email.message import EmailMessage
+
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.agents.screening.schemas import ShortlistPayload
-from app.approvals.service import payload_hash
+from app.approvals.service import EmailPayload, payload_hash
 from app.audit.log import append as audit
 from app.auth.security import HR_ROLES
+from app.config import get_settings
 from app.models import AuditLog, Candidate, Proposal, User, utcnow
+from app.security.output_guard import check_output
 
 
 class GatewayError(Exception):
@@ -41,40 +46,35 @@ def _execute_shortlist(db: Session, proposal: Proposal, actor: User) -> dict:
 
 
 def _execute_send_email(db: Session, proposal: Proposal, actor: User) -> dict:
-    to_email = proposal.payload.get("to", "")
-    subject = proposal.payload.get("subject", "TrustHR Notification")
-    body = proposal.payload.get("body", "")
+    try:
+        payload = EmailPayload.model_validate(proposal.payload)
+    except ValidationError as exc:
+        raise GatewayError(f"Invalid email payload: {exc.errors()[0]['msg']}") from exc
+    to_email, subject, body = payload.to, payload.subject, payload.body
 
-    if "@" not in to_email or "." not in to_email:
-        raise GatewayError(f"Invalid recipient email address {to_email!r}")
-
-    is_safe, violations = check_output(body)
-    if not is_safe:
+    # Output Guard again, with every other candidate's name: a reply must not leak them (LLM02).
+    others = [name for name, email in db.execute(select(Candidate.display_name, Candidate.email))
+              if (email or "").lower() != to_email.lower()]
+    violations = [v for part in (subject, body) for v in check_output(part, other_candidate_names=others)[1]]
+    if violations:
         raise GatewayError(f"Output Guard blocked execution: {'; '.join(violations)}")
 
-    from app.config import get_settings
+    msg = EmailMessage()
+    msg["From"] = "recruitment@trusthr.ai"
+    msg["To"] = to_email
+    msg["Subject"] = subject
+    msg.set_content(body)
     settings = get_settings()
-    delivered = False
     try:
-        import smtplib
-        from email.message import EmailMessage
-
-        msg = EmailMessage()
-        msg["From"] = "recruitment@trusthr.ai"
-        msg["To"] = to_email
-        msg["Subject"] = subject
-        msg.set_content(body)
-
-        with smtplib.SMTP(settings.mailpit_smtp_host, int(settings.mailpit_smtp_port), timeout=3) as server:
+        with smtplib.SMTP(settings.mailpit_smtp_host, settings.mailpit_smtp_port, timeout=5) as server:
             server.send_message(msg)
-        delivered = True
-    except Exception:
-        delivered = False
+    except (OSError, smtplib.SMTPException) as exc:
+        # Not delivered: the proposal is marked failed, never reported as sent.
+        raise GatewayError(f"Email not delivered: {type(exc).__name__}: {exc}") from exc
 
     audit(db, actor_type="system", actor_id="action_gateway", action="email.dispatched",
-          entity_type="proposal", entity_id=proposal.id,
-          details={"to": to_email, "subject": subject, "delivered_smtp": delivered})
-    return {"status": "sent", "to": to_email, "subject": subject, "delivered_smtp": delivered}
+          entity_type="proposal", entity_id=proposal.id, details={"to": to_email, "subject": subject})
+    return {"status": "sent", "to": to_email, "subject": subject}
 
 
 def _execute_schedule_interview(db: Session, proposal: Proposal, actor: User) -> dict:

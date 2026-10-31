@@ -10,12 +10,13 @@ from app.audit.log import append as audit
 from app.auth.security import HR_ROLES
 from app.models import Proposal, User, utcnow
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class EmailPayload(BaseModel):
-    to: str
-    subject: str = "TrustHR Notification"
-    body: str
+    # One plain address; the subject must be a single line (no header injection).
+    to: str = Field(max_length=254, pattern=r"^[^@\s<>,;]+@[^@\s<>,;]+\.[A-Za-z]{2,}$")
+    subject: str = Field(default="TrustHR Notification", min_length=1, max_length=200, pattern=r"^[^\r\n]*$")
+    body: str = Field(min_length=1, max_length=10_000)
 
 class SchedulePayload(BaseModel):
     candidate_id: str | None = None

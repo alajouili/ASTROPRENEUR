@@ -511,7 +511,11 @@ export const api = {
         not_ranked: [],
       };
     }
-    return request<RankingResponse>(`/api/jobs/${jobId}/ranking`);
+    const ranking = await request<RankingResponse>(`/api/jobs/${jobId}/ranking`);
+    // The backend reports a clean CV as risk_level "none"; the screens use "clean".
+    const normalize = <T extends { risk_level: string }>(row: T): T =>
+      (row.risk_level === 'none' ? { ...row, risk_level: 'clean' } : row);
+    return { ...ranking, ranked: ranking.ranked.map(normalize), not_ranked: ranking.not_ranked.map(normalize) };
   },
 
   // ---- Proposals & Governance Gateway ----
