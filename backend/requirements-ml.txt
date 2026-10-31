@@ -1,0 +1,4 @@
+# Optional: local Prompt Guard classifier (PROMPT_GUARD_MODE=local). Large download (torch).
+# Install on top of requirements.txt:  pip install -r requirements.txt -r requirements-ml.txt
+transformers>=4.44
+torch>=2.3

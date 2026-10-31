@@ -9,6 +9,7 @@ node_modules
 EOFcookies.txt
 *.db
 *.txt
+!**/requirements*.txt
 # Python
 __pycache__/
 *.py[cod]
