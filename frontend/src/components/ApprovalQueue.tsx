@@ -22,6 +22,18 @@ interface ApprovalQueueProps {
   onRefresh: () => void;
 }
 
+// Evidence and risk entries from the backend are objects; React cannot render them as is.
+const candidateLabel = (entry: any, names: Record<string, string>): string => {
+  if (typeof entry === 'string') return names[entry] || entry;
+  const name = entry?.display_name || names[entry?.candidate_id] || entry?.candidate_id || 'Unknown candidate';
+  const parts: string[] = [];
+  if (entry?.score !== undefined) parts.push(`score ${entry.score}`);
+  if (entry?.must_have) parts.push(`must-haves ${entry.must_have}`);
+  if (entry?.risk_level) parts.push(`risk ${entry.risk_level}`);
+  if (Array.isArray(entry?.flags) && entry.flags.length > 0) parts.push(`flags: ${entry.flags.join(', ')}`);
+  return parts.length > 0 ? `${name} (${parts.join(', ')})` : name;
+};
+
 export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefresh }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedCandidateIds, setEditedCandidateIds] = useState<string[]>([]);
@@ -165,6 +177,11 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefre
             const rankingList = evidence.ranking || [];
             const needsReviewList = evidence.needs_review || [];
             const missingMustHavesList = evidence.missing_must_haves || [];
+            const candidateNames: Record<string, string> = Object.fromEntries(
+              [...rankingList, ...needsReviewList, ...missingMustHavesList]
+                .filter((c: any) => c && c.candidate_id && c.display_name)
+                .map((c: any) => [c.candidate_id, c.display_name])
+            );
 
             return (
               <div
@@ -203,8 +220,8 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefre
                     <div>
                       <strong>Security Advisory:</strong>
                       <ul className="list-disc pl-4 mt-1 font-mono text-[11px]">
-                        {proposal.risk_flags.map((rf, i) => (
-                          <li key={i}>{rf}</li>
+                        {proposal.risk_flags.map((rf: any, i) => (
+                          <li key={i}>{candidateLabel(rf, candidateNames)}</li>
                         ))}
                       </ul>
                     </div>
@@ -297,7 +314,7 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefre
                             <thead className="bg-slate-50 dark:bg-slate-850 font-mono text-slate-500 text-[10px] uppercase">
                               <tr>
                                 {isEditing && <th className="p-2.5">Include</th>}
-                                <th className="p-2.5">Candidate ID</th>
+                                <th className="p-2.5">Candidate</th>
                                 <th className="p-2.5">Score</th>
                                 <th className="p-2.5">Must-Have Status</th>
                               </tr>
@@ -332,12 +349,12 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefre
                                       {cand.score !== undefined ? `${cand.score}%` : '—'}
                                     </td>
                                     <td className="p-2.5">
-                                      {cand.must_have_met !== undefined ? (
+                                      {cand.must_have || cand.must_have_met !== undefined ? (
                                         <span className="font-mono text-[11px] text-emerald-600 dark:text-emerald-400">
-                                          {cand.must_have_met}/{cand.must_have_total} met
+                                          {cand.must_have || `${cand.must_have_met}/${cand.must_have_total}`} met
                                         </span>
                                       ) : (
-                                        <span className="text-slate-400 font-mono text-[11px]">Verified</span>
+                                        <span className="text-slate-400 font-mono text-[11px]">—</span>
                                       )}
                                     </td>
                                   </tr>
@@ -359,8 +376,8 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefre
                             Needs Human Review ({needsReviewList.length}):
                           </span>
                           <ul className="list-disc pl-4 text-amber-800 dark:text-amber-300 font-mono mt-1">
-                            {needsReviewList.map((id: string, i: number) => (
-                              <li key={i}>{id}</li>
+                            {needsReviewList.map((entry: any, i: number) => (
+                              <li key={i}>{candidateLabel(entry, candidateNames)}</li>
                             ))}
                           </ul>
                         </div>
@@ -371,8 +388,8 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefre
                             Missing Must-Haves ({missingMustHavesList.length}):
                           </span>
                           <ul className="list-disc pl-4 text-rose-800 dark:text-rose-300 font-mono mt-1">
-                            {missingMustHavesList.map((id: string, i: number) => (
-                              <li key={i}>{id}</li>
+                            {missingMustHavesList.map((entry: any, i: number) => (
+                              <li key={i}>{candidateLabel(entry, candidateNames)}</li>
                             ))}
                           </ul>
                         </div>
@@ -462,7 +479,9 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefre
                         className="btn-primary text-xs py-1.5 px-3.5 flex items-center gap-1.5"
                       >
                         <Check className="w-3.5 h-3.5" />
-                        <span>Authorize via Action Gateway ({editedCandidateIds.length})</span>
+                        <span>
+                          Authorize via Action Gateway{proposal.type === 'shortlist' ? ` (${editedCandidateIds.length})` : ''}
+                        </span>
                       </button>
                     </div>
                   </div>

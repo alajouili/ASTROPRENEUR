@@ -4,6 +4,7 @@ Connects to candidate communications, scans inbound emails for prompt injection,
 and generates human-approval proposals for email replies and status updates.
 """
 import json
+import re
 from pathlib import Path
 from typing import List
 
@@ -64,10 +65,29 @@ def _load_emails() -> list[dict]:
     return list(DEFAULT_SAMPLE_EMAILS)
 
 
+def _normalize(email: dict) -> dict:
+    """Give every email the fields the dashboard reads. The dataset file uses Mailpit-style
+    keys ("from": "Name <address>", "date", "ai_draft"); the original keys are kept."""
+    out = dict(email)
+    sender = str(email.get("from") or "")
+    match = re.match(r"^\s*(.*?)\s*<([^<>\s]+@[^<>\s]+)>\s*$", sender)
+    if match:
+        out.setdefault("sender", match.group(1) or match.group(2))
+        out.setdefault("sender_email", match.group(2))
+    elif "@" in sender:
+        out.setdefault("sender", sender.strip())
+        out.setdefault("sender_email", sender.strip())
+    out.setdefault("received_at", email.get("date"))
+    # The dataset's ai_draft is an object ({action, to, subject, body, ...}); the screen shows text.
+    draft = email.get("ai_draft")
+    out.setdefault("ai_response_draft", (draft.get("body") or "") if isinstance(draft, dict) else (draft or ""))
+    return out
+
+
 @router.get("")
 def list_inbox(user: User = Depends(hr_only)) -> list[dict]:
     """Returns candidate inbox email threads with security scanning flags."""
-    emails = _load_emails()
+    emails = [_normalize(e) for e in _load_emails()]
     # Scan email bodies for prompt injection
     for email in emails:
         flags = scan_rules(email.get("body", ""))

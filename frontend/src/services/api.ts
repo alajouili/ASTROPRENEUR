@@ -215,7 +215,7 @@ export interface HomeStats {
   inboxUnread: number;
   interviewsScheduled: number;
   securityThreatsIntercepted: number;
-  hashChainIntegrity: boolean;
+  hashChainIntegrity: boolean | null; // null: not checked (only the HR admin may verify)
   averageMatchScore: number;
 }
 
@@ -668,6 +668,15 @@ export const api = {
     }
 
     try {
+      // Employees may not read candidates or proposals: do not call routes they are refused
+      // (each refusal is written to the audit log).
+      const me = await this.getMe();
+      if (me.role === 'employee') {
+        return {
+          candidatesScreened: 0, pendingApprovals: 0, inboxUnread: 0, interviewsScheduled: 0,
+          securityThreatsIntercepted: 0, hashChainIntegrity: null, averageMatchScore: 0,
+        };
+      }
       const [jobs, proposals] = await Promise.all([
         this.getJobs().catch(() => []),
         this.getProposals('pending').catch(() => []),
@@ -699,13 +708,11 @@ export const api = {
         }
       }
 
-      // Check audit chain if admin, or default true
-      let integrity = true;
-      try {
-        const verifyRes = await this.verifyAuditChain();
-        integrity = verifyRes.ok;
-      } catch {
-        // Recruiter might get 403 on /audit/verify
+      // Only the HR admin may verify the audit chain. For other roles the result is
+      // "not checked" (null), never assumed valid, and no forbidden call is made.
+      let integrity: boolean | null = null;
+      if (me.role === 'hr_admin') {
+        integrity = (await this.verifyAuditChain()).ok;
       }
 
       const [inboxItems, allProposals] = await Promise.all([

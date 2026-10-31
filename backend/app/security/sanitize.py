@@ -14,6 +14,10 @@ def sanitize(text: str, max_chars: int) -> tuple[str, list[RiskFlag]]:
     invisible = len(_INVISIBLE.findall(text))
     text = unicodedata.normalize("NFKC", text)
     text = _INVISIBLE.sub("", text)
+    # U+FFFD replaces glyphs the PDF font cannot map. It carries no text, and interleaved
+    # with letters ("S�y�s�t�e�m") it would hide words from the rules.
+    # Common in ordinary PDFs (icons, bullets), so it is removed without a flag.
+    text = text.replace("�", "")
     text = _CONTROL.sub(" ", text)
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r" *\n *", "\n", text)

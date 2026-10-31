@@ -51,6 +51,15 @@ _RULES: list[tuple[str, str, re.Pattern]] = [
     # From Member 2's input guard (jerbi-security-final): "disregard (all) prior/previous ..."
     # whatever the object ("guidance", "context", ...).
     ("instruction_override", "high", re.compile(r"\bdisregard\s+(all\s+)?(prior|previous)\b", _I)),
+    # Imperative "ignore all previous criteria/requirements" (screening-specific objects).
+    ("instruction_override", "high", re.compile(
+        r"\b(ignore|disregard|forget)\s+(all\s+|any\s+|the\s+)?(previous|prior|above|earlier)\s+"
+        r"(criteria|requirements|scoring|evaluation)\b", _I)),
+    # "[SYSTEM OVERRIDE: ..." / "System Override:" markers (a colon or bracket, not prose).
+    ("instruction_override", "high", re.compile(r"\bsystem\s+override\s*[:\]]", _I)),
+    # Taking the human out of the loop.
+    ("instruction_override", "high", re.compile(
+        r"\b(bypass|skip|avoid)\s+(the\s+)?human\s+(screening|review|approval|oversight|check)\b", _I)),
     ("instruction_override", "high", re.compile(
         r"\b(special|developer|maintenance|debug)\s+(override|mode|directive|mandate)\b|"
         r"\b(do\s+not|never)\s+evaluate\s+this\s+(candidate|resume|cv)\b", _I)),
@@ -83,6 +92,12 @@ _RULES: list[tuple[str, str, re.Pattern]] = [
     ("score_manipulation", "high", re.compile(
         r"\b(rank|rate|score|grade|mark|classify)\b[^.\n]{0,30}\b(me|this\s+(candidate|cv|resume|applicant|profile))\b"
         r"[^.\n]{0,30}\b(first|highest|top|best|maximum|perfect|100|10/10)\b", _I)),
+    # Imperative "give this candidate 100% score" / "assign score 100/100" (base form only:
+    # "assigned scores out of 100" in a CV does not match).
+    ("score_manipulation", "high", re.compile(
+        r"\b(give|assign|award)\s+(me|this\s+(candidate|cv|resume|applicant|profile))\b[^.\n]{0,25}"
+        r"\b(100|maximum|perfect|full|top|highest)\b|"
+        r"\b(give|assign|award|set)\s+(a\s+|the\s+)?(score|rating|grade|marks?)\s+(of\s+)?(100(/100)?|10/10)\b", _I)),
     ("score_manipulation", "high", re.compile(
         r"\b(classe[rz]?|note[rz]?|évalue[rz]?)\b[^.\n]{0,30}\b(moi|ce\s+(candidat|cv|profil))\b"
         r"[^.\n]{0,30}\b(premier|première|maximale?|meilleur|parfait|100|10/10)\b", _I)),

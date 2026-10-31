@@ -15,7 +15,8 @@ docker compose run --rm api python -m scripts.demo_prep
 
 # 3. Open dashboard
 # Browser: http://localhost:8080
-# Credentials: recruiter@trusthr.demo / DemoPass123!
+# Credentials: printed once by demo_prep (random), or set them first:
+#   docker compose run --rm -e SEED_RECRUITER_PASSWORD=... -e SEED_ADMIN_PASSWORD=... -e SEED_EMPLOYEE_PASSWORD=... api python -m scripts.demo_prep --reset-passwords
 ```
 
 ---
@@ -25,7 +26,7 @@ docker compose run --rm api python -m scripts.demo_prep
 ### Minute 1: The Problem & Live Adversarial Ingestion
 - **Pitch:** *"Under EU AI Act Annex III.4, recruitment AI is High Risk. Standard LLM screeners are vulnerable to prompt injections and hallucinations."*
 - **Action:**
-  1. Log in as `recruiter@trusthr.demo` / `DemoPass123!`.
+  1. Log in as `recruiter@trusthr.demo` with the password printed by `demo_prep`.
   2. Navigate to **Resume Screening** (`/screening`).
   3. Show the ranking table:
      - Notice **Amira Ben Salah** (Clean Baseline): **85.0%**, Clean Pass.
