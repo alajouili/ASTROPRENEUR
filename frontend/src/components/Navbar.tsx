@@ -23,6 +23,7 @@ interface NavbarProps {
   userRole: string;
   isMockMode: boolean;
   onToggleMockMode: () => void;
+  onOpenPitchDemo?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -32,6 +33,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   userRole,
   isMockMode,
   onToggleMockMode,
+  onOpenPitchDemo,
 }) => {
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
@@ -151,8 +153,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             </NavLink>
           </nav>
 
-          {/* Right Global Controls: Mock/Live Switch & Role Pill */}
+          {/* Right Global Controls: Pitch Mode, Mock/Live Switch & Role Pill */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* 5-Min Pitch Demo Button */}
+            {onOpenPitchDemo && (
+              <button
+                onClick={onOpenPitchDemo}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-sm transition-all transform active:scale-95"
+              >
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                <span className="hidden sm:inline">🚀 5-Min Pitch Mode</span>
+                <span className="sm:hidden font-mono">Pitch</span>
+              </button>
+            )}
+
             {/* Mock Data / Live API Switch */}
             <button
               onClick={onToggleMockMode}
