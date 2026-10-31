@@ -12,7 +12,7 @@ from app.agents.screening.schemas import ShortlistPayload
 from app.approvals.service import payload_hash
 from app.audit.log import append as audit
 from app.auth.security import HR_ROLES
-from app.models import Candidate, Proposal, User, utcnow
+from app.models import AuditLog, Candidate, Proposal, User, utcnow
 
 
 class GatewayError(Exception):
@@ -52,7 +52,25 @@ def execute(db: Session, proposal_id: str, actor: User) -> Proposal:
     if reviewer is None or reviewer.role not in HR_ROLES or actor.role not in HR_ROLES:
         raise GatewayError("Refused: reviewer or actor lacks an HR role")
     if payload_hash(proposal.payload) != proposal.payload_hash:
-        raise GatewayError("Refused: payload changed after approval")
+        raise GatewayError("proposal tampered: payload changed after approval")
+
+    # Verify the proposal's hash against the audit log entry where it was proposed / approved
+    creation_audit = db.scalar(
+        select(AuditLog)
+        .where(
+            AuditLog.entity_type == "proposal",
+            AuditLog.entity_id == str(proposal.id),
+            AuditLog.action.in_(("proposal.created", "proposal.approved", "proposal.edited")),
+        )
+        .order_by(AuditLog.id.desc())
+        .limit(1)
+    )
+    if creation_audit is None:
+        raise GatewayError("proposal tampered: no audit entry found")
+    audit_hash = creation_audit.details.get("payload_hash") or payload_hash(creation_audit.details.get("payload", {}))
+    if not audit_hash or audit_hash != proposal.payload_hash:
+        raise GatewayError("proposal tampered: hash does not match audit record")
+
     executor = EXECUTORS.get(proposal.type)
     if executor is None:
         raise GatewayError(f"No executor for {proposal.type!r}")

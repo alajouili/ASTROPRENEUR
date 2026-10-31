@@ -112,3 +112,19 @@ def test_gateway_refuses_a_payload_changed_after_approval(pending, db, users):
         execute(db, proposal.id, users["recruiter"])
     db.rollback()
     assert _statuses(db) == {"screened"}
+
+
+def test_gateway_refuses_out_of_band_tampered_proposal(pending, db, users):
+    """If a proposal's payload_hash is updated directly in DB without an audit record, the Gateway rejects it."""
+    _, proposal = pending
+    service.approve(db, proposal.id, users["recruiter"])
+    db.commit()
+    p = db.get(Proposal, proposal.id)
+    # Simulate direct SQL tampering of payload and payload_hash
+    p.payload_hash = "deadbeef" * 8
+    p.payload = {"job_id": p.job_id, "candidate_ids": ["forged_id"]}
+    db.commit()
+    with pytest.raises(GatewayError, match="proposal tampered"):
+        execute(db, proposal.id, users["recruiter"])
+    db.rollback()
+    assert _statuses(db) == {"screened"}

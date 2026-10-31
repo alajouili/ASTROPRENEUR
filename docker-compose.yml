@@ -118,6 +118,8 @@ services:
     environment:
       TEST_DATABASE_URL: postgresql+psycopg://trusthr:trusthr_test@db-test:5432/trusthr_test
     volumes:
+      - ./backend/app:/app/app:ro
+      - ./backend/scripts:/app/scripts:ro
       - ./backend/tests:/app/tests:ro
     command: ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "tests"]
     depends_on:

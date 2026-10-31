@@ -1,12 +1,13 @@
 """Authentication, roles, and the append-only, hash-chained audit log."""
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.exc import DBAPIError
 
 from app.api import auth as auth_api
 from app.audit.log import append, verify_chain
 from app.main import create_app
+from app.models import AuditLog
 from tests.conftest import PASSWORDS
 
 
@@ -86,3 +87,59 @@ def test_hash_chain_detects_tampering_even_if_triggers_are_bypassed(db):
     db.commit()
     result = verify_chain(db)
     assert result["ok"] is False and result["checked"] == 1
+
+
+def test_revoked_session_token_after_logout(users):
+    """Logging out must revoke the JTI so re-sending the cookie is refused."""
+    client = TestClient(create_app())
+    _login(client, "employee")
+    session = next(c for c in client.cookies.jar if c.name == "trusthr_session")
+    csrf_cookie = next(c for c in client.cookies.jar if c.name == "trusthr_csrf")
+    token_val = session.value
+
+    # Verify session works
+    me_resp = client.get("/api/auth/me")
+    assert me_resp.status_code == 200
+
+    # Logout (requires CSRF token)
+    logout_resp = client.post("/api/auth/logout", headers={"X-CSRF-Token": csrf_cookie.value})
+    assert logout_resp.status_code == 200
+
+    # Attempt re-use of original session cookie
+    client.cookies.set("trusthr_session", token_val, domain=session.domain, path=session.path)
+    reused = client.get("/api/auth/me")
+    assert reused.status_code == 401
+
+
+def test_failed_login_and_forbidden_role_are_logged_to_audit(as_role, job, db):
+    """Security events (failed logins, 403 forbidden) must write audit records."""
+    client = TestClient(create_app())
+    fail_res = client.post("/api/auth/login", json={"email": "recruiter@test.local", "password": "wrong-password"})
+    assert fail_res.status_code == 401
+
+    employee = as_role("employee")
+    emp_res = employee.get("/api/jobs")  # 403
+    assert emp_res.status_code == 403
+
+    db.commit()
+    actions = set(db.scalars(select(AuditLog.action)))
+    assert "auth.failed" in actions
+    assert "auth.forbidden" in actions
+
+
+def test_simulate_tamper_demo_breaks_chain(db):
+    """The demo simulate_tamper_id parameter returns a broken chain without altering DB storage."""
+    for i in range(3):
+        append(db, actor_type="user", actor_id="u1", action=f"block{i}", entity_type="t", entity_id=str(i))
+    db.commit()
+
+    rows = list(db.scalars(select(AuditLog).order_by(AuditLog.id)))
+    mid_id = rows[1].id
+
+    # Normal verification is ok
+    assert verify_chain(db)["ok"] is True
+
+    # Tampered simulation breaks chain at mid_id
+    tampered_result = verify_chain(db, simulate_tamper_id=mid_id)
+    assert tampered_result["ok"] is False
+    assert tampered_result["first_bad_id"] == mid_id

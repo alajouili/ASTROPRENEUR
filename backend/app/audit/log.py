@@ -65,12 +65,15 @@ def append(
     return row
 
 
-def verify_chain(db: Session) -> dict:
+def verify_chain(db: Session, simulate_tamper_id: int | None = None) -> dict:
     """Recompute every hash. Returns {"ok", "checked", "first_bad_id"}."""
     prev_hash = GENESIS_HASH
     checked = 0
     for row in db.execute(select(AuditLog).order_by(AuditLog.id)).scalars():
-        if row.prev_hash != prev_hash or _entry_hash(prev_hash, row) != row.hash:
+        expected_hash = row.hash
+        if simulate_tamper_id is not None and row.id == simulate_tamper_id:
+            expected_hash = "deadbeef" * 8  # simulate corrupted hash block on specified ID
+        if row.prev_hash != prev_hash or _entry_hash(prev_hash, row) != expected_hash:
             return {"ok": False, "checked": checked, "first_bad_id": row.id}
         prev_hash = row.hash
         checked += 1

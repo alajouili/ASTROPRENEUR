@@ -3,12 +3,13 @@ from app.agents.screening.evidence import quote_in_text, normalize, verify_asses
 from app.agents.screening.schemas import CandidateProfile, Criterion, CriterionAssessment, EvidencedItem, EvidencedYears
 from app.agents.screening.scoring import build_justification, compute_score, rank_key
 
-CV = "Data Analyst\nBuilt Python scripts with pandas.\nWrote SQL queries on PostgreSQL.\n3 years of experience."
+CV = "Data Analyst\nBuilt Python scripts with pandas.\nWrote SQL queries on PostgreSQL.\n3 years of experience.\nI have no knowledge of Docker.\nLoved working with the finance team."
 CRITERIA = [
     Criterion(id="python", label="Python", kind="must", weight=3, keywords=["python"]),
     Criterion(id="sql", label="SQL", kind="must", weight=3, keywords=["sql"]),
     Criterion(id="exp", label="2+ years", kind="must", weight=2, type="min_years", min_years=2),
     Criterion(id="bi", label="Power BI", kind="nice", weight=2, keywords=["power bi"]),
+    Criterion(id="docker", label="Docker", kind="nice", weight=2, keywords=["docker"]),
 ]
 
 
@@ -51,6 +52,29 @@ def test_met_without_verified_quote_is_downgraded_and_years_decided_in_code():
     assert results["exp"]["result"] == "met"
     assert results["bi"]["result"] == "missing"
     assert "unknown" not in results
+
+
+def test_negation_quote_cannot_satisfy_criterion():
+    """Negative statement in CV (e.g. 'no knowledge of Docker') must be rejected as positive evidence."""
+    profile = CandidateProfile()
+    assessments = [
+        CriterionAssessment(criterion_id="docker", result="met", evidence=["I have no knowledge of Docker."]),
+    ]
+    results = {r["criterion_id"]: r for r in verify_assessments(assessments, CRITERIA, profile, CV)}
+    assert results["docker"]["result"] == "missing"
+    assert results["docker"]["downgraded"]
+
+
+def test_irrelevant_verbatim_quote_is_rejected():
+    """A verbatim quote with no relation to criterion keywords must not satisfy the criterion."""
+    profile = CandidateProfile()
+    assessments = [
+        # True verbatim quote from CV, but totally irrelevant to SQL
+        CriterionAssessment(criterion_id="sql", result="met", evidence=["Loved working with the finance team."]),
+    ]
+    results = {r["criterion_id"]: r for r in verify_assessments(assessments, CRITERIA, profile, CV)}
+    assert results["sql"]["result"] == "missing"
+    assert results["sql"]["downgraded"]
 
 
 def test_score_is_weighted_and_deterministic():
