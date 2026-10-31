@@ -42,37 +42,37 @@ export const ApprovalPage: React.FC<ApprovalPageProps> = ({ onDataChanged }) => 
   const executedCount = approvals.filter((a) => a.status === 'EXECUTED').length;
 
   return (
-    <div className="space-y-6 animate-fade-in text-slate-100">
+    <div className="space-y-5">
       {/* Subheader Filter Bar */}
-      <div className="bg-slate-900/60 backdrop-blur-xl p-5 rounded-2xl border border-slate-800/80 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div className="flex items-center gap-2 text-xs font-semibold flex-wrap">
-          <span className="text-slate-400 uppercase tracking-wider font-mono">Queue Filter:</span>
+      <div className="surface-card p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div className="flex items-center gap-1.5 text-xs font-medium flex-wrap">
+          <span className="text-slate-500 font-mono uppercase text-[11px] mr-1">Filter Queue:</span>
           <button
             onClick={() => setStatusFilter('ALL')}
-            className={`px-3 py-1.5 rounded-xl transition-all border ${
+            className={`px-3 py-1.5 rounded-lg transition-colors ${
               statusFilter === 'ALL'
-                ? 'bg-sky-500/20 text-sky-300 border-sky-500/40 shadow-[0_0_12px_rgba(56,189,248,0.25)]'
-                : 'bg-slate-950/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-slate-800/80'
+                ? 'bg-indigo-600 text-white font-semibold'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            All Proposals ({approvals.length})
+            All ({approvals.length})
           </button>
           <button
             onClick={() => setStatusFilter('PENDING')}
-            className={`px-3 py-1.5 rounded-xl transition-all border ${
+            className={`px-3 py-1.5 rounded-lg transition-colors ${
               statusFilter === 'PENDING'
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-[0_0_12px_rgba(251,191,36,0.3)]'
-                : 'bg-slate-950/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-slate-800/80'
+                ? 'bg-amber-600 text-white font-semibold'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             Pending Review ({pendingCount})
           </button>
           <button
             onClick={() => setStatusFilter('EXECUTED')}
-            className={`px-3 py-1.5 rounded-xl transition-all border ${
+            className={`px-3 py-1.5 rounded-lg transition-colors ${
               statusFilter === 'EXECUTED'
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.25)]'
-                : 'bg-slate-950/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-slate-800/80'
+                ? 'bg-emerald-600 text-white font-semibold'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             Executed ({executedCount})
@@ -81,7 +81,7 @@ export const ApprovalPage: React.FC<ApprovalPageProps> = ({ onDataChanged }) => 
 
         <button
           onClick={handleRefresh}
-          className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-xl bg-slate-950/60 hover:bg-slate-800 text-slate-300 border border-slate-800/80 transition-colors"
+          className="btn-secondary text-xs py-1.5 px-3"
         >
           <RefreshCw className="w-3.5 h-3.5" />
           <span>Refresh Queue</span>
