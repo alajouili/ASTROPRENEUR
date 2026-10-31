@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import audit, auth, inbox, jobs, proposals, scan, scheduling
+from app.api import assistant, audit, auth, inbox, jobs, proposals, scan, scheduling
 from app.config import get_settings
 from app.db import init_db
 
@@ -51,7 +51,8 @@ def create_app() -> FastAPI:
         return {"status": "ok", "screening_engine": build_engine(settings).label,
                 "prompt_guard": settings.prompt_guard_mode}
 
-    for router in (auth.router, jobs.router, proposals.router, audit.router, scan.router, inbox.router, scheduling.router):
+    for router in (auth.router, jobs.router, proposals.router, audit.router, scan.router, inbox.router, scheduling.router,
+                   assistant.router):
         app.include_router(router)
     return app
 

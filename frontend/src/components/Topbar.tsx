@@ -1,17 +1,7 @@
 import React from 'react';
-import { useLocation, Link } from 'react-router-dom';
-import {
-  Menu,
-  Sun,
-  Moon,
-  Wifi,
-  WifiOff,
-  User,
-  ShieldCheck,
-  Zap,
-} from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { Menu, Sun, Moon, Presentation } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import { useAuth } from '../context/AuthContext';
 
 interface TopbarProps {
   onToggleSidebar: () => void;
@@ -20,124 +10,62 @@ interface TopbarProps {
   onOpenPitchDemo?: () => void;
 }
 
-export const Topbar: React.FC<TopbarProps> = ({
-  onToggleSidebar,
-  isMockMode,
-  onToggleMockMode,
-  onOpenPitchDemo,
-}) => {
+const PAGES: Record<string, { title: string; subtitle: string }> = {
+  '/': { title: 'Overview', subtitle: 'Screening activity, pending decisions and security at a glance' },
+  '/screening': { title: 'Resume screening', subtitle: 'Evidence-based ranking against the job criteria' },
+  '/approvals': { title: 'Approval queue', subtitle: 'Every action waits for a human decision' },
+  '/inbox': { title: 'Inbox triage', subtitle: 'Candidate emails and reply drafts' },
+  '/scheduling': { title: 'Interview scheduling', subtitle: 'Interview slot proposals' },
+  '/assistant': { title: 'Policy assistant', subtitle: 'Answers from company policy documents, with sources' },
+  '/audit': { title: 'Audit trail', subtitle: 'Tamper-evident record of every action' },
+  '/lab': { title: 'Adversarial & bias lab', subtitle: 'Attack and fairness checks on the screening pipeline' },
+};
+
+export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar, isMockMode, onToggleMockMode, onOpenPitchDemo }) => {
   const { theme, toggleTheme } = useTheme();
-  const { user } = useAuth();
   const location = useLocation();
-
-  const getPageTitle = (pathname: string) => {
-    switch (pathname) {
-      case '/':
-        return 'Overview & Governance Metrics';
-      case '/screening':
-        return 'Candidate Resume Screening';
-      case '/approvals':
-        return 'Human Approval & Action Gateway';
-      case '/inbox':
-        return 'Inbox Triage & Communications';
-      case '/scheduling':
-        return 'Recruiter Interview Calendar';
-      case '/assistant':
-        return 'Employee Policy Assistant';
-      case '/audit':
-        return 'Cryptographic Audit Trail';
-      case '/login':
-        return 'Authentication Console';
-      default:
-        return 'TrustHR AI Workspace';
-    }
-  };
-
-  const userRole = user?.role ? user.role.replace('_', ' ') : 'Guest';
+  const page = PAGES[location.pathname] ?? { title: 'TrustHR', subtitle: '' };
 
   return (
-    <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors">
-      {/* Left Section: Mobile Toggle & Page Breadcrumbs */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onToggleSidebar}
-          className="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          aria-label="Toggle navigation sidebar"
-        >
+    <header className="h-16 sticky top-0 z-30 flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+      <div className="flex items-center gap-3 min-w-0">
+        <button onClick={onToggleSidebar} className="lg:hidden btn-ghost p-2 -ml-2" aria-label="Open navigation">
           <Menu className="w-5 h-5" />
         </button>
-
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-slate-400 font-medium hidden sm:inline">TrustHR</span>
-          <span className="text-slate-300 dark:text-slate-600 hidden sm:inline">/</span>
-          <h1 className="font-semibold text-slate-900 dark:text-white text-xs sm:text-sm">
-            {getPageTitle(location.pathname)}
-          </h1>
+        <div className="min-w-0">
+          <h1 className="text-[15px] font-semibold text-slate-900 dark:text-white truncate">{page.title}</h1>
+          {page.subtitle && (
+            <p className="hidden md:block text-xs text-slate-500 dark:text-slate-400 truncate">{page.subtitle}</p>
+          )}
         </div>
       </div>
 
-      {/* Right Controls: Pitch Mode, Mock/Live Toggle, Theme Toggle & Role Pill */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* 5-Min Pitch Demo Button */}
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {/* Data source: live backend or local sample data */}
+        <button
+          onClick={onToggleMockMode}
+          title={isMockMode ? 'Showing local sample data. Click to use the live backend.' : 'Showing live backend data. Click to show sample data.'}
+          className="inline-flex items-center gap-2 h-8 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+        >
+          <span className={`w-2 h-2 rounded-full ${isMockMode ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+          <span>{isMockMode ? 'Sample data' : 'Live data'}</span>
+        </button>
+
         {onOpenPitchDemo && (
-          <button
-            onClick={onOpenPitchDemo}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-all transform active:scale-95"
-            title="Launch 5-Minute Interactive Hackathon Pitch Guide"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-300 animate-ping"></span>
-            <span className="hidden sm:inline">5-Min Pitch Guide</span>
-            <span className="sm:hidden font-mono text-[11px]">Pitch</span>
+          <button onClick={onOpenPitchDemo} className="btn-ghost h-8 px-2.5 text-xs" title="Open the presenter guide">
+            <Presentation className="w-4 h-4" />
+            <span className="hidden sm:inline">Presenter guide</span>
           </button>
         )}
 
-        {/* Demo Mode Toggle */}
-        <button
-          onClick={onToggleMockMode}
-          title="Toggle between Demo Simulation Mode and Real Live Backend API"
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-            isMockMode
-              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800/60 hover:bg-amber-100'
-              : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800/60 hover:bg-emerald-100'
-          }`}
-        >
-          {isMockMode ? (
-            <>
-              <WifiOff className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span className="hidden md:inline font-mono">Demo Data Mode</span>
-              <span className="md:hidden font-mono">Demo</span>
-            </>
-          ) : (
-            <>
-              <Wifi className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 animate-pulse" />
-              <span className="hidden md:inline font-mono">Live Gateway API</span>
-              <span className="md:hidden font-mono">Live</span>
-            </>
-          )}
-        </button>
-
-        {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}
-          title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} theme`}
-          className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-colors"
+          className="btn-ghost h-8 w-8 p-0"
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+          aria-label="Toggle theme"
         >
-          {theme === 'dark' ? (
-            <Sun className="w-4 h-4 text-amber-400" />
-          ) : (
-            <Moon className="w-4 h-4 text-slate-600" />
-          )}
+          {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
-
-        {/* User Role Pill */}
-        <Link
-          to="/login"
-          title="Session details / switch user"
-          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-750 hover:border-indigo-500 transition-colors capitalize font-mono text-[11px]"
-        >
-          <User className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-          <span>{userRole}</span>
-        </Link>
       </div>
     </header>
   );

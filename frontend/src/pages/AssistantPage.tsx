@@ -1,267 +1,295 @@
-import React, { useState } from 'react';
-import { api, PolicyAnswer } from '../services/api';
+import React, { useEffect, useRef, useState } from 'react';
+import { api, AssistantAnswer, AssistantStatus, AssistantTurn } from '../services/api';
 import {
-  Bot,
-  Send,
-  User,
+  ArrowUp,
   BookOpen,
-  Sparkles,
-  ShieldCheck,
-  CheckCircle,
-  HelpCircle,
-  ArrowRight,
-  ThumbsUp,
-  Copy,
+  Bot,
   Check,
+  Copy,
+  FileText,
+  Info,
+  RefreshCw,
+  RotateCcw,
+  SearchX,
+  ShieldAlert,
+  TriangleAlert,
 } from 'lucide-react';
 
-interface ChatMessage {
-  id: string;
-  sender: 'user' | 'assistant';
-  text: string;
-  timestamp: string;
-  citation?: {
-    source: string;
-    confidence: number;
-    section: string;
-  };
-}
+const MAX_LENGTH = 1000;
 
-const PRESET_QUESTIONS = [
-  "What is our remote work and equipment allowance policy?",
-  "How many days of paid maternity or paternity leave are provided?",
-  "What is the annual education and conference budget per employee?",
-  "How does TrustHR protect employee and applicant personal data under GDPR?",
-  "What health insurance and mental wellness benefits are included?",
+const SUGGESTIONS = [
+  'How many days of annual leave do I get?',
+  'How many days a week can I work remotely?',
+  'What is the yearly training budget?',
+  'How long is paternity leave?',
+  'How do I ask for my personal data to be deleted?',
 ];
 
+type Message =
+  | { id: string; kind: 'user'; text: string }
+  | { id: string; kind: 'answer'; reply: AssistantAnswer }
+  | { id: string; kind: 'error'; text: string; question: string };
+
+const newId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+const describeMode = (mode: string) => {
+  if (mode.startsWith('sample data')) return { label: 'Sample data', tone: 'badge-warning', detail: 'Pre-written examples only, nothing comes from the backend.' };
+  if (mode.includes('offline') || mode.includes('SIMULATED'))
+    return { label: 'Offline mode', tone: 'badge-warning', detail: 'No AI model is configured: answers quote the most relevant policy text directly.' };
+  return { label: 'AI model', tone: 'badge-clean', detail: `Answers are written by ${mode} from the policy documents only, with their sources.` };
+};
+
 export const AssistantPage: React.FC = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'm-0',
-      sender: 'assistant',
-      text: "Hello! I am the TrustHR Employee Policy Assistant. I provide verifiable answers grounded exclusively in our verified corporate HR handbook and compliance documents. Every response includes exact source citations and confidence metrics.",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    },
-  ]);
-  const [inputText, setInputText] = useState<string>('');
-  const [isTyping, setIsTyping] = useState<boolean>(false);
+  const [status, setStatus] = useState<AssistantStatus | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleSend = async (queryText?: string) => {
-    const textToSend = queryText || inputText;
-    if (!textToSend.trim()) return;
+  useEffect(() => {
+    api.getAssistantStatus().then(setStatus).catch((e) => setStatusError(e.message || 'The assistant is unavailable.'));
+  }, []);
 
-    const userMsg: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      sender: 'user',
-      text: textToSend,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages, isSending]);
 
-    setMessages((prev) => [...prev, userMsg]);
-    if (!queryText) setInputText('');
-    setIsTyping(true);
+  // The conversation sent as context: questions and the assistant's answers (errors excluded).
+  const history = (): AssistantTurn[] =>
+    messages.flatMap<AssistantTurn>((m) =>
+      m.kind === 'user' ? [{ role: 'user', content: m.text }] : m.kind === 'answer' ? [{ role: 'assistant', content: m.reply.answer }] : []
+    );
 
+  const send = async (text: string) => {
+    const question = text.trim();
+    if (!question || isSending) return;
+    const context = history();
+    setMessages((prev) => [...prev, { id: newId(), kind: 'user', text: question }]);
+    setInput('');
+    setIsSending(true);
     try {
-      const res: PolicyAnswer = await api.askPolicyAssistant(textToSend);
-      const botMsg: ChatMessage = {
-        id: `msg-${Date.now() + 1}`,
-        sender: 'assistant',
-        text: res.answer,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        citation: {
-          source: res.source,
-          confidence: res.confidence,
-          section: res.section,
-        },
-      };
-      setMessages((prev) => [...prev, botMsg]);
-    } catch (e) {
-      console.error(e);
+      const reply = await api.askAssistant(question, context);
+      setMessages((prev) => [...prev, { id: newId(), kind: 'answer', reply }]);
+    } catch (e: any) {
+      const message =
+        e?.status === 429
+          ? 'Too many questions in a short time. Wait a minute, then try again.'
+          : e?.message || 'The assistant could not be reached.';
+      setMessages((prev) => [...prev, { id: newId(), kind: 'error', text: message, question }]);
     } finally {
-      setIsTyping(false);
+      setIsSending(false);
+      inputRef.current?.focus();
     }
   };
 
-  const handleCopy = (id: string, text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+  const retry = (msg: Extract<Message, { kind: 'error' }>) => {
+    // Remove the failed exchange, then ask again.
+    setMessages((prev) => {
+      const i = prev.findIndex((m) => m.id === msg.id);
+      return prev.filter((_, j) => j !== i && j !== i - 1);
+    });
+    send(msg.question);
   };
 
+  const copy = (id: string, text: string) => {
+    navigator.clipboard?.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1500);
+  };
+
+  const mode = status ? describeMode(status.mode) : null;
+
   return (
-    <div className="space-y-4 max-w-4xl mx-auto">
-      {/* Roadmap Notice */}
-      <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs flex items-center justify-between font-mono">
-        <div className="flex items-center gap-2">
-          <span className="badge-warning text-[10px]">Preview (simulated)</span>
-          <span>Policy Assistant milestone M3. Running on local simulated corporate policy knowledge base.</span>
-        </div>
-      </div>
-
-      {/* Header Banner */}
-      <div className="surface-card p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+    <div className="max-w-4xl mx-auto flex flex-col gap-4 h-[calc(100vh-9.5rem)] min-h-[520px]">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
-              Employee Policy Assistant
-            </h2>
-            <span className="badge-info font-mono">
-              Verifiable RAG
+          <h2 className="page-title">Policy assistant</h2>
+          <p className="page-subtitle">Ask about leave, remote work, benefits, training or your personal data.</p>
+        </div>
+        {messages.length > 0 && (
+          <button onClick={() => setMessages([])} className="btn-secondary self-start sm:self-auto" disabled={isSending}>
+            <RotateCcw className="w-4 h-4" />
+            New conversation
+          </button>
+        )}
+      </div>
+
+      {/* Status */}
+      {statusError ? (
+        <div role="alert" className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-sm text-rose-700 dark:text-rose-300 flex items-center gap-2">
+          <TriangleAlert className="w-4 h-4 shrink-0" /> {statusError}
+        </div>
+      ) : mode ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
+          <span className={mode.tone}>{mode.label}</span>
+          <span>{mode.detail}</span>
+          {status && status.documents.length > 0 && (
+            <span className="inline-flex items-center gap-1" title={status.documents.join('\n')}>
+              <BookOpen className="w-3.5 h-3.5" /> {status.documents.length} documents available to you
             </span>
-          </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Grounded Q&A over internal company policies, benefits, leave, and GDPR rights with verifiable source citations.
-          </p>
+          )}
         </div>
+      ) : (
+        <div className="skeleton h-5 w-80" />
+      )}
 
-        <div className="badge-clean">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span>Hallucination-Protected</span>
-        </div>
-      </div>
+      {/* Conversation */}
+      <div className="surface-card flex-1 min-h-0 flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5" aria-live="polite">
+          {messages.length === 0 && (
+            <div className="empty-state h-full">
+              <div className="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-1">
+                <Bot className="w-5 h-5" />
+              </div>
+              <div className="text-base font-medium text-slate-900 dark:text-white">How can I help?</div>
+              <p className="max-w-md">
+                I answer from the company's HR policy documents only and show where each answer comes from. I can't see
+                information about candidates or other employees.
+              </p>
+              <div className="flex flex-wrap justify-center gap-2 mt-4 max-w-2xl">
+                {SUGGESTIONS.map((q) => (
+                  <button key={q} onClick={() => send(q)} className="btn-secondary text-xs py-1.5 font-normal">
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-      {/* Suggested Quick Prompt Pills */}
-      <div>
-        <span className="block text-xs font-semibold uppercase tracking-wider text-slate-400 font-mono mb-2">
-          Frequently Consulted Policies
-        </span>
-        <div className="flex flex-wrap gap-2">
-          {PRESET_QUESTIONS.map((q, idx) => (
-            <button
-              key={idx}
-              onClick={() => handleSend(q)}
-              className="text-xs font-medium bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 transition-colors flex items-center gap-1.5 text-left cursor-pointer"
-            >
-              <span>{q}</span>
-              <ArrowRight className="w-3 h-3 text-slate-400 flex-shrink-0" />
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Chat Thread Area */}
-      <div className="surface-card flex flex-col h-[500px] overflow-hidden">
-        {/* Messages Stream */}
-        <div className="flex-1 p-5 sm:p-6 overflow-y-auto space-y-4">
           {messages.map((m) => {
-            const isUser = m.sender === 'user';
-
+            if (m.kind === 'user') {
+              return (
+                <div key={m.id} className="flex justify-end">
+                  <div className="max-w-[85%] sm:max-w-[75%] px-4 py-2.5 rounded-2xl rounded-br-md bg-indigo-600 text-white text-sm whitespace-pre-wrap break-words">
+                    {m.text}
+                  </div>
+                </div>
+              );
+            }
+            if (m.kind === 'error') {
+              return (
+                <div key={m.id} className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 flex items-center justify-center shrink-0">
+                    <TriangleAlert className="w-4 h-4" />
+                  </div>
+                  <div className="max-w-[85%] px-4 py-3 rounded-2xl rounded-tl-md border border-rose-200 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/30 text-sm text-rose-800 dark:text-rose-200">
+                    <p>{m.text}</p>
+                    <button onClick={() => retry(m)} className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium hover:underline" disabled={isSending}>
+                      <RefreshCw className="w-3.5 h-3.5" /> Try again
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+            const { reply } = m;
             return (
-              <div
-                key={m.id}
-                className={`flex gap-2.5 max-w-[85%] ${isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
-              >
-                {/* Avatar */}
+              <div key={m.id} className="flex gap-3">
                 <div
-                  className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white text-xs ${
-                    isUser ? 'bg-indigo-600' : 'bg-slate-700'
+                  className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                    reply.flagged
+                      ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/10'
+                      : 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400'
                   }`}
                 >
-                  {isUser ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
+                  {reply.flagged ? <ShieldAlert className="w-4 h-4" /> : reply.found ? <Bot className="w-4 h-4" /> : <SearchX className="w-4 h-4" />}
                 </div>
-
-                {/* Bubble & Metadata */}
-                <div className="space-y-1.5">
-                  <div
-                    className={`p-3.5 rounded-xl text-xs leading-relaxed ${
-                      isUser
-                        ? 'bg-indigo-600 text-white rounded-tr-none'
-                        : 'bg-slate-50 dark:bg-slate-850 border border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none space-y-2.5'
-                    }`}
-                  >
-                    <p>{m.text}</p>
-
-                    {/* Verifiable Citation Card if Assistant */}
-                    {m.citation && (
-                      <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2">
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="font-semibold text-indigo-700 dark:text-indigo-400 flex items-center gap-1">
-                            <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
-                            <span>Verifiable Source:</span>
-                          </span>
-                          <span className="badge-info text-[10px]">
-                            {(m.citation.confidence * 100).toFixed(0)}% Match
-                          </span>
-                        </div>
-
-                        <div className="p-2 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-mono text-[11px] text-slate-700 dark:text-slate-300">
-                          {m.citation.source}
-                        </div>
-
-                        <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono">
-                          <span>Section: {m.citation.section}</span>
-                          <button
-                            onClick={() => handleCopy(m.id, m.text)}
-                            className="flex items-center gap-1 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
-                          >
-                            {copiedId === m.id ? (
-                              <>
-                                <Check className="w-3 h-3 text-emerald-600" />
-                                <span className="text-emerald-600 font-bold">Copied</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="w-3 h-3" />
-                                <span>Copy Text</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                <div className="min-w-0 max-w-[85%] space-y-2">
+                  <div className="group relative px-4 py-3 rounded-2xl rounded-tl-md bg-slate-100 dark:bg-slate-800 text-sm text-slate-800 dark:text-slate-100 whitespace-pre-wrap break-words">
+                    {reply.answer}
+                    <button
+                      onClick={() => copy(m.id, reply.answer)}
+                      className="absolute -right-9 top-1 p-1.5 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                      aria-label="Copy answer"
+                    >
+                      {copiedId === m.id ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
                   </div>
-
-                  <span className={`block text-[10px] text-slate-400 font-mono ${isUser ? 'text-right' : 'text-left'}`}>
-                    {m.timestamp}
-                  </span>
+                  {reply.sources.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {reply.sources.map((src) => (
+                        <span
+                          key={src.id}
+                          title={src.excerpt || undefined}
+                          className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-slate-400" />
+                          {src.document}
+                          {src.section && <span className="text-slate-400">› {src.section}</span>}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {reply.notice && (
+                    <p className="flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-300">
+                      <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                      <span>{reply.notice}</span>
+                    </p>
+                  )}
                 </div>
               </div>
             );
           })}
 
-          {isTyping && (
-            <div className="flex gap-2.5 max-w-[85%] mr-auto items-center text-xs text-slate-400">
-              <div className="w-7 h-7 rounded-lg bg-slate-700 flex items-center justify-center text-white">
-                <Bot className="w-3.5 h-3.5" />
+          {isSending && (
+            <div className="flex gap-3" role="status" aria-label="The assistant is answering">
+              <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                <Bot className="w-4 h-4" />
               </div>
-              <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 flex items-center gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.2s]"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.4s]"></div>
-                <span className="text-[11px] text-slate-500 ml-1 font-mono">Searching employee handbook...</span>
+              <div className="px-4 py-3 rounded-2xl rounded-tl-md bg-slate-100 dark:bg-slate-800 flex items-center gap-1.5">
+                {[0, 150, 300].map((d) => (
+                  <span key={d} className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: `${d}ms` }} />
+                ))}
+                <span className="sr-only">Searching the policies</span>
               </div>
             </div>
           )}
+          <div ref={endRef} />
         </div>
 
-        {/* Input Bar */}
-        <div className="p-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSend();
-            }}
-            className="flex gap-2"
-          >
-            <input
-              type="text"
-              placeholder="Ask any policy, benefits, or compliance question..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              className="input-base"
+        {/* Composer */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            send(input);
+          }}
+          className="border-t border-slate-200 dark:border-slate-800 p-3 sm:p-4"
+        >
+          <div className="flex items-end gap-2">
+            <label htmlFor="assistant-input" className="sr-only">Your question</label>
+            <textarea
+              id="assistant-input"
+              ref={inputRef}
+              rows={1}
+              value={input}
+              maxLength={MAX_LENGTH}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  send(input);
+                }
+              }}
+              placeholder="Ask a question about a company policy…"
+              className="input-base resize-none max-h-40 py-2.5"
             />
             <button
               type="submit"
-              disabled={!inputText.trim() || isTyping}
-              className="btn-primary"
+              disabled={!input.trim() || isSending}
+              className="btn-primary h-[42px] w-[42px] p-0 shrink-0"
+              aria-label="Send question"
             >
-              <Send className="w-3.5 h-3.5" />
-              <span>Ask</span>
+              <ArrowUp className="w-4 h-4" />
             </button>
-          </form>
-        </div>
+          </div>
+          <div className="flex justify-between mt-1.5 px-1 text-xs text-slate-400">
+            <span>Enter to send · Shift+Enter for a new line</span>
+            {input.length > MAX_LENGTH * 0.8 && <span>{input.length}/{MAX_LENGTH}</span>}
+          </div>
+        </form>
       </div>
     </div>
   );

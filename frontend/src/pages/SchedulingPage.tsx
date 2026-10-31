@@ -71,11 +71,11 @@ export const SchedulingPage: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {/* Live Gateway Notice */}
-      <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs flex items-center justify-between font-mono">
-        <div className="flex items-center gap-2">
-          <span className="badge-clean text-[10px]">Active & Guarded</span>
-          <span>Interview proposals automatically queue in the Human Approval Queue. Action Gateway locks the calendar slot.</span>
+      {/* Preview notice: what is sample data and what is real */}
+      <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-900 dark:text-amber-200 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex items-start gap-2">
+          <span className="badge-warning shrink-0">Preview</span>
+          <span>The calendar shows sample slots; there is no calendar integration yet. Slots you propose here are real: they go to the approval queue.</span>
         </div>
         <Link to="/approvals" className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1">
           <span>View Approvals</span>

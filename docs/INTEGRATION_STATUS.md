@@ -23,6 +23,7 @@ The application that runs is `backend/` (FastAPI, PostgreSQL, worker) + `fronten
 | Inbox (sample emails), reply drafts into the approval queue | Works with the sample file (no triage agent yet) | Browser |
 | Interview proposal from the scheduling form | Works (no calendar, see open issues) | Browser |
 | Audit trail: list, verify chain, tamper simulation | Works (HR admin only) | API e2e, browser |
+| Policy assistant (chatbot) | Works: answers from `data/policies/*.md` with sources; role-filtered (HR-only documents hidden from employees); refuses questions about specific people and injection; honest "not found"; LLM mode when a key is set, offline quoting otherwise, fallback with notice when the LLM fails | Backend tests (24), browser (16 checks, employee and HR admin), live failure test with an invalid Groq key |
 | All 8 pages × 3 roles | Render without JavaScript errors or failed API calls; role restrictions match the backend | Browser sweep |
 
 ## Fixed in the final validation
@@ -64,7 +65,7 @@ Member 2's branch is a separate prototype at the repository root (`app/`, `guard
 
 | Suite | Result |
 |---|---|
-| Backend (`docker compose --profile test run --rm tests`) | **124 passed** |
+| Backend (`docker compose --profile test run --rm tests`) | **168 passed** |
 | Frontend `npm run build` (tsc + Vite) | Passes |
 | `npm audit --omit=dev` | 0 vulnerabilities |
 | API end-to-end (`e2e/dashboard-api.e2e.mjs`, real `api.ts`) | **18/18** |
@@ -96,7 +97,7 @@ The app refuses to start when a chosen provider lacks its key or model (checked)
 | 1 | Live LLM providers and Prompt Guard models never run; `PROMPT_GUARD_MODE=groq` call likely wrong (see above) | Member 1 / Member 2 |
 | 2 | Scheduling: slot list and "Confirm Slot" are local mock data; no calendar or free-slot check; a made-up candidate id when none is given. Labelled "Preview (simulated)" in the sidebar | Member 1 (M3) / Member 3 |
 | 3 | Inbox reads a JSON sample file, not Mailpit; no triage agent | Member 1 (M2) |
-| 4 | Policy assistant answers from a mock knowledge base (P2 not built). Labelled "Preview (simulated)" | Member 1 (M4) |
+| 4 | Policy assistant: lexical (BM25 + synonyms) retrieval instead of embeddings; answers in LLM mode not run with a real key (mocked in tests, failure path tested live). The 6 policy documents are fictional | Member 1 |
 | 5 | Root prototype files (`app/`, `guard/`, `main.py`, `Dockerfile.api`, root `Caddyfile`, `requirements.txt`, `web/`, `guard.py`) do not run and duplicate the backend: keep, move, or delete | Member 2 |
 | 6 | Token revocation and login rate limiter are in memory (one API process, lost on restart) | Member 2 |
 | 7 | "Reviewed by" in the approval queue shows the user id, not the name | Member 3 |
