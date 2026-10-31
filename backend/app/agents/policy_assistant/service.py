@@ -127,13 +127,43 @@ def answer_question(question: str, history: list[Turn], role: str, index: Policy
     audiences = AUDIENCES_BY_ROLE.get(role, {"all"})
     terms = _query_terms(question, history)
     hits = index.search(terms, audiences)
-    if not hits or hits[0][0] < MIN_SCORE:
-        return AssistantReply(NOT_FOUND, found=False, mode=mode)
-    # One shared common word ("data" in "data analyst") is not an answer. A follow-up may rely on
-    # the previous question for its topic.
     previous = next((t.content for t in reversed(history) if t.role == "user"), "")
-    if max(index.coverage(hits[0][1], question), index.coverage(hits[0][1], f"{previous} {question}")) < MIN_COVERAGE:
+
+    is_policy_hit = (
+        hits
+        and hits[0][0] >= MIN_SCORE
+        and max(index.coverage(hits[0][1], question), index.coverage(hits[0][1], f"{previous} {question}")) >= MIN_COVERAGE
+    )
+
+    if not is_policy_hit:
+        # Check if query is conversational, greeting, drafting, or workplace advisory in Derja/FR/EN
+        q_low = question.lower().strip()
+        from app.api.assistant import _detect_language, _answer_query
+        lang = _detect_language(question, "auto")
+
+        work_triggers = [
+            "ahla", "ahline", "ahlin", "ahlen", "3aslema", "aslema", "salem", "salam", "mar7ba", "marhaba",
+            "sbe7", "sbah", "bonjour", "salut", "coucou", "bonsoir", "hello", "hi", "hey",
+            "khedma", "flous", "kifeh", "kifech", "nheb", "conflit", "mochkla", "salaire", "augmentation",
+            "lettre", "démission", "demission", "contrat", "civp", "cdi", "cdd", "prime", "stage", "quitus",
+            "préavis", "preavis", "maternité", "paternité", "entretien", "recrutement", "cv", "ats", "télétravail",
+            "poste", "rh", "manager", "chef", "collègue", "collegue", "solde", "augmenti", "famma", "chkoun"
+        ]
+        is_conversational = (
+            lang == "derja"
+            or any(t in q_low for t in work_triggers)
+            or any('\u0600' <= c <= '\u06FF' for c in q_low)
+        )
+        if is_conversational:
+            text, src, sec, conf = _answer_query(question, lang)
+            return AssistantReply(
+                text,
+                found=True,
+                mode="TrustHR AI Conversational Copilot",
+                sources=[{"id": "conversational-copilot", "document": src, "section": sec, "excerpt": text[:180]}],
+            )
         return AssistantReply(NOT_FOUND, found=False, mode=mode)
+
     top = hits[0][1]
     related = [p for s, p in hits[1:] if s >= 0.6 * hits[0][0]][:2]
 
