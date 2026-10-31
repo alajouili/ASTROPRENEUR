@@ -1,5 +1,5 @@
 # TrustHR AI — Defense-Grade Human-in-the-Loop HR Recruitment Platform
-
+hi
 [![Compliance: EU AI Act Annex III.4](https://img.shields.io/badge/Compliance-EU_AI_Act_Annex_III.4-10b981.svg?style=flat-square)](https://artificialintelligenceact.eu/)
 [![Security: OWASP LLM Top 10](https://img.shields.io/badge/Security-OWASP_LLM_Top_10_Defended-0284c7.svg?style=flat-square)](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
 [![Architecture: Air--Gapped Action Gateway](https://img.shields.io/badge/Architecture-Air--Gapped_Action_Gateway-6366f1.svg?style=flat-square)](#architecture)
