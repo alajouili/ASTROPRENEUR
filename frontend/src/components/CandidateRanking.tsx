@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { RankedCandidate, NotRankedCandidate, JobOffer } from '../services/api';
 import {
@@ -12,6 +12,8 @@ import {
   Play,
   RotateCw,
   Scale,
+  Sliders,
+  RotateCcw,
 } from 'lucide-react';
 
 interface CandidateRankingProps {
@@ -39,6 +41,68 @@ export const CandidateRanking: React.FC<CandidateRankingProps> = ({
 }) => {
   const pendingScreenCount = notRanked.length;
 
+  const [isSensitivityOpen, setIsSensitivityOpen] = useState(false);
+  const [customWeights, setCustomWeights] = useState<Record<string, number>>({});
+
+  const criteria = job?.criteria || [];
+
+  const handleWeightChange = (critId: string, val: number) => {
+    setCustomWeights((prev) => ({ ...prev, [critId]: val }));
+  };
+
+  const handleResetWeights = () => {
+    setCustomWeights({});
+  };
+
+  const isCustomized = Object.keys(customWeights).length > 0;
+
+  // Compute dynamic ranking if custom weights exist
+  const displayRanked = useMemo(() => {
+    if (!isCustomized || criteria.length === 0) return ranked;
+
+    const scored = ranked.map((cand) => {
+      let totalWeight = 0;
+      let weightedSum = 0;
+
+      criteria.forEach((crit) => {
+        const weight = customWeights[crit.id] !== undefined ? customWeights[crit.id] : crit.weight || 2;
+        totalWeight += weight;
+
+        // Extract candidate score for this criterion
+        let critScore = 0;
+        if (cand.criteria_results) {
+          if (Array.isArray(cand.criteria_results)) {
+            const found = cand.criteria_results.find((cr: any) => cr.criterion_id === crit.id || cr.id === crit.id);
+            if (found) {
+              critScore = found.score ?? (found.met ? 100 : 0);
+            }
+          } else if (typeof cand.criteria_results === 'object') {
+            const found = (cand.criteria_results as any)[crit.id];
+            if (found) {
+              critScore = found.score ?? (found.met ? 100 : 0);
+            }
+          }
+        }
+        weightedSum += weight * critScore;
+      });
+
+      const dynamicScore = totalWeight > 0 ? Number((weightedSum / totalWeight).toFixed(1)) : cand.score;
+      return {
+        ...cand,
+        originalRank: cand.rank,
+        originalScore: cand.score,
+        dynamicScore,
+      };
+    });
+
+    scored.sort((a, b) => b.dynamicScore - a.dynamicScore);
+    return scored.map((s, idx) => ({
+      ...s,
+      rank: idx + 1,
+      score: s.dynamicScore,
+    }));
+  }, [ranked, criteria, customWeights, isCustomized]);
+
   return (
     <div className="space-y-4">
       {/* Top Banner & Header */}
@@ -62,7 +126,7 @@ export const CandidateRanking: React.FC<CandidateRankingProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {pendingScreenCount > 0 && (
             <button
               onClick={onStartScreening}
@@ -85,6 +149,22 @@ export const CandidateRanking: React.FC<CandidateRankingProps> = ({
             </button>
           )}
 
+          {criteria.length > 0 && (
+            <button
+              onClick={() => setIsSensitivityOpen(!isSensitivityOpen)}
+              className={`px-3 py-2 rounded-lg border text-xs font-mono font-medium flex items-center gap-1.5 transition-colors ${
+                isSensitivityOpen || isCustomized
+                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 ring-1 ring-indigo-500'
+                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850'
+              }`}
+              title="Audit ranking stability by tweaking criteria weights in real time"
+            >
+              <Sliders className="w-3.5 h-3.5 text-indigo-500" />
+              <span>What-If Audit</span>
+              {isCustomized && <span className="badge-clean text-[9px] px-1.5">Live</span>}
+            </button>
+          )}
+
           <Link
             to="/lab"
             className="px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 text-xs font-mono font-medium flex items-center gap-1.5 transition-colors"
@@ -99,6 +179,63 @@ export const CandidateRanking: React.FC<CandidateRankingProps> = ({
           </button>
         </div>
       </div>
+
+      {/* What-If Sensitivity Slider Deck */}
+      {isSensitivityOpen && criteria.length > 0 && (
+        <div className="surface-card p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/30 dark:bg-indigo-950/20 space-y-3 animate-fade-in">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-bold text-indigo-900 dark:text-indigo-200 font-mono">
+                <Sliders className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <span>Deterministic Counterfactual Sensitivity Engine</span>
+                <span className="badge-clean text-[10px] font-mono">Instant Math Rescore</span>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                Tweak criterion weights in real time to audit decision stability. Proves ranking is an open mathematical function, not an unconstrained LLM.
+              </p>
+            </div>
+            {isCustomized && (
+              <button
+                onClick={handleResetWeights}
+                className="btn-secondary text-[11px] py-1 px-2.5 flex items-center gap-1 self-start sm:self-auto"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Reset Weights</span>
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+            {criteria.map((crit) => {
+              const currentWeight = customWeights[crit.id] !== undefined ? customWeights[crit.id] : crit.weight || 2;
+              return (
+                <div key={crit.id} className="p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 space-y-1.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 truncate pr-2" title={crit.label}>
+                      {crit.label}
+                    </span>
+                    <span className="badge-info font-mono text-[10px]">Weight: {currentWeight}x</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="5"
+                    step="1"
+                    value={currentWeight}
+                    onChange={(e) => handleWeightChange(crit.id, Number(e.target.value))}
+                    className="w-full accent-indigo-600 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer"
+                  />
+                  <div className="flex justify-between text-[9px] text-slate-400 font-mono">
+                    <span>1 (Low)</span>
+                    <span>3 (Std)</span>
+                    <span>5 (High)</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Screening Progress Bar */}
       {isScreening && (
@@ -159,7 +296,7 @@ export const CandidateRanking: React.FC<CandidateRankingProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
-                {ranked.map((cand) => {
+                {displayRanked.map((cand: any) => {
                   const isSuspicious = cand.risk_level === 'high' || (cand.risk_flags && cand.risk_flags.length > 0);
                   const isMediumRisk = cand.risk_level === 'medium';
 
@@ -252,6 +389,11 @@ export const CandidateRanking: React.FC<CandidateRankingProps> = ({
                             {cand.engine || 'SIMULATED'}
                           </span>
                         </div>
+                        {isCustomized && cand.originalScore !== undefined && (
+                          <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                            Base: {cand.originalScore.toFixed(1)}% (#{cand.originalRank})
+                          </div>
+                        )}
                         <div className="w-24 bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden mt-1">
                           <div
                             className={`h-1.5 rounded-full ${barBg}`}
