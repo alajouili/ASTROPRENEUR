@@ -35,14 +35,15 @@ def create_proposal(
     db: Session, *, type: str, job_id: str | None, payload: dict, evidence: dict, risk_flags: list, created_by: str
 ) -> Proposal:
     clean = validate_payload(type, payload)
+    h = payload_hash(clean)
     proposal = Proposal(
-        type=type, job_id=job_id, payload=clean, payload_hash=payload_hash(clean),
+        type=type, job_id=job_id, payload=clean, payload_hash=h,
         evidence=evidence, risk_flags=risk_flags, status="pending", created_by=created_by,
     )
     db.add(proposal)
     db.flush()
     audit(db, actor_type="agent", actor_id=created_by, action="proposal.created", entity_type="proposal",
-          entity_id=proposal.id, details={"type": type, "payload": clean, "risk_flags": len(risk_flags)})
+          entity_id=proposal.id, details={"type": type, "payload": clean, "payload_hash": h, "risk_flags": len(risk_flags)})
     return proposal
 
 
@@ -69,10 +70,11 @@ def approve(db: Session, proposal_id: str, user: User, edited_payload: dict | No
     if edited_payload is not None:
         clean = validate_payload(proposal.type, edited_payload)
         if clean != proposal.payload:
+            new_hash = payload_hash(clean)
             audit(db, actor_type="user", actor_id=user.id, action="proposal.edited", entity_type="proposal",
-                  entity_id=proposal.id, details={"before": proposal.payload, "after": clean})
+                  entity_id=proposal.id, details={"before": proposal.payload, "after": clean, "payload_hash": new_hash})
             proposal.payload = clean
-            proposal.payload_hash = payload_hash(clean)
+            proposal.payload_hash = new_hash
     proposal.status = "approved"
     proposal.reviewed_by = user.id
     proposal.reviewed_at = utcnow()

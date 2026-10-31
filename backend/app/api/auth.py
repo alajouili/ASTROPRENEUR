@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.audit.log import append as audit
 from app.auth.security import (
-    CSRF_COOKIE, SESSION_COOKIE, create_session_token, get_current_user, hash_password, verify_password,
+    CSRF_COOKIE, SESSION_COOKIE, create_session_token, get_current_user, hash_password, revoke_token, verify_password,
 )
 from app.config import get_settings
 from app.db import get_db
@@ -50,14 +50,23 @@ def login(body: LoginIn, request: Request, response: Response, db: Session = Dep
     user = db.scalar(select(User).where(User.email == body.email.strip().lower()))
     if user is None:
         verify_password(body.password, _DUMMY_HASH)  # same timing whether or not the account exists
+        audit(db, actor_type="system", actor_id="auth", action="auth.failed", entity_type="user",
+              entity_id=body.email.strip().lower(), details={"reason": "not_found"})
+        db.commit()
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
     if user.locked_until and user.locked_until > utcnow():
+        audit(db, actor_type="system", actor_id="auth", action="auth.locked_attempt", entity_type="user",
+              entity_id=user.id, details={"locked_until": user.locked_until.isoformat()})
+        db.commit()
         raise HTTPException(status.HTTP_423_LOCKED, "Account temporarily locked after repeated failures")
     if not verify_password(body.password, user.password_hash):
         user.failed_logins += 1
         if user.failed_logins >= LOCK_AFTER_FAILURES:
             user.locked_until = utcnow() + timedelta(minutes=LOCK_MINUTES)
             audit(db, actor_type="system", actor_id="auth", action="user.locked", entity_type="user", entity_id=user.id)
+        else:
+            audit(db, actor_type="system", actor_id="auth", action="auth.failed", entity_type="user",
+                  entity_id=user.id, details={"failed_logins": user.failed_logins})
         db.commit()
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
     user.failed_logins = 0
@@ -74,7 +83,12 @@ def login(body: LoginIn, request: Request, response: Response, db: Session = Dep
 
 
 @router.post("/logout")
-def logout(response: Response, user: User = Depends(get_current_user)) -> dict:
+def logout(request: Request, response: Response, db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> dict:
+    token = request.cookies.get(SESSION_COOKIE)
+    if token:
+        revoke_token(token)
+    audit(db, actor_type="user", actor_id=user.id, action="user.logout", entity_type="user", entity_id=user.id)
+    db.commit()
     response.delete_cookie(SESSION_COOKIE, path="/")
     response.delete_cookie(CSRF_COOKIE, path="/")
     return {"ok": True}

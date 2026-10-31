@@ -20,5 +20,10 @@ def list_audit(limit: int = 200, db: Session = Depends(get_db), user: User = Dep
 
 
 @router.get("/verify")
-def verify(db: Session = Depends(get_db), user: User = Depends(admin_only)) -> dict:
-    return verify_chain(db)
+def verify(simulate_tamper_id: int | None = None, db: Session = Depends(get_db), user: User = Depends(admin_only)) -> dict:
+    return verify_chain(db, simulate_tamper_id=simulate_tamper_id)
+
+
+@router.post("/verify")
+def verify_post(simulate_tamper_id: int | None = None, db: Session = Depends(get_db), user: User = Depends(admin_only)) -> dict:
+    return verify_chain(db, simulate_tamper_id=simulate_tamper_id)

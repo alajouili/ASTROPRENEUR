@@ -14,6 +14,7 @@ from fastapi import Depends, HTTPException, Request, status
 from pwdlib import PasswordHash
 from sqlalchemy.orm import Session
 
+from app.audit.log import append as audit
 from app.config import get_settings
 from app.db import get_db
 from app.models import User
@@ -24,6 +25,21 @@ CSRF_HEADER = "X-CSRF-Token"
 _SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
 _hasher = PasswordHash.recommended()
+_REVOKED_JTIS: set[str] = set()
+
+
+def revoke_token(token: str) -> None:
+    try:
+        claims = jwt.decode(token, get_settings().jwt_secret, algorithms=["HS256"], options={"verify_exp": False})
+        jti = claims.get("jti")
+        if jti:
+            _REVOKED_JTIS.add(jti)
+    except Exception:
+        pass
+
+
+def is_token_revoked(jti: str) -> bool:
+    return jti in _REVOKED_JTIS
 
 
 def hash_password(password: str) -> str:
@@ -61,6 +77,8 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     if not token:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not authenticated")
     claims = _decode(token)
+    if is_token_revoked(claims.get("jti", "")):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Session has been revoked")
     if request.method not in _SAFE_METHODS:
         sent = request.headers.get(CSRF_HEADER, "")
         if not sent or not secrets.compare_digest(sent, claims.get("csrf", "")):
@@ -74,8 +92,18 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
 def require_roles(*roles: str):
     """Dependency factory: the current user must have one of `roles`."""
 
-    def _dep(user: User = Depends(get_current_user)) -> User:
+    def _dep(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> User:
         if user.role not in roles:
+            audit(
+                db,
+                actor_type="user",
+                actor_id=user.id,
+                action="auth.forbidden",
+                entity_type="user",
+                entity_id=user.id,
+                details={"required_roles": list(roles), "user_role": user.role},
+            )
+            db.commit()
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Your role is not allowed to do this")
         return user
 

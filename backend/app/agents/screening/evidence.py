@@ -11,6 +11,7 @@ from app.agents.screening.schemas import CandidateProfile, Criterion, CriterionA
 from app.security.injection import scan_rules
 
 _PUNCT_MAP = str.maketrans({"’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", " ": " "})
+_NEGATION_RE = re.compile(r"\b(no|never|without|sans|jamais|aucun|aucune)\b", re.IGNORECASE)
 
 
 def normalize(text: str) -> str:
@@ -21,6 +22,19 @@ def normalize(text: str) -> str:
 def quote_in_text(quote: str, normalized_cv: str) -> bool:
     q = normalize(quote).strip(" .,;:-•*")
     return len(q) >= 3 and q in normalized_cv
+
+
+def contains_negation(quote: str) -> bool:
+    return bool(_NEGATION_RE.search(quote))
+
+
+def matches_criterion_keywords(quote: str, criterion: Criterion) -> bool:
+    """The quote must contain at least one of the criterion's keywords or label words."""
+    q_norm = normalize(quote)
+    targets = [normalize(kw) for kw in (criterion.keywords or []) if len(kw) >= 2]
+    if not targets:
+        targets = [w for w in re.findall(r"\w+", normalize(criterion.label)) if len(w) >= 3]
+    return any(t in q_norm for t in targets)
 
 
 def _usable_quote(quote: str, normalized_cv: str) -> tuple[bool, str]:
@@ -65,10 +79,22 @@ def verify_assessments(
             continue
         a = by_id.get(criterion.id)
         result, note = (a.result, a.note) if a else ("missing", "not assessed")
-        evidence = [q for q in (a.evidence if a else []) if _usable_quote(q, cv)[0]][:3]
+
+        valid_evidence: list[str] = []
+        for q in (a.evidence if a else []):
+            usable, _ = _usable_quote(q, cv)
+            if not usable:
+                continue
+            if contains_negation(q):
+                continue
+            if not matches_criterion_keywords(q, criterion):
+                continue
+            valid_evidence.append(q)
+
+        evidence = valid_evidence[:3]
         downgraded = False
         if result in ("met", "partial") and not evidence:
-            result, note, downgraded = "missing", "claimed without a verifiable quote from the CV", True
+            result, note, downgraded = "missing", "claimed without a verifiable relevant quote from the CV", True
         results.append({
             "criterion_id": criterion.id, "label": criterion.label, "kind": criterion.kind, "weight": criterion.weight,
             "result": result, "evidence": [q[:200] for q in evidence], "note": note[:240], "downgraded": downgraded,

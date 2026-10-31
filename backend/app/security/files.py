@@ -13,7 +13,10 @@ import pymupdf
 from app.config import Settings
 
 _MAGIC = {"pdf": b"%PDF-", "docx": b"PK\x03\x04"}
-_PDF_ACTIVE_CONTENT = (b"/JavaScript", b"/JS ", b"/JS(", b"/Launch", b"/EmbeddedFile", b"/OpenAction")
+_PDF_ACTIVE_CONTENT = (
+    b"/JavaScript", b"/JS ", b"/JS(", b"/Launch", b"/EmbeddedFile", b"/EmbeddedFiles",
+    b"/OpenAction", b"/AcroForm", b"/RichMedia",
+)
 _DOCX_MAX_ENTRIES = 1000
 _DOCX_MAX_UNCOMPRESSED = 50 * 1024 * 1024
 
