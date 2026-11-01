@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api, HomeStats } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { EUAIActRadar } from '../components/EUAIActRadar';
+import { RecruitmentAnalyticsDashboard } from '../components/RecruitmentAnalyticsDashboard';
 import { roleLabel } from '../lib/format';
 import {
   Users,
@@ -207,6 +208,9 @@ export const HomeOverview: React.FC<HomeOverviewProps> = () => {
           <EUAIActRadar />
         </section>
       </div>
+
+      {/* Real Recruitment Funnel & Grounded Evaluation Analytics */}
+      <RecruitmentAnalyticsDashboard />
     </div>
   );
 };

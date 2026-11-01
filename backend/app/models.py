@@ -175,4 +175,38 @@ class CalendarEvent(Base):
     candidate_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     interviewer: Mapped[str | None] = mapped_column(String(255), nullable=True)
     proposal_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+
+INTERVIEW_STATUSES = ('scheduled', 'confirmed', 'completed', 'cancelled')
+INTERVIEW_TYPES = ('online', 'phone', 'in_person')
+
+
+class Interview(Base):
+    __tablename__ = 'interviews'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    candidate_id: Mapped[str | None] = mapped_column(ForeignKey('candidates.id'), nullable=True, index=True)
+    job_id: Mapped[str | None] = mapped_column(ForeignKey('job_offers.id'), nullable=True, index=True)
+    candidate_name: Mapped[str] = mapped_column(String(255))
+    candidate_email: Mapped[str] = mapped_column(String(255))
+    role: Mapped[str] = mapped_column(String(255))
+    interviewer: Mapped[str] = mapped_column(String(255))
+    interviewer_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    interview_type: Mapped[str] = mapped_column(String(32), default='online')
+    location_or_link: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    scheduled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    duration_minutes: Mapped[int] = mapped_column(Integer, default=45)
+    status: Mapped[str] = mapped_column(String(32), default='scheduled', index=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_by: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+
+class CandidateNote(Base):
+    __tablename__ = 'candidate_notes'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    candidate_id: Mapped[str] = mapped_column(ForeignKey('candidates.id'), index=True)
+    author_id: Mapped[str] = mapped_column(ForeignKey('users.id'))
+    author_name: Mapped[str] = mapped_column(String(255))
+    content: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

@@ -10,7 +10,7 @@ from app.audit.log import append as audit
 from app.auth.security import HR_ROLES, require_roles
 from app.config import get_settings
 from app.db import get_db
-from app.models import BackgroundTask, Candidate, JobOffer, Screening, User
+from app.models import BackgroundTask, Candidate, CandidateNote, JobOffer, Screening, User
 from app.security.files import FileRejected, safe_display_name, store_upload, validate_upload
 from app.worker.runner import enqueue
 
@@ -179,3 +179,65 @@ def ranking(job_id: str, db: Session = Depends(get_db), user: User = Depends(hr_
                "status": c.status, "risk_level": c.risk_level, "risk_flags": c.risk_flags}
               for c in db.scalars(select(Candidate).where(Candidate.job_id == job.id)) if c.id not in screened_ids]
     return {"job": job_out(job), "ranked": rows, "not_ranked": others}
+
+class NoteIn(BaseModel):
+    content: str = Field(min_length=1, max_length=2000)
+
+
+@router.get("/candidates/{candidate_id}/notes")
+def get_candidate_notes(candidate_id: str, db: Session = Depends(get_db), user: User = Depends(hr_only)) -> list[dict]:
+    cand = db.get(Candidate, candidate_id)
+    if not cand:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Candidate not found")
+    notes = db.scalars(
+        select(CandidateNote)
+        .where(CandidateNote.candidate_id == cand.id)
+        .order_by(CandidateNote.created_at.desc())
+    ).all()
+    return [
+        {
+            "id": n.id,
+            "candidate_id": n.candidate_id,
+            "author_name": n.author_name,
+            "content": n.content,
+            "created_at": n.created_at.isoformat(),
+        }
+        for n in notes
+    ]
+
+
+@router.post("/candidates/{candidate_id}/notes", status_code=status.HTTP_201_CREATED)
+def add_candidate_note(
+    candidate_id: str,
+    body: NoteIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(hr_only),
+) -> dict:
+    cand = db.get(Candidate, candidate_id)
+    if not cand:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Candidate not found")
+    note = CandidateNote(
+        candidate_id=cand.id,
+        author_id=user.id,
+        author_name=user.full_name or user.email,
+        content=body.content,
+    )
+    db.add(note)
+    audit(
+        db,
+        actor_type="user",
+        actor_id=user.id,
+        action="candidate.note_added",
+        entity_type="candidate",
+        entity_id=cand.id,
+        details={"note_excerpt": body.content[:100]},
+    )
+    db.commit()
+    return {
+        "id": note.id,
+        "candidate_id": note.candidate_id,
+        "author_name": note.author_name,
+        "content": note.content,
+        "created_at": note.created_at.isoformat(),
+    }
+

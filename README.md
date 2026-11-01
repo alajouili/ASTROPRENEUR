@@ -4,7 +4,7 @@
 [![Security: OWASP LLM Top 10](https://img.shields.io/badge/Security-OWASP_LLM_Top_10_Defended-0284c7.svg?style=flat-square)](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
 [![Architecture: Air--Gapped Action Gateway](https://img.shields.io/badge/Architecture-Deterministic_Action_Gateway-6366f1.svg?style=flat-square)](#architecture)
 [![Interface: Dual Theme Enterprise SaaS](https://img.shields.io/badge/UI-Ashby_%7C_Linear_Enterprise_Theme-f59e0b.svg?style=flat-square)](#enterprise-dashboard-suite)
-[![Tests: 100% Passing](https://img.shields.io/badge/Tests-Passing_176%2F176_Backend_%2B_Vite_TS-emerald.svg?style=flat-square)](#verification--test-suite)
+[![Tests: 100% Passing](https://img.shields.io/badge/Tests-Passing_179%2F179_Backend_%2B_Vite_TS-emerald.svg?style=flat-square)](#verification--test-suite)
 
 > **Golden Principle:** *"The agent proposes, the human decides."*
 > 
@@ -26,7 +26,8 @@
 | **Tamper-Evident Audit Trail** | SHA-256 backward hash chaining (`prev_hash` -> `current_hash`); PostgreSQL triggers blocking `UPDATE`/`DELETE`/`TRUNCATE`; on-demand tamper simulation (`/api/audit/verify?simulate_tamper_id=`). | **WORKING (Live API)** |
 | **Demographic Fairness Twin Lab** | Blind extraction anonymization; evaluated against demographic twin pairs from `data/samples/` (`twin_a_leila` vs `twin_b_karim`) proving **0.0% bias delta**. | **WORKING (Live API)** |
 | **Candidate Inbox Triage** | Multi-intent categorization and AI draft response generator for candidate communications (/api/inbox). | **WORKING (Live API)** |
-| **Recruiter Calendar & Scheduling** | Proposed interview slots and calendar hold dispatching with Mailpit sync (/api/scheduling). | **WORKING (Live API)** |
+| **Recruiter Calendar & Scheduling** | Persistent database-backed interview calendar with collision prevention, weekly/monthly/agenda views, and Article 14 approval routing (`/api/scheduling`). | **WORKING (Live API)** |
+| **Recruitment Funnel & Analytics** | Grounded pipeline conversion telemetry, score distribution histogram, and interviewer workload analytics (`/api/analytics`). | **WORKING (Live API)** |
 | **Multilingual HR Assistant & Copilot** | Conversational Q&A and document drafting in Tunisian Derja, French, and English (/api/assistant/ask & /api/assistant/chat). | **WORKING (Live API)** |
 | **Anti-AI Interview Proctoring** | Real-time detection of candidates covertly relying on AI teleprompters or LLMs during technical interviews. | **WORKING (Live Module)** |
 

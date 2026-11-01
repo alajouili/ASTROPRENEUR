@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { RankedCandidate, NotRankedCandidate, CandidateDetailWithResume, api } from '../services/api';
+import { RankedCandidate, NotRankedCandidate, CandidateDetailWithResume, api, CandidateNote } from '../services/api';
 import { SecurityScanModal } from './SecurityScanModal';
 import { ForensicXRay } from './ForensicXRay';
 import {
@@ -10,7 +10,7 @@ import {
   ShieldAlert,
   FileText,
   Sparkles,
-  Quote,
+  Quote, MessageSquare, Send, Plus,
   Ban,
   HelpCircle,
   Link2,
@@ -28,7 +28,31 @@ interface EvidenceModalProps {
 export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose }) => {
   if (!candidate) return null;
 
-  const [activeTab, setActiveTab] = useState<'CV_LIAISON' | 'XRAY' | 'EVALUATION'>('CV_LIAISON');
+  const [activeTab, setActiveTab] = useState<'CV_LIAISON' | 'XRAY' | 'EVALUATION' | 'NOTES'>('CV_LIAISON');
+  const [notes, setNotes] = useState<CandidateNote[]>([]);
+  const [newNoteContent, setNewNoteContent] = useState<string>('');
+  const [isAddingNote, setIsAddingNote] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (candidate?.candidate_id) {
+      api.getCandidateNotes(candidate.candidate_id).then(setNotes).catch(() => {});
+    }
+  }, [candidate?.candidate_id]);
+
+  const handleAddNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNoteContent.trim() || !candidate?.candidate_id) return;
+    setIsAddingNote(true);
+    try {
+      const note = await api.addCandidateNote(candidate.candidate_id, newNoteContent.trim());
+      setNotes((prev) => [note, ...prev]);
+      setNewNoteContent('');
+    } catch (err) {
+      console.error('Failed to add note', err);
+    } finally {
+      setIsAddingNote(false);
+    }
+  };
   const [detail, setDetail] = useState<CandidateDetailWithResume | null>(null);
   const [selectedCriterionId, setSelectedCriterionId] = useState<string | null>(null);
   const [selectedQuote, setSelectedQuote] = useState<string | null>(null);
@@ -291,6 +315,18 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
               )}
             </button>
             <button
+              onClick={() => setActiveTab('NOTES')}
+              className={`py-3 px-3.5 text-xs font-semibold border-b-2 flex items-center gap-1.5 transition-colors ${
+                activeTab === 'NOTES'
+                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>Recruiter Notes</span>
+              <span className="badge-clean text-[10px] font-mono">{notes.length}</span>
+            </button>
+            <button
               onClick={() => setActiveTab('EVALUATION')}
               className={`py-3 px-3.5 text-xs font-semibold border-b-2 flex items-center gap-1.5 transition-colors ${
                 activeTab === 'EVALUATION'
@@ -546,6 +582,68 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
                       );
                     })}
                   </div>
+                </div>
+              </div>
+            )}
+            {/* TAB 4: RECRUITER NOTES & HUMAN OVERSIGHT */}
+            {activeTab === 'NOTES' && (
+              <div className="space-y-4 animate-fade-in">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">
+                    Add Collaborative Recruiter Note
+                  </h4>
+                  <p className="text-xs text-slate-500 mb-3">
+                    Notes are stamped with your identity and recorded in the tamper-evident audit ledger.
+                  </p>
+                  <form onSubmit={handleAddNote} className="space-y-2.5">
+                    <textarea
+                      rows={3}
+                      value={newNoteContent}
+                      onChange={(e) => setNewNoteContent(e.target.value)}
+                      placeholder="Add observations about candidate background, interview performance, or technical evaluation..."
+                      className="w-full text-xs p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={isAddingNote || !newNoteContent.trim()}
+                        className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>{isAddingNote ? 'Saving...' : 'Post Note'}</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    Evaluation History & Notes ({notes.length})
+                  </h4>
+                  {notes.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-slate-400 bg-slate-50/50 dark:bg-slate-850/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+                      No recruiter notes entered for this candidate yet.
+                    </div>
+                  ) : (
+                    notes.map((n) => (
+                      <div
+                        key={n.id}
+                        className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-1.5"
+                      >
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">
+                            👤 {n.author_name}
+                          </span>
+                          <span className="text-[11px] text-slate-400">
+                            {new Date(n.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                          {n.content}
+                        </p>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}

@@ -14,6 +14,57 @@ import {
 import type { RiskFlagLike } from '../lib/format';
 import { getConversationalAnswer } from './conversationalEngine';
 
+
+export interface PersistentInterview {
+  id: string;
+  candidate_id: string | null;
+  job_id: string | null;
+  candidate_name: string;
+  candidate_email: string;
+  role: string;
+  interviewer: string;
+  interviewer_email?: string | null;
+  interview_type: 'online' | 'phone' | 'in_person';
+  location_or_link?: string | null;
+  scheduled_at: string;
+  end_at: string;
+  duration_minutes: number;
+  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled';
+  notes?: string | null;
+  created_at: string;
+}
+
+export interface CandidateNote {
+  id: string;
+  candidate_id: string;
+  author_name: string;
+  content: string;
+  created_at: string;
+}
+
+export interface FunnelStage {
+  stage: string;
+  count: number;
+  rate: number;
+  color: string;
+}
+
+export interface RecruitmentFunnel {
+  job_id: string | null;
+  stages: FunnelStage[];
+  overall_conversion: number;
+}
+
+export interface ScoreDistribution {
+  total_evaluations: number;
+  distribution: { range: string; count: number }[];
+  must_have_compliance: {
+    passed_all_mandatory: number;
+    missing_mandatory: number;
+    pass_rate: number;
+  };
+}
+
 export interface User {
   id: string;
   email: string;
@@ -1010,6 +1061,193 @@ export const api = {
 
   async askPolicyAssistant(question: string) {
     return this.askAssistant(question);
+  },
+
+
+  // ---- Persistent Calendar & Interview Management ----
+  async getInterviews(filters: { job_id?: string; status?: string; interviewer?: string } = {}): Promise<PersistentInterview[]> {
+    if (_mockMode) {
+      const slots = await this.getSchedulingSlots();
+      return slots.map((s) => ({
+        id: s.id,
+        candidate_id: null,
+        job_id: null,
+        candidate_name: s.candidate_name,
+        candidate_email: s.candidate_email,
+        role: s.role,
+        interviewer: s.interviewer,
+        interview_type: 'online',
+        location_or_link: 'https://meet.google.com/trusthr-room',
+        scheduled_at: new Date().toISOString(),
+        end_at: new Date(Date.now() + 45 * 60000).toISOString(),
+        duration_minutes: 45,
+        status: s.status === 'CONFIRMED' ? 'confirmed' : 'scheduled',
+        notes: `Interviewer: ${s.interviewer} on ${s.day} at ${s.time}`,
+        created_at: new Date().toISOString(),
+      }));
+    }
+    const params = new URLSearchParams();
+    if (filters.job_id) params.append('job_id', filters.job_id);
+    if (filters.status && filters.status !== 'all') params.append('status', filters.status);
+    if (filters.interviewer) params.append('interviewer', filters.interviewer);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return request<PersistentInterview[]>(`/api/scheduling/interviews${qs}`);
+  },
+
+  async createInterview(body: any, force: boolean = false): Promise<any> {
+    if (_mockMode) {
+      return { mode: 'interview_created', interview: { ...body, id: `int-${Date.now()}`, status: 'scheduled' } };
+    }
+    return request<any>(`/api/scheduling/interviews?force=${force}`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
+
+  async updateInterview(id: string, body: any, force: boolean = false): Promise<PersistentInterview> {
+    if (_mockMode) {
+      return { ...body, id, status: body.status || 'scheduled' };
+    }
+    return request<PersistentInterview>(`/api/scheduling/interviews/${id}?force=${force}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  },
+
+  async cancelInterview(id: string, reason: string = 'Recruiter requested cancellation'): Promise<any> {
+    if (_mockMode) {
+      return { status: 'cancelled' };
+    }
+    return request<any>(`/api/scheduling/interviews/${id}/cancel?reason=${encodeURIComponent(reason)}`, {
+      method: 'POST',
+    });
+  },
+
+  async completeInterview(id: string, feedback: string = ''): Promise<any> {
+    if (_mockMode) {
+      return { status: 'completed' };
+    }
+    return request<any>(`/api/scheduling/interviews/${id}/complete?feedback=${encodeURIComponent(feedback)}`, {
+      method: 'POST',
+    });
+  },
+
+  async checkInterviewConflicts(params: { interviewer: string; candidate_email: string; scheduled_at: string; duration_minutes?: number }): Promise<{ has_conflicts: boolean; conflicts: string[] }> {
+    if (_mockMode) {
+      return { has_conflicts: false, conflicts: [] };
+    }
+    const qs = new URLSearchParams({
+      interviewer: params.interviewer,
+      candidate_email: params.candidate_email,
+      scheduled_at: params.scheduled_at,
+      duration_minutes: String(params.duration_minutes || 45),
+    }).toString();
+    return request<{ has_conflicts: boolean; conflicts: string[] }>(`/api/scheduling/conflicts?${qs}`);
+  },
+
+  // ---- Candidate Notes ----
+  async getCandidateNotes(candidateId: string): Promise<CandidateNote[]> {
+    if (_mockMode) {
+      return [
+        {
+          id: 'note-mock-1',
+          candidate_id: candidateId,
+          author_name: 'Rania Recruiter',
+          content: 'Verified technical profile. Strong recommendations from previous lead architect.',
+          created_at: new Date().toISOString(),
+        },
+      ];
+    }
+    return request<CandidateNote[]>(`/api/candidates/${candidateId}/notes`);
+  },
+
+  async addCandidateNote(candidateId: string, content: string): Promise<CandidateNote> {
+    if (_mockMode) {
+      return {
+        id: `note-${Date.now()}`,
+        candidate_id: candidateId,
+        author_name: 'Recruiter',
+        content,
+        created_at: new Date().toISOString(),
+      };
+    }
+    return request<CandidateNote>(`/api/candidates/${candidateId}/notes`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+  },
+
+  // ---- Analytics & Intelligence ----
+  async getAnalyticsOverview(job_id?: string): Promise<any> {
+    if (_mockMode) {
+      return this.getHomeStats();
+    }
+    const qs = job_id ? `?job_id=${encodeURIComponent(job_id)}` : '';
+    return request<any>(`/api/analytics/overview${qs}`);
+  },
+
+  async getAnalyticsFunnel(job_id?: string): Promise<RecruitmentFunnel> {
+    if (_mockMode) {
+      return {
+        job_id: null,
+        stages: [
+          { stage: 'Applied', count: 12, rate: 100.0, color: '#6366f1' },
+          { stage: 'Screened', count: 10, rate: 83.3, color: '#818cf8' },
+          { stage: 'Under Review', count: 7, rate: 58.3, color: '#38bdf8' },
+          { stage: 'Interview', count: 5, rate: 41.7, color: '#f59e0b' },
+          { stage: 'Shortlisted / Hired', count: 3, rate: 25.0, color: '#10b981' },
+        ],
+        overall_conversion: 25.0,
+      };
+    }
+    const qs = job_id ? `?job_id=${encodeURIComponent(job_id)}` : '';
+    return request<RecruitmentFunnel>(`/api/analytics/funnel${qs}`);
+  },
+
+  async getAnalyticsScoreDistribution(job_id?: string): Promise<ScoreDistribution> {
+    if (_mockMode) {
+      return {
+        total_evaluations: 10,
+        distribution: [
+          { range: '0-39% (Unqualified)', count: 2 },
+          { range: '40-59% (Partial Match)', count: 1 },
+          { range: '60-79% (Strong Fit)', count: 2 },
+          { range: '80-100% (Top Performer)', count: 5 },
+        ],
+        must_have_compliance: {
+          passed_all_mandatory: 7,
+          missing_mandatory: 3,
+          pass_rate: 70.0,
+        },
+      };
+    }
+    const qs = job_id ? `?job_id=${encodeURIComponent(job_id)}` : '';
+    return request<ScoreDistribution>(`/api/analytics/score-distribution${qs}`);
+  },
+
+  async getAnalyticsInterviews(): Promise<any> {
+    if (_mockMode) {
+      return {
+        total_interviews: 6,
+        status_breakdown: [
+          { status: 'scheduled', count: 3 },
+          { status: 'confirmed', count: 2 },
+          { status: 'completed', count: 1 },
+          { status: 'cancelled', count: 0 },
+        ],
+        interviewer_workload: [
+          { interviewer: 'Sarah (Lead Architect)', interviews: 3 },
+          { interviewer: 'Rania Recruiter', interviews: 2 },
+          { interviewer: 'Hedi HR Admin', interviews: 1 },
+        ],
+        channel_breakdown: [
+          { type: 'online', count: 5 },
+          { type: 'phone', count: 0 },
+          { type: 'in_person', count: 1 },
+        ],
+      };
+    }
+    return request<any>('/api/analytics/interviews');
   },
 
 };
