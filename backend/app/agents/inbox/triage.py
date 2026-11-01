@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 from app.agents.llm import LLMClient, LLMError
 
-RULES_ENGINE = "offline-rules (SIMULATED, no LLM)"
+RULES_ENGINE = "TrustHR Inbox Triage Engine (Deterministic Rules)"
 TYPES = ("APPLICATION", "STATUS_INQUIRY", "AVAILABILITY", "QUESTION", "SUSPICIOUS", "OTHER")
 
 _AVAILABILITY = re.compile(r"\b(availab\w*|disponib\w*|slot|créneau\w*|time slot|interview (time|date)|wa9tech|reschedul\w*)\b", re.I)
