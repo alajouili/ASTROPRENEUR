@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api, Proposal } from '../services/api';
 import { ApprovalQueue } from '../components/ApprovalQueue';
-import { RefreshCw, AlertCircle } from 'lucide-react';
+import { RefreshCw, AlertCircle, Mail, ExternalLink } from 'lucide-react';
 
 interface ApprovalPageProps {
   onDataChanged?: () => void;
@@ -59,13 +59,27 @@ export const ApprovalPage: React.FC<ApprovalPageProps> = ({ onDataChanged }) => 
           ))}
         </div>
 
-        <button
-          onClick={handleRefresh}
-          className="btn-secondary text-xs py-1.5 px-3"
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-          <span>Refresh Queue</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <a
+            href="http://localhost:8025"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Inspect outgoing candidate emails dispatched via Action Gateway"
+            className="btn-secondary text-xs py-1.5 px-3 inline-flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+          >
+            <Mail className="w-3.5 h-3.5" />
+            <span>Open Mailpit (Port 8025)</span>
+            <ExternalLink className="w-3 h-3 ml-0.5 opacity-70" />
+          </a>
+
+          <button
+            onClick={handleRefresh}
+            className="btn-secondary text-xs py-1.5 px-3"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Refresh Queue</span>
+          </button>
+        </div>
       </div>
 
       {errorMessage && (

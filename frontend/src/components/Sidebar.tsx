@@ -71,10 +71,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ pendingCount, securityAlertCou
       ],
     },
     {
-      title: 'Preview',
+      title: 'Communications & Calendar',
       items: [
-        { to: '/inbox', label: 'Inbox triage', icon: Mail, roles: HR, preview: true },
-        { to: '/scheduling', label: 'Interview scheduling', icon: CalendarDays, roles: HR, preview: true },
+        { to: '/inbox', label: 'Inbox triage', icon: Mail, roles: HR },
+        { to: '/scheduling', label: 'Interview scheduling', icon: CalendarDays, roles: HR },
       ],
     },
   ];

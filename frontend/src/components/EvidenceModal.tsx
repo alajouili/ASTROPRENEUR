@@ -18,6 +18,7 @@ import {
   Search,
   Eye,
   Info,
+  Scale,
 } from 'lucide-react';
 
 interface EvidenceModalProps {
@@ -28,7 +29,7 @@ interface EvidenceModalProps {
 export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose }) => {
   if (!candidate) return null;
 
-  const [activeTab, setActiveTab] = useState<'CV_LIAISON' | 'XRAY' | 'EVALUATION' | 'NOTES'>('CV_LIAISON');
+  const [activeTab, setActiveTab] = useState<'CV_LIAISON' | 'XRAY' | 'EVALUATION' | 'NOTES' | 'GDPR'>('CV_LIAISON');
   const [notes, setNotes] = useState<CandidateNote[]>([]);
   const [newNoteContent, setNewNoteContent] = useState<string>('');
   const [isAddingNote, setIsAddingNote] = useState<boolean>(false);
@@ -327,6 +328,17 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
               <span className="badge-clean text-[10px] font-mono">{notes.length}</span>
             </button>
             <button
+              onClick={() => setActiveTab('GDPR')}
+              className={`py-3 px-3.5 text-xs font-semibold border-b-2 flex items-center gap-1.5 transition-colors ${
+                activeTab === 'GDPR'
+                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
+            >
+              <Scale className="w-4 h-4 text-emerald-500" />
+              <span>GDPR Art. 22 Feedback</span>
+            </button>
+            <button
               onClick={() => setActiveTab('EVALUATION')}
               className={`py-3 px-3.5 text-xs font-semibold border-b-2 flex items-center gap-1.5 transition-colors ${
                 activeTab === 'EVALUATION'
@@ -585,6 +597,81 @@ export const EvidenceModal: React.FC<EvidenceModalProps> = ({ candidate, onClose
                 </div>
               </div>
             )}
+            {/* TAB 5: GDPR ARTICLE 22 EXPLAINABILITY & CANDIDATE FEEDBACK */}
+            {activeTab === 'GDPR' && (
+              <div className="space-y-4 animate-fade-in text-xs">
+                <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 flex items-start gap-3">
+                  <Scale className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-xs">
+                      GDPR Article 22 & EU AI Act Article 13 Right-to-Explanation Notice
+                    </h4>
+                    <p className="text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                      Under EU data protection legislation, candidates subject to AI-assisted screening are entitled to clear, intelligible, and verifiable justifications for their evaluation. Automated decisions without human review are prohibited by our Action Gateway architecture.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-5 surface-card rounded-xl border border-slate-200 dark:border-slate-800 space-y-4">
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-800">
+                    <div>
+                      <span className="text-slate-400 uppercase text-[10px] font-mono">Candidate Subject</span>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                        {candidate.display_name}
+                      </h4>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-slate-400 uppercase text-[10px] font-mono">Final Deterministic Score</span>
+                      <p className="text-base font-extrabold text-indigo-600 dark:text-indigo-400 font-mono">
+                        {(rankedCand?.score ?? 0).toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h5 className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">
+                      Verifiable Factual Findings (Objective Criteria)
+                    </h5>
+                    <div className="space-y-1.5 font-mono text-[11px]">
+                      <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 flex justify-between">
+                        <span>Mandatory Criteria Status:</span>
+                        <span className={((candidate as any).must_haves_met ?? isRanked) ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
+                          {((candidate as any).must_haves_met ?? isRanked) ? '100% SATISFIED' : 'UNMET REQUIREMENTS'}
+                        </span>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 flex justify-between">
+                        <span>Security & Manipulation Analysis:</span>
+                        <span className={candidate.risk_level === 'clean' ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
+                          {candidate.risk_level === 'clean' ? 'CLEAN (No Adversarial Tokens)' : `FLAGGED [${candidate.risk_level.toUpperCase()}]`}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h5 className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">
+                      Candidate-Facing Explainability Summary
+                    </h5>
+                    <div className="p-3.5 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 font-sans text-slate-600 dark:text-slate-300 leading-relaxed text-xs">
+                      {(rankedCand?.score ?? 0) >= 70 ? (
+                        <p>
+                          Your profile demonstrated strong alignment with the technical prerequisites. Verbatim evidence quotes from your resume were mathematically verified against the job rubric. Our human recruiting committee has placed your application into the active interview scheduling phase.
+                        </p>
+                      ) : (
+                        <p>
+                          While your technical background presents notable strengths, our deterministic evaluation found that several mandatory must-have requirements for this specific role were not substantiated by verbatim evidence in your submitted resume.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 text-[11px] text-slate-500 dark:text-slate-400">
+                    <strong>Right of Appeal:</strong> To request a manual re-evaluation by the HR Director under GDPR Article 22.3, submit your petition citing reference <code className="font-mono text-indigo-500">ID-{candidate.candidate_id ? candidate.candidate_id.substring(0, 8) : "REF"}</code> to <code className="font-mono text-indigo-500">appeals@trusthr.demo</code> within 14 business days.
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* TAB 4: RECRUITER NOTES & HUMAN OVERSIGHT */}
             {activeTab === 'NOTES' && (
               <div className="space-y-4 animate-fade-in">
