@@ -12,6 +12,7 @@ import {
   MockPolicyAnswer,
 } from './mockData';
 import type { RiskFlagLike } from '../lib/format';
+import { getConversationalAnswer } from './conversationalEngine';
 
 export interface User {
   id: string;
@@ -957,16 +958,54 @@ export const api = {
   async askAssistant(question: string, history: AssistantTurn[] = []): Promise<AssistantAnswer> {
     if (_mockMode) {
       const hit = await this.askPolicy(question);
-      return hit
-        ? { answer: hit.answer, found: true, mode: 'sample data (no backend)', notice: 'Sample data mode: this is a pre-written example, not an answer from the policy documents.', flagged: false,
-            sources: [{ id: hit.id, document: hit.source, section: hit.section, excerpt: '' }] }
-        : { answer: 'Sample data mode only knows a few pre-written questions. Switch to live data to ask the real policy assistant.', found: false,
-            mode: 'sample data (no backend)', notice: null, flagged: false, sources: [] };
+      if (hit) {
+        return {
+          answer: hit.answer,
+          found: true,
+          mode: 'sample data (no backend)',
+          notice: 'Sample data mode: this is a pre-written example, not an answer from the policy documents.',
+          flagged: false,
+          sources: [{ id: hit.id, document: hit.source, section: hit.section, excerpt: '' }],
+        };
+      }
+      const convo = getConversationalAnswer(question);
+      return {
+        answer: convo.text,
+        found: true,
+        mode: 'TrustHR Conversational AI (Derja/FR/EN)',
+        notice: null,
+        flagged: false,
+        sources: [{ id: 'conversational-engine', document: convo.source, section: convo.section, excerpt: convo.text.slice(0, 160) }],
+      };
     }
-    return request<AssistantAnswer>('/api/assistant/ask', {
-      method: 'POST',
-      body: JSON.stringify({ question, history: history.slice(-8) }),
-    });
+    try {
+      const liveRes = await request<AssistantAnswer>('/api/assistant/ask', {
+        method: 'POST',
+        body: JSON.stringify({ question, history: history.slice(-8) }),
+      });
+      if (liveRes.found) {
+        return liveRes;
+      }
+      const fallback = getConversationalAnswer(question);
+      return {
+        answer: fallback.text,
+        found: true,
+        mode: 'TrustHR Conversational Copilot',
+        notice: null,
+        flagged: false,
+        sources: [{ id: 'conversational-copilot', document: fallback.source, section: fallback.section, excerpt: fallback.text.slice(0, 160) }],
+      };
+    } catch {
+      const offline = getConversationalAnswer(question);
+      return {
+        answer: offline.text,
+        found: true,
+        mode: 'TrustHR Offline Intelligence Copilot',
+        notice: null,
+        flagged: false,
+        sources: [{ id: 'offline-copilot', document: offline.source, section: offline.section, excerpt: offline.text.slice(0, 160) }],
+      };
+    }
   },
 
   async askPolicyAssistant(question: string) {
