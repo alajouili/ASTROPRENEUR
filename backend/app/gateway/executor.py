@@ -60,7 +60,7 @@ def _execute_send_email(db: Session, proposal: Proposal, actor: User) -> dict:
         raise GatewayError(f"Output Guard blocked execution: {'; '.join(violations)}")
 
     msg = EmailMessage()
-    msg["From"] = "recruitment@trusthr.ai"
+    msg["From"] = get_settings().mail_from
     msg["To"] = to_email
     msg["Subject"] = subject
     msg.set_content(body)

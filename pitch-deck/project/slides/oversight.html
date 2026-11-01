@@ -1,0 +1,37 @@
+<section id="oversight" data-transition="fade" style="background:#F6F7F9;color:#0F1729;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;justify-content:space-between;gap:40px">
+<div style="display:flex;flex-direction:column;gap:24px">
+<p style="font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#4F46E5">Human approval &amp; audit</p>
+<h2 style="font-size:64px;font-weight:700;line-height:1.1;letter-spacing:-1px">Nothing is sent or recorded without a person</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#FFFFFF;padding:48px;border:1px solid #E3E6EC;border-radius:24px">
+<div style="display:flex;align-items:center;gap:16px">
+<x-icon name="Lock" style="color:#4F46E5;width:44px;height:44px"></x-icon>
+<h3 style="font-size:36px;font-weight:700">The Action Gateway</h3>
+</div>
+<p style="font-size:28px;line-height:1.4;color:#475569">Plain code, no AI. Before it acts, it checks again:</p>
+<ul style="font-size:28px;line-height:1.5;color:#0F1729">
+<li>a recruiter or HR admin approved it</li>
+<li>the payload has not changed since</li>
+<li>the recipient and targets are valid</li>
+<li>it was not already executed</li>
+</ul>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#FFFFFF;padding:48px;border:1px solid #E3E6EC;border-radius:24px">
+<div style="display:flex;align-items:center;gap:16px">
+<x-icon name="Database" style="color:#4F46E5;width:44px;height:44px"></x-icon>
+<h3 style="font-size:36px;font-weight:700">The audit trail</h3>
+</div>
+<p style="font-size:28px;line-height:1.4;color:#475569">Every upload, score, approval and email is logged:</p>
+<ul style="font-size:28px;line-height:1.5;color:#0F1729">
+<li>append-only, enforced by the database</li>
+<li>each entry hash-chained to the previous</li>
+<li>any tampering is detected on verify</li>
+<li>failed actions are logged, never hidden</li>
+</ul>
+</div>
+</div>
+<p style="font-size:28px;line-height:1.4;color:#0F1729">Roles are enforced on the server: <b>employees</b> see only the policy assistant, <b>recruiters</b> review and approve, the <b>HR admin</b> audits.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:900px;font-size:24px;color:#64748B">TrustHR AI · 9</p>
+<aside>Tested: a replayed approval is refused, an edited payload is refused, an email that fails to send is marked failed instead of sent, and every step appears in the audit trail with who did it.</aside>
+</section>
