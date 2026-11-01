@@ -25,21 +25,15 @@ function resetDemoDatabase() {
   execSync('.\\venv\\Scripts\\python.exe backend\\scripts\\reset_demo_job.py', { cwd: BASE_DIR });
 }
 
-// 2. Synthesize Speech Helper
-function synthesizeSpeech(text, wavPath) {
-  const cleanText = text.replace(/'/g, "''").replace(/\r?\n/g, ' ');
-  const psPath = wavPath + '.ps1';
-  const ps = [
-    'Add-Type -AssemblyName System.Speech',
-    '$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer',
-    '$synth.Rate = 0',
-    `$synth.SetOutputToWaveFile('${wavPath.replace(/'/g, "''")}')`,
-    `$synth.Speak('${cleanText}')`,
-    '$synth.Dispose()'
-  ].join('\r\n');
-  fs.writeFileSync(psPath, ps, 'utf8');
-  execSync(`powershell -NoProfile -ExecutionPolicy Bypass -File "${psPath}"`);
-  try { fs.unlinkSync(psPath); } catch {}
+// 2. Synthesize Speech Helper (Azure Neural Studio Voice via edge-tts)
+function synthesizeSpeech(text, outAudioPath) {
+  const pythonPath = path.join(BASE_DIR, 'venv', 'Scripts', 'python.exe');
+  const ttsScript = path.join(BASE_DIR, 'backend', 'scripts', 'tts_helper.py');
+  const txtPath = outAudioPath + '.txt';
+  fs.writeFileSync(txtPath, text, 'utf8');
+  const cmd = `"${pythonPath}" "${ttsScript}" "${txtPath}" "${outAudioPath}" "fr-FR-HenriNeural" "+18%"`;
+  execSync(cmd, { cwd: BASE_DIR });
+  try { fs.unlinkSync(txtPath); } catch {}
 }
 
 // 3. Encode Video Clip Helper
@@ -115,7 +109,7 @@ async function main() {
   scenes.push({
     id: 'test1_login',
     title: 'Test 1: Connexion sécurisée',
-    narration: "Test 1: Connexion sécurisée. We first enter an invalid password. The platform immediately blocks access and displays 'Invalid email or password'. We then log in with recruiter credentials, granting verified access to the platform. Only authorized personnel can enter.",
+    narration: "Test 1 : Connexion sécurisée. Nous saisissons d'abord un mauvais mot de passe : le message Invalid email or password s'affiche immédiatement. Nous nous connectons ensuite avec les identifiants recruteur. Seuls les utilisateurs autorisés peuvent entrer sur la plateforme.",
     png: png1
   });
 
@@ -171,7 +165,7 @@ async function main() {
   scenes.push({
     id: 'test2_upload',
     title: 'Test 2: Envoi des CV et refus d’un fichier dangereux',
-    narration: "Test 2: Envoi des CV et refus d'un fichier dangereux. We select the 10 benchmark candidates alongside a weaponized faux_cv.pdf. The platform immediately accepts the 10 valid resumes and rejects faux_cv.pdf because the file content does not match its extension. Dangerous and corrupted files are blocked at the binary gateway.",
+    narration: "Test 2 : Envoi des CV et refus d'un fichier dangereux. Nous sélectionnons les 10 CV de référence ainsi que le fichier piégé faux_cv.pdf. Résultat immédiat : 10 CV sont acceptés, et faux_cv.pdf est immédiatement rejeté car le contenu ne correspond pas à son extension. Les fichiers piégés sont bloqués dès l'entrée.",
     png: png2
   });
 
@@ -217,7 +211,7 @@ async function main() {
   scenes.push({
     id: 'test3_screening',
     title: 'Test 3: Tri et classement',
-    narration: "Test 3: Tri et classement. Clicking Screen 10 new CVs triggers the background orchestrator. Amira and Sara rank at 100 percent, while Leila and Karim each achieve 84.6 percent. Opening Amira's evaluation confirms that every score is grounded in verified, verbatim citations from her CV. The score is calculated deterministically in code, with zero AI hallucination.",
+    narration: "Test 3 : Tri et classement. En cliquant sur Screen 10 new CVs, le tri s'effectue. Amira et Sara se classent à 100 %, et les jumeaux Leila et Karim à 84.6 % chacun. En ouvrant la ligne d'Amira, chaque critère s'affiche avec une citation exacte issue du CV. Le classement repose sur des preuves, et le score est calculé par le code.",
     png: png3
   });
 
@@ -231,7 +225,7 @@ async function main() {
   scenes.push({
     id: 'test4_equity',
     title: 'Test 4: Équité',
-    narration: "Test 4: Équité. Leila and Karim possess identical credentials, differing only by name and gender. Both achieve the exact same score of 84.6 percent. This validates zero bias delta under EU AI Act Article 10: only job criteria count.",
+    narration: "Test 4 : Équité démographique. Regardez Leila et Karim : leurs CV sont identiques sauf le nom et le genre, et ils ont exactement le même score de 84.6 %. Seuls les critères du poste comptent, garantissant un biais nul selon l'article 10 de l'EU AI Act.",
     png: png4
   });
 
@@ -260,7 +254,7 @@ async function main() {
   scenes.push({
     id: 'test5_attack',
     title: 'Test 5: Attaque détectée : le moment fort',
-    narration: "Test 5: Attaque détectée. Opening Attack White Text Youssef reveals the quarantined prompt injection, stripped before reaching any model. Notice that his score is 30.8 percent, exactly identical to the clean Youssef Trabelsi. The attack yielded zero extra points. Three other attacks—tiny font, visible instructions, and hidden Word text—are similarly neutralized. The AI cannot be manipulated.",
+    narration: "Test 5 : Attaque détectée, le moment fort. Ouvrons Attack White Text Youssef : on y voit le texte caché Ignore all previous instructions, retiré et signalé High Risk. Comparons avec Youssef Trabelsi, le même CV sans attaque : les deux ont exactement 30.8 %. Les trois autres attaques sont également déjouées. L'IA ne se laisse pas manipuler.",
     png: png5
   });
 
@@ -274,7 +268,7 @@ async function main() {
   scenes.push({
     id: 'test6_human_oversight',
     title: 'Test 6: Rien ne se passe sans validation humaine',
-    narration: "Test 6: Rien ne se passe sans validation humaine. Notice that all candidates remain in 'screened' status. No automated decisions are made, and no candidate is shortlisted without authenticated human recruiter intervention.",
+    narration: "Test 6 : Rien ne se passe sans validation humaine. Regardez bien : tous les candidats sont encore au statut screened. Aucun n'a été retenu automatiquement par l'IA : le contrôle humain est absolu.",
     png: png6
   });
 
@@ -307,7 +301,7 @@ async function main() {
   scenes.push({
     id: 'test7_approval',
     title: 'Test 7: File d’approbation',
-    narration: "Test 7: File d'approbation. In the Approval Queue, the AI proposes four candidates while isolating attacked files for manual review. The recruiter reviews the evidence, adds the note 'Validé après revue', and clicks Approve. Returning to Screening proves that only those four candidates have transitioned to shortlisted. The agent proposes, the human decides.",
+    narration: "Test 7 : File d'approbation. Dans l'onglet Approval queue, la plateforme propose 4 candidats. Les CV piégés sont dans Needs manual review, et Youssef et Mehdi sont dans must-have not met. Ajoutons la note Validé après revue, puis cliquons sur Approve shortlist of 4. De retour dans Screening : seuls ces 4 candidats sont passés à shortlisted. L'agent propose, l'humain décide.",
     png: png7a
   });
 
@@ -342,7 +336,7 @@ async function main() {
   scenes.push({
     id: 'test8_audit',
     title: 'Test 8: Journal d’audit',
-    narration: "Test 8: Journal d'audit. Logging in as HR Admin and opening the Audit Trail displays the green 'Hash chain verified' badge. Every action—CV upload, screening, proposal creation, and recruiter approval—is permanently sealed in an immutable SHA-256 backward hash chain. Any unauthorized modification is instantly caught.",
+    narration: "Test 8 : Journal d'audit. Déconnexion, puis reconnexion avec le compte administrateur. Dans l'Audit trail, regardez le badge Hash chain verified et l'historique complet : envoi des CV, tri, proposition, approbation, changement de statut. Tout est scellé en SHA-256 : tout est tracé, et toute modification serait détectée.",
     png: png8
   });
 
@@ -372,7 +366,7 @@ async function main() {
   scenes.push({
     id: 'test9_roles',
     title: 'Test 9: Contrôle des rôles',
-    narration: "Test 9: Contrôle des rôles. An employee login demonstrates strict privilege isolation. Candidate records and executive decisions remain completely inaccessible. TrustHR AI brings safety, transparency, and human dignity back to recruitment.",
+    narration: "Test 9 : Contrôle des rôles. Connexion avec le compte employé : aucun accès aux candidats ni aux décisions de recrutement. La séparation des privilèges est totale. TrustHR AI garantit une gouvernance et une sécurité irréprochables.",
     png: png9
   });
 
@@ -389,11 +383,11 @@ async function main() {
     const scene = scenes[idx];
     console.log(`[*] Compiling Clip ${idx + 1}/${scenes.length}: [${scene.id}]`);
 
-    const wavPath = path.join(tempDir, `narration_${idx}.wav`);
-    synthesizeSpeech(scene.narration, wavPath);
+    const audioPath = path.join(tempDir, `narration_${idx}.mp3`);
+    synthesizeSpeech(scene.narration, audioPath);
 
     const clipPath = path.join(tempDir, `clip_${idx}.mp4`);
-    encodeClip(scene.png, wavPath, clipPath);
+    encodeClip(scene.png, audioPath, clipPath);
     clipPaths.push(clipPath);
     console.log(`    [OK] Clip ${idx + 1} generated.`);
   }
