@@ -56,6 +56,17 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar, isMockMode, onT
           <span>{isMockMode ? 'Sample data' : 'Live data'}</span>
         </button>
 
+        <a
+          href="/presentation/index.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-ghost h-8 px-2.5 text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:bg-indigo-50 dark:hover:bg-indigo-950/40 inline-flex items-center gap-1.5"
+          title="Open the 14-slide interactive Pitch Deck presentation"
+        >
+          <Presentation className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+          <span className="hidden sm:inline">Pitch Deck</span>
+        </a>
+
         {onOpenPitchDemo && (
           <button onClick={onOpenPitchDemo} className="btn-ghost h-8 px-2.5 text-xs" title="Open the presenter guide">
             <Presentation className="w-4 h-4" />
