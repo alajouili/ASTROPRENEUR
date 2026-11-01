@@ -110,6 +110,12 @@ def _to_interview_out(i: Interview) -> dict:
     }
 
 
+def _as_utc(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
 def _check_overlap(
     db: Session,
     interviewer: str,
@@ -119,7 +125,8 @@ def _check_overlap(
     exclude_id: str | None = None,
 ) -> list[str]:
     """Detects time slot overlap for either the interviewer or the candidate."""
-    end_at = scheduled_at + timedelta(minutes=duration_minutes)
+    t_start = _as_utc(scheduled_at)
+    t_end = t_start + timedelta(minutes=duration_minutes)
     query = select(Interview).where(
         Interview.status.in_(["scheduled", "confirmed"]),
         or_(
@@ -133,16 +140,17 @@ def _check_overlap(
     candidates = db.scalars(query).all()
     conflicts = []
     for item in candidates:
-        item_end = item.scheduled_at + timedelta(minutes=item.duration_minutes)
-        # Check if interval [scheduled_at, end_at] overlaps with [item.scheduled_at, item_end]
-        if max(scheduled_at, item.scheduled_at) < min(end_at, item_end):
+        item_start = _as_utc(item.scheduled_at)
+        item_end = item_start + timedelta(minutes=item.duration_minutes)
+        # Check if interval [t_start, t_end] overlaps with [item_start, item_end]
+        if max(t_start, item_start) < min(t_end, item_end):
             reason = (
                 f"Double-booked interviewer '{interviewer}'"
                 if item.interviewer == interviewer
                 else f"Candidate '{candidate_email}' already scheduled"
             )
             conflicts.append(
-                f"{reason} on {item.scheduled_at.strftime('%Y-%m-%d %H:%M UTC')} "
+                f"{reason} on {item_start.strftime('%Y-%m-%d %H:%M UTC')} "
                 f"for '{item.role}' (Interview ID: {item.id[:8]})"
             )
     return conflicts
