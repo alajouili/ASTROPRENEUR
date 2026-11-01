@@ -131,3 +131,48 @@ class BackgroundTask(Base):
     created_by: Mapped[str] = mapped_column(String(36))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+
+class Email(Base):
+    """A message read from or sent through the mailbox (Mailpit). Inbound text is untrusted:
+    it is stored after the Security Guard's sanitising, with its flags and its triage."""
+    __tablename__ = "emails"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    mailbox_id: Mapped[str] = mapped_column(String(128), unique=True)  # Mailpit message ID
+    direction: Mapped[str] = mapped_column(String(8), index=True)  # in | out
+    from_addr: Mapped[str] = mapped_column(String(255), index=True)
+    from_name: Mapped[str] = mapped_column(String(255), default="")
+    to_addr: Mapped[str] = mapped_column(String(255), index=True)
+    subject: Mapped[str] = mapped_column(String(500), default="")
+    body: Mapped[str] = mapped_column(Text, default="")
+    sent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    candidate_id: Mapped[str | None] = mapped_column(ForeignKey("candidates.id"), nullable=True, index=True)
+    # Triage (inbound only)
+    type: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    urgency: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    needs_human: Mapped[bool] = mapped_column(default=False)
+    summary: Mapped[str] = mapped_column(Text, default="")
+    risk_level: Mapped[str] = mapped_column(String(16), default="none")
+    risk_flags: Mapped[list] = mapped_column(JSON, default=list)
+    triage_engine: Mapped[str] = mapped_column(String(128), default="")
+    # Suggested reply from the Comms agent (inbound only; a human edits and authorizes it)
+    draft_subject: Mapped[str] = mapped_column(String(500), default="")
+    draft_body: Mapped[str] = mapped_column(Text, default="")
+    draft_engine: Mapped[str] = mapped_column(String(128), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class CalendarEvent(Base):
+    """The recruiter's calendar: busy blocks and interview holds placed by the Action Gateway."""
+    __tablename__ = "calendar_events"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    owner_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    kind: Mapped[str] = mapped_column(String(16))  # busy | interview
+    title: Mapped[str] = mapped_column(String(255))
+    start_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    end_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    candidate_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    candidate_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    interviewer: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    proposal_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

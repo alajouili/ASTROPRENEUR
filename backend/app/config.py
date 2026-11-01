@@ -49,6 +49,14 @@ class Settings(BaseSettings):
     mailpit_smtp_host: str = "localhost"
     mailpit_smtp_port: int = 1025
     mailpit_api_url: str = "http://localhost:8025"
+    mail_from: str = "recruitment@trusthr.ai"  # the recruitment mailbox; also how outbound mail is recognised
+    followup_days: int = 3  # remind candidates who have not answered our last email for this many days
+
+    # Interview scheduling: working hours (UTC) and slot rules for the free-slot finder
+    work_day_start_hour: int = 9
+    work_day_end_hour: int = 17
+    interview_minutes: int = 45
+    interview_buffer_minutes: int = 15
 
     shortlist_size: int = 5
 
