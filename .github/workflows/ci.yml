@@ -41,11 +41,12 @@ jobs:
 
       - name: Run Pytest Suite
         env:
+          TEST_DATABASE_URL: postgresql+psycopg://trusthr:trusthr_test_password@localhost:5432/trusthr_test
           DATABASE_URL: postgresql+psycopg://trusthr:trusthr_test_password@localhost:5432/trusthr_test
           JWT_SECRET: test_secret_key_ci_environment_32chars_min_length
-          EMBEDDED_WORKER: "true"
+          PYTHONPATH: backend
         run: |
-          pytest backend/tests/ -v
+          python -m pytest backend/tests/ -v -q
 
   frontend-build:
     name: Frontend TypeScript & Vite Bundle
