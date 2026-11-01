@@ -1,0 +1,30 @@
+<section id="security" data-transition="fade" style="background:#4F46E5;color:#F8F9FF;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;justify-content:space-between;gap:48px">
+<div style="display:flex;flex-direction:column;gap:24px">
+<p style="font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#E0E4FF">AI security</p>
+<h2 style="font-size:64px;font-weight:700;line-height:1.1;letter-spacing:-1px;width:1550px">Untrusted text is data, never instructions</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:8px">
+<p style="font-size:120px;font-weight:800;line-height:1;letter-spacing:-3px">9 / 9</p>
+<p style="font-size:28px;line-height:1.4;color:#E0E4FF">attack CVs in our dataset flagged high risk — white text, tiny fonts, hidden DOCX runs, FR/EN overrides, fake system tags</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px">
+<p style="font-size:120px;font-weight:800;line-height:1;letter-spacing:-3px">0 / 20</p>
+<p style="font-size:28px;line-height:1.4;color:#E0E4FF">clean CVs wrongly flagged. No attack CV reached the proposed shortlist.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px">
+<p style="font-size:120px;font-weight:800;line-height:1;letter-spacing:-3px">=</p>
+<p style="font-size:28px;line-height:1.4;color:#E0E4FF">fairness twins (same CV, different name and gender) get identical scores</p>
+</div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:16px">
+<p style="font-size:24px;background:#3F37C9;padding:12px 24px;border-radius:999px">Hidden-text removal</p>
+<p style="font-size:24px;background:#3F37C9;padding:12px 24px;border-radius:999px">EN / FR / AR injection rules</p>
+<p style="font-size:24px;background:#3F37C9;padding:12px 24px;border-radius:999px">Optional Prompt Guard model</p>
+<p style="font-size:24px;background:#3F37C9;padding:12px 24px;border-radius:999px">Quotes verified against the CV</p>
+<p style="font-size:24px;background:#3F37C9;padding:12px 24px;border-radius:999px">Output guard on drafts</p>
+<p style="font-size:24px;background:#3F37C9;padding:12px 24px;border-radius:999px">Mapped to OWASP LLM Top 10</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1600px;font-size:24px;color:#E0E4FF">TrustHR AI · 8 · Measured on our fictional dataset of 29 CVs; detection is a second layer — the real protection is architectural.</p>
+<aside>Detection can always be bypassed by a new phrasing, so we never rely on it alone. Even an undetected attack cannot do anything: the agent has no action tools, the score is computed in code from verified quotes, and a human approves the shortlist.</aside>
+</section>
