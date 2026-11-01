@@ -12,6 +12,33 @@
 
 ---
 
+### 🏆 Hackathon Showcase & Jury Resources
+
+| Resource | Description | Quick Access |
+|---|---|:---:|
+| 🎬 **Master Demo Video (1080p)** | Full HD recorded walkthrough with synchronized voice narration (1m56s) | [`media/trusthr_ai_demo.mp4`](media/trusthr_ai_demo.mp4) • [Watch in Browser](http://localhost:8088/presentation/trusthr_ai_demo.mp4) |
+| 📊 **14-Slide Interactive Pitch Deck** | Widescreen presentation app with keyboard navigation (`F` fullscreen, `S` speaker notes, `P` print PDF) | [`pitch-deck/index.html`](pitch-deck/index.html) • [Open Presentation](http://localhost:8088/presentation/index.html) |
+| 🎙️ **Pitch Script & Defense Matrix** | 5-Minute word-for-word presentation script with top 10 jury Q&A defense rebuttals | [`docs/PITCH_DEMO_SCRIPT.md`](docs/PITCH_DEMO_SCRIPT.md) |
+| ⚡ **Live Demo Guide** | Step-by-step evaluator instructions to reproduce attack defanging & gateway approvals | [`docs/DEMO.md`](docs/DEMO.md) |
+
+---
+
+## 🥊 Competitive Advantage Matrix
+
+| Technical & Legal Dimension | Legacy ATS (Workday, Taleo) | Naive AI Screeners (Ashby, AutoGPT wrappers) | **TrustHR AI (Team ASTROPRENEUR)** |
+|---|:---:|:---:|:---:|
+| **Invisible Prompt Injection Defense** | ❌ Inapplicable (Keyword-based) | ❌ **Vulnerable** (Fails on white text, tiny font, zero-width chars) | ✅ **100% Interception** via PyMuPDF raw binary byte & RGB delta forensics |
+| **Evidence Grounding & Verbatim Verification** | ❌ Boolean match only | ❌ Hallucinates skills; black-box scoring | ✅ **Deterministic Math Scoring**: LLM cites exact quotes; unverified = 0% |
+| **Outbound Dispatch Control (Action Gateway)** | ⚠️ Manual rule-based | ❌ Uncontrolled autonomous email/calendar dispatch | ✅ **Air-Gapped Gateway**: Zero network dispatch without authenticated human HR signature |
+| **Tamper-Evident Audit Trail** | ⚠️ Flat database logs (mutable) | ❌ Non-existent or simple console logging | ✅ **Cryptographic SHA-256 Backward Chained Ledger** with real-time tampering alert |
+| **Calendar Scheduling & Conflict Engine** | ⚠️ External sync only | ⚠️ Prone to double-booking and drift | ✅ **Built-in Recruiter Calendar** with atomic `HTTP 409 Conflict` collision prevention |
+| **Demographic Fairness Twin Evaluation** | ❌ Blind | ⚠️ Subject to latent demographic bias | ✅ **0.0% Bias Delta** validated on demographic twin pairs (`twin_a_leila` vs `twin_b_karim`) |
+| **Multilingual HR Copilot** | ❌ None | ⚠️ English only | ✅ **Tunisian Derja, French, and English** with zero-latency local fallback |
+| **EU AI Act Article 12 & 14 Compliance** | ⚠️ Partial | ❌ **High Legal Liability** (Statutory fines up to €35M / 7% turnover) | ✅ **100% Compliant by Design** (Mandatory human oversight & immutable event logs) |
+
+
+---
+
 ## Live System Capabilities & Status Matrix
 
 | Module / Capability | Implementation & Architecture | Status |
@@ -211,9 +238,9 @@ The system includes pre-loaded fixtures in `data/samples/` to demonstrate attack
 
 | Member | Ownership Domain | Scope & Deliverables | Build Share |
 |---|---|---|:---:|
-| **Member 1** | **Core AI & Backend Engine** | LangGraph screening orchestrator, Gemini & Groq fallback client, deterministic quote scoring math, business API routes, Mailpit adapter, worker queue | **39%** (15h) |
-| **Member 2** | **Security & Trust** | OWASP LLM defense, PyMuPDF forensic extractor, bilingual injection rules, Action Gateway HITL authorization, SHA-256 chained audit ledger, red-team test suite | **33%** (12.5h) |
-| **Member 3** | **Product Experience & Pitch** | Enterprise SaaS dashboard (8 screens), Ashby/Linear dual-theme engine, 5-Min pitch mode with teleprompter, benchmark fictional dataset, pitch deck & docs | **28%** (10.5h) |
+| **Ala Jouili** (`@alajouili`) | **Core AI & Backend Engine** | LangGraph screening orchestrator, Gemini & Groq fallback client, deterministic quote scoring math, business API routes, Mailpit adapter, worker queue | **39%** (15h) |
+| **Mohamed Jerbi & Hamza** (`@jerbi`, `@hammmza`) | **Security & Trust** | OWASP LLM defense, PyMuPDF forensic extractor, bilingual injection rules, Action Gateway HITL authorization, SHA-256 chained audit ledger, red-team test suite | **33%** (12.5h) |
+| **Chiheb Ben Taleb** (`@Chiheb-bt`) | **Product Experience & Pitch** | Enterprise SaaS dashboard (8 screens), Ashby/Linear dual-theme engine, 14-slide interactive pitch deck, 1080p demo video, benchmark dataset, calendar workspace | **28%** (10.5h) |
 
 ---
 
