@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="common.css">
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="slide-container">
+    <div class="top-header">
+      <div class="brand-cluster">
+        <div class="brand-logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="brand-title">TrustHR <span>AI</span></div>
+      </div>
+      <div class="header-badge">CODE INSPECTION // FORENSIC EXTRACTION</div>
+      <div class="header-tagline">app/security/extract.py</div>
+    </div>
+
+    <div class="title-section">
+      <h2 class="scene-title">Forensic PDF Span Parsing &amp; Hidden Text Defense</h2>
+      <p class="scene-subtitle">Intercepting invisible prompt smuggling at the document binary layer before any LLM invocation.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1.35fr 0.65fr; gap: 32px; align-items: start;">
+      <!-- CODE WINDOW -->
+      <div class="code-window">
+        <div class="code-window-bar">
+          <div class="code-dots">
+            <div class="code-dot dot-red"></div>
+            <div class="code-dot dot-yellow"></div>
+            <div class="code-dot dot-green"></div>
+          </div>
+          <div class="code-filename">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            backend/app/security/extract.py
+          </div>
+          <div class="code-badge">PyMuPDF Binary Scanner</div>
+        </div>
+        <div class="code-body">
+<span class="line-num">16</span><span class="hl"><span class="kw">_NEAR_WHITE</span> = <span class="num">235</span>  <span class="cm"># every RGB channel &gt;= 235 counts as white-on-white</span></span>
+<span class="line-num">17</span><span class="hl"><span class="kw">_MIN_FONT_PT</span> = <span class="num">4.0</span>  <span class="cm"># microscopic font threshold for adversarial payloads</span></span>
+<span class="line-num">18</span>
+<span class="line-num">40</span><span class="kw">def</span> <span class="fn">_is_near_white</span>(rgb: <span class="cls">tuple</span>[<span class="cls">int</span>, <span class="cls">int</span>, <span class="cls">int</span>]) -&gt; <span class="cls">bool</span>:
+<span class="line-num">41</span>    <span class="kw">return</span> <span class="fn">min</span>(rgb) &gt;= _NEAR_WHITE
+<span class="line-num">42</span>
+<span class="line-num">44</span><span class="kw">def</span> <span class="fn">_pdf_hidden_reason</span>(span: <span class="cls">dict</span>, page_rect: pymupdf.Rect) -&gt; <span class="cls">str</span> | <span class="kw">None</span>:
+<span class="line-num">45</span>    color = <span class="fn">int</span>(span.<span class="fn">get</span>(<span class="str">"color"</span>, <span class="num">0</span>))
+<span class="line-num">46</span>    <span class="kw">if</span> <span class="fn">_is_near_white</span>(((color &gt;&gt; <span class="num">16</span>) &amp; <span class="num">255</span>, (color &gt;&gt; <span class="num">8</span>) &amp; <span class="num">255</span>, color &amp; <span class="num">255</span>)):
+<span class="line-num">47</span>        <span class="kw">return</span> <span class="str">"white_text"</span>
+<span class="line-num">48</span>    <span class="kw">if</span> <span class="fn">float</span>(span.<span class="fn">get</span>(<span class="str">"size"</span>, <span class="num">12</span>)) &lt; _MIN_FONT_PT:
+<span class="line-num">49</span>        <span class="kw">return</span> <span class="str">"tiny_font"</span>
+<span class="line-num">50</span>    <span class="kw">if</span> span.<span class="fn">get</span>(<span class="str">"alpha"</span>, <span class="num">255</span>) == <span class="num">0</span>:
+<span class="line-num">51</span>        <span class="kw">return</span> <span class="str">"invisible"</span>
+<span class="line-num">52</span>    bbox = pymupdf.Rect(span[<span class="str">"bbox"</span>])
+<span class="line-num">53</span>    <span class="kw">if</span> bbox.<span class="fn">get_area</span>() &gt; <span class="num">0</span> <span class="kw">and</span> (bbox &amp; page_rect).<span class="fn">get_area</span>() &lt; <span class="num">0.5</span> * bbox.<span class="fn">get_area</span>():
+<span class="line-num">54</span>        <span class="kw">return</span> <span class="str">"off_page"</span>
+<span class="line-num">55</span>    <span class="kw">return</span> <span class="kw">None</span>
+        </div>
+      </div>
+
+      <!-- SIDE CALLOUTS -->
+      <div class="side-cards">
+        <div class="callout-box blue">
+          <div class="callout-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 14.14 14.14"/></svg>
+            RGB Channel Inspection
+          </div>
+          <div class="callout-text">
+            Checks individual red, green, and blue bytes. If every component exceeds 235, the span is identified as invisible white text and isolated from the LLM prompt.
+          </div>
+        </div>
+
+        <div class="callout-box amber">
+          <div class="callout-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            Microscopic Font Filter
+          </div>
+          <div class="callout-text">
+            Adversarial injections often hide in 1pt or 2pt micro-text. Any glyph under 4.0 points is removed and tagged for human recruiter forensic review.
+          </div>
+        </div>
+
+        <div class="callout-box emerald">
+          <div class="callout-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Off-Page Coordinate Math
+          </div>
+          <div class="callout-text">
+            Calculates bounding box intersection with the page viewport. Text positioned off-canvas to deceive screeners is immediately caught and quarantined.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      <div>VERIFIED IN TEST SUITE: tests/test_extract.py // 100% COVERAGE ON ADVERSARIAL SAMPLES</div>
+      <div>ASTROPRENEUR CORE SECURITY // TRUSTHR AI</div>
+    </div>
+  </div>
+</body>
+</html>

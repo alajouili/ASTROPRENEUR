@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="common.css">
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="slide-container">
+    <div class="top-header">
+      <div class="brand-cluster">
+        <div class="brand-logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="brand-title">TrustHR <span>AI</span></div>
+      </div>
+      <div class="header-badge">SYSTEM ARCHITECTURE BLUEPRINT</div>
+      <div class="header-tagline">DEFENSE-IN-DEPTH PIPELINE</div>
+    </div>
+
+    <div class="title-section">
+      <h2 class="scene-title">Three-Tier Defense-in-Depth Architecture</h2>
+      <p class="scene-subtitle">Guaranteed boundaries between untrusted inputs, AI reasoning, and system execution.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 40px 1.15fr 40px 1fr; align-items: stretch; gap: 0;">
+      <!-- TIER 1 -->
+      <div class="glass-card" style="padding: 24px; border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(13, 22, 44, 0.7);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <span style="font-family:'JetBrains Mono'; font-size:12px; font-weight:700; color:#60A5FA;">TIER 01 // INGESTION</span>
+          <span style="padding:2px 8px; border-radius:4px; background:rgba(59,130,246,0.2); color:#93C5FD; font-size:11px; font-family:'JetBrains Mono';">PRE-LLM</span>
+        </div>
+        <h4 style="font-size:18px; font-weight:700; color:#FFFFFF; margin-bottom:12px;">Forensic Ingestion</h4>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; border-left:3px solid #3B82F6;">
+            <div style="font-family:'JetBrains Mono'; font-size:12.5px; font-weight:600; color:#93C5FD;">extract.py (PyMuPDF)</div>
+            <div style="font-size:12px; color:#94A3B8; margin-top:3px;">_NEAR_WHITE=235 &amp; font &lt; 4.0pt detection</div>
+          </div>
+          <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; border-left:3px solid #3B82F6;">
+            <div style="font-family:'JetBrains Mono'; font-size:12.5px; font-weight:600; color:#93C5FD;">injection.py (Homoglyphs)</div>
+            <div style="font-size:12px; color:#94A3B8; margin-top:3px;">Cyrillic &amp; Greek unicode spoofing transliteration</div>
+          </div>
+          <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; border-left:3px solid #EF4444;">
+            <div style="font-family:'JetBrains Mono'; font-size:12.5px; font-weight:600; color:#F87171;">Bilingual Prompt Rules</div>
+            <div style="font-size:12px; color:#94A3B8; margin-top:3px;">Regex flags prompt overrides (EN/FR)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ARROW 1 -->
+      <div style="display:flex; align-items:center; justify-content:center; color:#475569;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+
+      <!-- TIER 2 -->
+      <div class="glass-card" style="padding: 24px; border: 1px solid rgba(16, 185, 129, 0.3); background: rgba(10, 31, 28, 0.7);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <span style="font-family:'JetBrains Mono'; font-size:12px; font-weight:700; color:#34D399;">TIER 02 // INTELLIGENCE</span>
+          <span style="padding:2px 8px; border-radius:4px; background:rgba(16,185,129,0.2); color:#6EE7B7; font-size:11px; font-family:'JetBrains Mono';">SANDBOXED</span>
+        </div>
+        <h4 style="font-size:18px; font-weight:700; color:#FFFFFF; margin-bottom:12px;">Evidence &amp; Determinism</h4>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; border-left:3px solid #10B981;">
+            <div style="font-family:'JetBrains Mono'; font-size:12.5px; font-weight:600; color:#6EE7B7;">Verbatim Quote Matcher</div>
+            <div style="font-size:12px; color:#94A3B8; margin-top:3px;">Extracts string citations directly from sanitized raw text</div>
+          </div>
+          <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; border-left:3px solid #10B981;">
+            <div style="font-family:'JetBrains Mono'; font-size:12.5px; font-weight:600; color:#6EE7B7;">scoring.py (Pure Math)</div>
+            <div style="font-size:12px; color:#94A3B8; margin-top:3px;">RESULT_VALUE = met:1.0, partial:0.5, missing:0.0</div>
+          </div>
+          <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; border-left:3px solid #F59E0B;">
+            <div style="font-family:'JetBrains Mono'; font-size:12.5px; font-weight:600; color:#FCD34D;">Output Guard (LLM02)</div>
+            <div style="font-size:12px; color:#94A3B8; margin-top:3px;">Scans proposed draft to prevent PII cross-candidate leaks</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ARROW 2 -->
+      <div style="display:flex; align-items:center; justify-content:center; color:#475569;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+
+      <!-- TIER 3 -->
+      <div class="glass-card" style="padding: 24px; border: 1px solid rgba(139, 92, 246, 0.3); background: rgba(25, 18, 48, 0.7);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <span style="font-family:'JetBrains Mono'; font-size:12px; font-weight:700; color:#A78BFA;">TIER 03 // GOVERNANCE</span>
+          <span style="padding:2px 8px; border-radius:4px; background:rgba(139,92,246,0.2); color:#C4B5FD; font-size:11px; font-family:'JetBrains Mono';">HUMAN-GATED</span>
+        </div>
+        <h4 style="font-size:18px; font-weight:700; color:#FFFFFF; margin-bottom:12px;">Gateway &amp; Ledger</h4>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; border-left:3px solid #8B5CF6;">
+            <div style="font-family:'JetBrains Mono'; font-size:12.5px; font-weight:600; color:#C4B5FD;">executor.py (Action Gateway)</div>
+            <div style="font-size:12px; color:#94A3B8; margin-top:3px;">Zero autonomous dispatch; requires signed JWT HR role</div>
+          </div>
+          <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; border-left:3px solid #8B5CF6;">
+            <div style="font-family:'JetBrains Mono'; font-size:12.5px; font-weight:600; color:#C4B5FD;">scheduling.py (Anti-Collision)</div>
+            <div style="font-size:12px; color:#94A3B8; margin-top:3px;">UTC offset normalization &amp; HTTP 409 conflict lock</div>
+          </div>
+          <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; border-left:3px solid #10B981;">
+            <div style="font-family:'JetBrains Mono'; font-size:12.5px; font-weight:600; color:#6EE7B7;">log.py (SHA-256 Ledger)</div>
+            <div style="font-size:12px; color:#94A3B8; margin-top:3px;">prev_hash backward chain makes edits tamper-evident</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 14px; padding: 14px 24px; border-radius: 12px; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(59, 130, 246, 0.3); display: flex; align-items: center; justify-content: space-between;">
+      <span style="font-size: 14px; color: #E2E8F0; font-weight: 600;">
+        🛡️ ENFORCED INVARIANT: LLM agents have zero database write privileges, zero socket dispatch rights, and zero autonomous authority.
+      </span>
+      <span style="font-family: 'JetBrains Mono'; font-size: 12px; color: #60A5FA; font-weight: 700;">STRICT ZERO-TRUST</span>
+    </div>
+
+    <div class="footer-bar">
+      <div>PIPELINE LATENCY: &lt; 2.4 SECONDS // RESILIENT TO ZERO-DAY PROMPT INJECTIONS</div>
+      <div>ASTROPRENEUR CORE ARCHITECTURE // TRUSTHR AI</div>
+    </div>
+  </div>
+</body>
+</html>

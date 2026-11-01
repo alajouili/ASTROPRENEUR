@@ -16,7 +16,8 @@
 
 | Resource | Description | Quick Access |
 |---|---|:---:|
-| 🎬 **Master Demo Video (1080p)** | Full HD recorded walkthrough with synchronized voice narration (1m56s) | [`media/trusthr_ai_demo.mp4`](media/trusthr_ai_demo.mp4) • [Watch in Browser](http://localhost:8088/presentation/trusthr_ai_demo.mp4) |
+| 🎬 **Cinematic Architecture & Code Tour (1080p)** | Complete technical deep-dive into backend source code, math scoring, Action Gateway, and SHA-256 ledger (3m20s) | [`media/trusthr_ai_cinematic_architecture.mp4`](media/trusthr_ai_cinematic_architecture.mp4) • [Watch in Browser](http://localhost:8088/presentation/trusthr_ai_cinematic_architecture.mp4) |
+| 🎥 **Master Demo Pitch Video (1080p)** | Full HD recorded walkthrough with synchronized voice narration (1m56s) | [`media/trusthr_ai_demo.mp4`](media/trusthr_ai_demo.mp4) • [Watch in Browser](http://localhost:8088/presentation/trusthr_ai_demo.mp4) |
 | 📊 **14-Slide Interactive Pitch Deck** | Widescreen presentation app with keyboard navigation (`F` fullscreen, `S` speaker notes, `P` print PDF) | [`pitch-deck/index.html`](pitch-deck/index.html) • [Open Presentation](http://localhost:8088/presentation/index.html) |
 | 🎙️ **Pitch Script & Defense Matrix** | 5-Minute word-for-word presentation script with top 10 jury Q&A defense rebuttals | [`docs/PITCH_DEMO_SCRIPT.md`](docs/PITCH_DEMO_SCRIPT.md) |
 | ⚡ **Live Demo Guide** | Step-by-step evaluator instructions to reproduce attack defanging & gateway approvals | [`docs/DEMO.md`](docs/DEMO.md) |

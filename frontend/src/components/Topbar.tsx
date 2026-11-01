@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { Menu, Sun, Moon, Presentation } from 'lucide-react';
+import { Menu, Sun, Moon, Presentation, Video } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { TrustHRLogo } from './TrustHRLogo';
 
@@ -65,6 +65,17 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar, isMockMode, onT
         >
           <Presentation className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
           <span className="hidden sm:inline">Pitch Deck</span>
+        </a>
+
+        <a
+          href="/presentation/trusthr_ai_cinematic_architecture.mp4"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-ghost h-8 px-2.5 text-xs text-purple-600 dark:text-purple-400 font-medium hover:bg-purple-50 dark:hover:bg-purple-950/40 inline-flex items-center gap-1.5"
+          title="Watch the 1080p Cinematic Architecture and Code Tour video"
+        >
+          <Video className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+          <span className="hidden md:inline">Architecture Video</span>
         </a>
 
         {onOpenPitchDemo && (

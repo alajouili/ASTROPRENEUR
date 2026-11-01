@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="common.css">
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="slide-container">
+    <div class="top-header">
+      <div class="brand-cluster">
+        <div class="brand-logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="brand-title">TrustHR <span>AI</span></div>
+      </div>
+      <div class="header-badge">CODE INSPECTION // CRYPTOGRAPHIC LEDGER</div>
+      <div class="header-tagline">app/audit/log.py</div>
+    </div>
+
+    <div class="title-section">
+      <h2 class="scene-title">Tamper-Evident SHA-256 Backward Hash Chaining</h2>
+      <p class="scene-subtitle">Cryptographic proof of chronological integrity. Any modified row invalidates all subsequent blocks.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 32px; align-items: start;">
+      <!-- CODE WINDOW -->
+      <div class="code-window">
+        <div class="code-window-bar">
+          <div class="code-dots">
+            <div class="code-dot dot-red"></div>
+            <div class="code-dot dot-yellow"></div>
+            <div class="code-dot dot-green"></div>
+          </div>
+          <div class="code-filename">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            backend/app/audit/log.py
+          </div>
+          <div class="code-badge">Cryptographic Ledger</div>
+        </div>
+        <div class="code-body">
+<span class="line-num">16</span><span class="kw">GENESIS_HASH</span> = <span class="str">"0"</span> * <span class="num">64</span>
+<span class="line-num">20</span><span class="kw">def</span> <span class="fn">_entry_hash</span>(prev_hash: <span class="cls">str</span>, row: AuditLog) -&gt; <span class="cls">str</span>:
+<span class="line-num">21</span>    body = {
+<span class="line-num">22</span>        <span class="str">"at"</span>: row.at.<span class="fn">astimezone</span>(timezone.utc).<span class="fn">isoformat</span>(timespec=<span class="str">"microseconds"</span>),
+<span class="line-num">23</span>        <span class="str">"actor_type"</span>: row.actor_type, <span class="str">"actor_id"</span>: row.actor_id,
+<span class="line-num">24</span>        <span class="str">"action"</span>: row.action, <span class="str">"entity_type"</span>: row.entity_type,
+<span class="line-num">25</span>        <span class="str">"entity_id"</span>: row.entity_id, <span class="str">"details"</span>: row.details,
+<span class="line-num">26</span>    }
+<span class="line-num">30</span><span class="hl">    canonical = json.<span class="fn">dumps</span>(body, sort_keys=<span class="kw">True</span>, separators=(<span class="str">","</span>, <span class="str">":"</span>), ensure_ascii=<span class="kw">False</span>)</span>
+<span class="line-num">31</span><span class="hl">    <span class="kw">return</span> hashlib.<span class="fn">sha256</span>((prev_hash + canonical).<span class="fn">encode</span>(<span class="str">"utf-8"</span>)).<span class="fn">hexdigest</span>()</span>
+<span class="line-num">44</span><span class="kw">def</span> <span class="fn">append</span>(db: Session, *, actor_type, actor_id, action, entity_type, entity_id, details=<span class="kw">None</span>):
+<span class="line-num">49</span>    last = db.<span class="fn">execute</span>(<span class="fn">select</span>(AuditLog).<span class="fn">order_by</span>(AuditLog.id.<span class="fn">desc</span>()).<span class="fn">limit</span>(<span class="num">1</span>)).<span class="fn">scalar_one_or_none</span>()
+<span class="line-num">50</span>    prev_hash = last.hash <span class="kw">if</span> last <span class="kw">else</span> GENESIS_HASH
+<span class="line-num">59</span>    row.prev_hash = prev_hash
+<span class="line-num">60</span>    row.hash = <span class="fn">_entry_hash</span>(prev_hash, row)
+        </div>
+      </div>
+
+      <!-- VISUAL HASH CHAIN -->
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="padding: 16px 20px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'JetBrains Mono'; font-size:12px; font-weight:700; color:#34D399;">CHAIN STATUS</span>
+            <span style="display:inline-flex; align-items:center; gap:6px; font-family:'JetBrains Mono'; font-size:11px; color:#10B981; font-weight:700;">
+              <span class="pulse-dot"></span> 57 / 57 BLOCKS VERIFIED
+            </span>
+          </div>
+        </div>
+
+        <!-- BLOCK N-1 -->
+        <div style="padding: 14px 18px; border-radius: 12px; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.1);">
+          <div style="font-size:11px; font-family:'JetBrains Mono'; color:#64748B;">BLOCK #56 // PROPOSAL_APPROVED</div>
+          <div style="font-family:'JetBrains Mono'; font-size:12px; color:#93C5FD; margin-top:4px;">
+            HASH: 8e5a7d...31b2
+          </div>
+        </div>
+
+        <div style="text-align:center; color:#3B82F6; font-family:'JetBrains Mono'; font-size:12px;">
+          &darr; SHA256(prev_hash + canonical_json)
+        </div>
+
+        <!-- BLOCK N -->
+        <div style="padding: 14px 18px; border-radius: 12px; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(59, 130, 246, 0.4); box-shadow:0 0 15px rgba(59,130,246,0.2);">
+          <div style="font-size:11px; font-family:'JetBrains Mono'; color:#60A5FA;">BLOCK #57 (HEAD) // EMAIL_DISPATCHED</div>
+          <div style="font-family:'JetBrains Mono'; font-size:12px; color:#64748B; margin-top:2px;">
+            PREV: 8e5a7d...31b2
+          </div>
+          <div style="font-family:'JetBrains Mono'; font-size:12px; color:#34D399; margin-top:2px; font-weight:700;">
+            HASH: 4c9f1a...7e88
+          </div>
+        </div>
+
+        <div class="callout-box emerald" style="padding: 14px 18px;">
+          <div class="callout-title" style="font-size:14px; margin-bottom:4px;">
+            PostgreSQL Database Immutability
+          </div>
+          <div class="callout-text" style="font-size:12.5px;">
+            Database triggers reject SQL UPDATE and DELETE on audit logs outright. Verification API (<span style="font-family:'JetBrains Mono'; color:#6EE7B7;">/api/audit/verify</span>) confirms full ledger validity.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      <div>CRYPTOGRAPHIC SECURITY: SHA-256 IMMUTABILITY // ADVISORY LOCK PREVENTS FORKS</div>
+      <div>ASTROPRENEUR CORE AUDIT // TRUSTHR AI</div>
+    </div>
+  </div>
+</body>
+</html>
