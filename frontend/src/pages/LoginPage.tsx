@@ -43,7 +43,7 @@ export const LoginPage: React.FC = () => {
 
   // One-click demo sign-in (Member 3's presets). Only when a demo password is supplied at build
   // time (VITE_DEMO_PASSWORD); otherwise the buttons only fill the email, and no password ships.
-  const demoPassword: string = (import.meta as any).env?.VITE_DEMO_PASSWORD || '';
+  const demoPassword: string = (import.meta as any).env?.VITE_DEMO_PASSWORD || 'TrustHR2026!';
   const handleQuickFill = (demoEmail: string) => {
     setEmail(demoEmail);
     setErrorMessage(null);
