@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { Menu, Sun, Moon, Presentation, Video } from 'lucide-react';
+import { Menu, Sun, Moon, Presentation, Video, PlayCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { TrustHRLogo } from './TrustHRLogo';
 
@@ -65,6 +65,17 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleSidebar, isMockMode, onT
         >
           <Presentation className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
           <span className="hidden sm:inline">Pitch Deck</span>
+        </a>
+
+        <a
+          href="/presentation/trusthr_ai_live_poc_tests.mp4"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-ghost h-8 px-2.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium hover:bg-emerald-50 dark:hover:bg-emerald-950/40 inline-flex items-center gap-1.5"
+          title="Watch the 9 Live Proof of Concept Tests video (1080p, 4m16s)"
+        >
+          <PlayCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <span className="hidden md:inline">Live POC Video</span>
         </a>
 
         <a

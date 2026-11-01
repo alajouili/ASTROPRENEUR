@@ -34,7 +34,7 @@ export const ScreeningPage: React.FC<ScreeningPageProps> = ({ onDataChanged }) =
   const [selectedJob, setSelectedJob] = useState<JobOffer | null>(null);
   const [rankedCandidates, setRankedCandidates] = useState<RankedCandidate[]>([]);
   const [notRankedCandidates, setNotRankedCandidates] = useState<NotRankedCandidate[]>([]);
-  const [viewMode, setViewMode] = useState<'KANBAN' | 'TABLE'>('KANBAN');
+  const [viewMode, setViewMode] = useState<'KANBAN' | 'TABLE'>('TABLE');
   const [filterMode, setFilterMode] = useState<'ALL' | 'CLEAN' | 'FLAGGED' | 'TOP'>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCandidate, setSelectedCandidate] = useState<RankedCandidate | NotRankedCandidate | null>(null);
@@ -60,8 +60,9 @@ export const ScreeningPage: React.FC<ScreeningPageProps> = ({ onDataChanged }) =
       const data = await api.getJobs();
       setJobs(data);
       if (data.length > 0) {
-        setSelectedJob(data[0]);
-        loadRanking(data[0].id);
+        const defJob = data.find((j: any) => j.id === 'job-data-001') || data[0];
+        setSelectedJob(defJob);
+        loadRanking(defJob.id);
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to load jobs from gateway.');
@@ -392,7 +393,7 @@ export const ScreeningPage: React.FC<ScreeningPageProps> = ({ onDataChanged }) =
       {isUploadOpen && selectedJob && (
         <UploadResumeModal
           jobId={selectedJob.id}
-          onClose={() => setIsUploadOpen(false)}
+          onClose={() => { setIsUploadOpen(false); if (selectedJob) loadRanking(selectedJob.id); }}
           onSuccess={handleResumeUploaded}
         />
       )}

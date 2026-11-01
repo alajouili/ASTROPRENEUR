@@ -21,6 +21,12 @@ export const AuditPage: React.FC = () => {
     try {
       const data = await api.getAuditTrail(200);
       setLogs(data);
+      try {
+        const verifyRes = await api.verifyAuditChain();
+        setVerificationResult(verifyRes);
+      } catch (vErr) {
+        // non-fatal
+      }
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to retrieve audit trail.');
     } finally {

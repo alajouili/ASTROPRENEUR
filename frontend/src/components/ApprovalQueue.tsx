@@ -487,7 +487,7 @@ export const ApprovalQueue: React.FC<ApprovalQueueProps> = ({ approvals, onRefre
                       >
                         <Check className="w-3.5 h-3.5" />
                         <span>
-                          Authorize via Action Gateway{proposal.type === 'shortlist' ? ` (${editedCandidateIds.length})` : ''}
+                          {proposal.type === 'shortlist' ? `Approve shortlist of ${editedCandidateIds.length}` : 'Authorize via Action Gateway'}
                         </span>
                       </button>
                     </div>

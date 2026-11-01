@@ -353,6 +353,14 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   if (response.status === 401) {
     setCsrfToken(null);
+    if (endpoint === '/api/auth/login') {
+      let message = 'Invalid email or password';
+      try {
+        const errJson = await response.json();
+        message = errJson.detail || message;
+      } catch {}
+      throw new ApiError(401, message);
+    }
     if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
       window.location.href = '/login';
     }

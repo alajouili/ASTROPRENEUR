@@ -126,6 +126,8 @@ export const UploadResumeModal: React.FC<UploadResumeModalProps> = ({ jobId, onC
             </h3>
           </div>
           <button
+            id="close-upload-modal"
+            aria-label="Close modal"
             onClick={onClose}
             className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
           >
@@ -144,7 +146,25 @@ export const UploadResumeModal: React.FC<UploadResumeModalProps> = ({ jobId, onC
 
           {/* Results Summary */}
           {uploadResult && (
+            <>
+            <div>
+              <button
+                id="done-upload-btn"
+                onClick={onClose}
+                className="w-full btn-secondary text-xs py-2 mb-3 font-semibold"
+              >
+                Close &amp; Proceed to Screening &rarr;
+              </button>
+            </div>
             <div className="space-y-2 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850">
+              <div className="text-xs text-emerald-800 dark:text-emerald-300 p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 font-semibold font-mono">
+                {uploadResult.accepted.length} CV(s) accepted.
+                {uploadResult.rejected.length > 0 && (
+                  <span className="text-rose-700 dark:text-rose-300 ml-1">
+                    Rejected: {uploadResult.rejected.map(r => `${r.filename}: ${r.message}`).join(', ')}
+                  </span>
+                )}
+              </div>
               <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span>Upload Batch Results:</span>
@@ -169,6 +189,7 @@ export const UploadResumeModal: React.FC<UploadResumeModalProps> = ({ jobId, onC
                 </div>
               )}
             </div>
+            </>
           )}
 
           {/* File Picker */}

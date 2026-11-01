@@ -48,7 +48,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({
               verificationResult.ok ? (
                 <span className="badge-clean font-mono text-[11px]">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Chain Verified: {verificationResult.checked} blocks intact</span>
+                  <span>Hash chain verified: {verificationResult.checked} blocks intact (100% Valid)</span>
                 </span>
               ) : (
                 <span className="badge-danger font-mono text-[11px] animate-pulse">
